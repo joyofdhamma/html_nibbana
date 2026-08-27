@@ -2175,11 +2175,11 @@ const stpAllocations = [
         function getPerformanceLabel(returnsPct) { if (returnsPct >= 20) return 'Excellent'; if (returnsPct >= 10) return 'Good'; if (returnsPct >= 0) return 'Average'; return 'Poor'; }
         function getPerformanceClass(returnsPct) { if (returnsPct >= 20) return 'perf-excellent'; if (returnsPct >= 10) return 'perf-good'; if (returnsPct >= 0) return 'perf-average'; return 'perf-poor'; }
         const LINKED_ACCOUNT_MAP = {
-            '1037341542': 'SBINRO-MRG-****7490', '7908933': 'SBINRE-MRG-****1700', '18045120': 'SBINRE-MRG-****1700',
-            '6008721': 'SBINRO-BOM-****1958', '8897233': 'SBINRE-MRG-****1700', '17129752': 'HDFCNRE-****0230',
-            '18492401': 'SBINRE-MRG-****1700', '11276586': 'SBINRE-MRG-****1700', '19604758': 'SBINRE-MRG-****1700',
-            '6065964': 'SBINRE-MRG-****1700', '91028891045': 'SBINRE-MRG-****1700', '77743993346': 'SBINRE-MRG-****1700',
-            '577337827677': 'SBINRE-MRG-****1700', '577337827686': 'SBINRE-MRG-****1700'
+            '1542': 'SBINRO-MRG-****7490', '8933': 'SBINRE-MRG-****1700', '5120': 'SBINRE-MRG-****1700',
+            '8721': 'SBINRO-BOM-****1958', '7233': 'SBINRE-MRG-****1700', '9752': 'HDFCNRE-****0230',
+            '2401': 'SBINRE-MRG-****1700', '6586': 'SBINRE-MRG-****1700', '4758': 'SBINRE-MRG-****1700',
+            '5964': 'SBINRE-MRG-****1700', '1045': 'SBINRE-MRG-****1700', '3346': 'SBINRE-MRG-****1700',
+            '7677': 'SBINRE-MRG-****1700', '7686': 'SBINRE-MRG-****1700'
         };
         function getLinkedAccount(folio) { if (!folio) return 'N/A'; return LINKED_ACCOUNT_MAP[String(folio).trim()] || 'N/A'; }
         function getSelectedValues(selectElement) {
