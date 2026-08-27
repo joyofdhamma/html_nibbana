@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Joy Player</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      background-color: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+      position: relative;
+    }
+    input,
+    select {
+      font-size: 1em;
+      padding: 8px;
+      margin: 8px;
+      background: #222;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 5px;
+    }
+    button {
+      font-size: 1em;
+      padding: 8px 16px;
+      margin: 10px;
+      background: #0f0;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+      font-weight: bold;
+    }
+    #sliders input {
+      width: 90%;
+    }
+    .control-section {
+      margin: 20px 0;
+    }
+    /* Settings Button */
+    #settingsBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #444;
+      color: #fff;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      font-size: 1.5em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.8);
+    }
+    .modal-content {
+      background-color: #222;
+      margin: 10% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 90%;
+      max-width: 500px;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .file-group {
+      margin-bottom: 15px;
+      border-bottom: 1px solid #555;
+      padding-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>🎧 Joy Audio Player</h2>
+
+  <button id="settingsBtn">⚙</button>
+
+  <input type="file" id="audioFile" accept="audio/*" /><br />
+
+  <audio id="audio" controls></audio><br />
+
+  <div class="control-section" id="sliders">
+    <label>Playback Speed</label>
+    <input type="range" min="0.5" max="2.0" step="0.1" id="speedSlider" value="1.0" />
+
+    <label>Bass</label>
+    <input type="range" min="-40" max="40" value="0" id="bass" />
+
+    <label>Mid</label>
+    <input type="range" min="-40" max="40" value="0" id="mid" />
+
+    <label>Treble</label>
+    <input type="range" min="-40" max="40" value="0" id="treble" />
+
+    <label>Volume</label>
+    <input type="range" min="0" max="1" step="0.01" id="volumeSlider" value="1" />
+
+    <label>Stereo Pan</label>
+    <input type="range" min="-1" max="1" step="0.01" id="panSlider" value="0" />
+
+    <label>Reverb Wet/Dry Mix</label>
+    <input type="range" min="0" max="1" step="0.01" id="reverbSlider" value="0.3" />
+
+    <label>Progress</label>
+    <input type="range" min="0" max="100" value="0" id="progressBar" />
+   
+
+  </div>
+
+  <label>Loop from (sec)</label>
+  <input type="number" id="loopStart" value="0" />
+
+  <label>to (sec)</label>
+  <input type="number" id="loopEnd" value="0" />
+
+  <button onclick="toggleLoop()">🔁 A→B Loop</button>
+  <button onclick="toggleRepeat()">🔂 Repeat Entire Track</button>
+
+ <label>Stop After (Minutes)</label>
+<input type="number" min="0" placeholder="Leave blank for no timer" id="stopTimer" />
+
+  <!-- Modal -->
+  <div id="settingsModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h3>🎶 MP3 Playlist Settings</h3>
+      <form id="playlistForm">
+        <div id="playlistInputs"></div>
+        <button type="button" onclick="playPlaylist()">▶️ Play All</button>
+
+	<label>Stop After (Minutes)</label>
+	<input type="number" min="0" placeholder="Leave blank for no timer" id="stopTimer" />
+
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const audio = document.getElementById("audio");
+    const audioFile = document.getElementById("audioFile");
+    const speedSlider = document.getElementById("speedSlider");
+    const volumeSlider = document.getElementById("volumeSlider");
+    const progressBar = document.getElementById("progressBar");
+    const loopStart = document.getElementById("loopStart");
+    const loopEnd = document.getElementById("loopEnd");
+    const bassSlider = document.getElementById("bass");
+    const midSlider = document.getElementById("mid");
+    const trebleSlider = document.getElementById("treble");
+    const panSlider = document.getElementById("panSlider");
+    const reverbSlider = document.getElementById("reverbSlider");
+
+    let loopEnabled = false;
+    let repeatEnabled = false;
+
+    let audioCtx,
+      sourceNode,
+      bassEQ,
+      midEQ,
+      trebleEQ,
+      gainNode,
+      compressor,
+      panner,
+      convolver,
+      dryGain,
+      wetGain;
+
+    function setupAudioContext() {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      sourceNode = audioCtx.createMediaElementSource(audio);
+
+      bassEQ = audioCtx.createBiquadFilter();
+      bassEQ.type = "lowshelf";
+      bassEQ.frequency.value = 150;
+
+      midEQ = audioCtx.createBiquadFilter();
+      midEQ.type = "peaking";
+      midEQ.frequency.value = 1000;
+      midEQ.Q.value = 1;
+
+      trebleEQ = audioCtx.createBiquadFilter();
+      trebleEQ.type = "highshelf";
+      trebleEQ.frequency.value = 4000;
+
+      compressor = audioCtx.createDynamicsCompressor();
+      compressor.threshold.setValueAtTime(-30, audioCtx.currentTime);
+      compressor.knee.setValueAtTime(40, audioCtx.currentTime);
+      compressor.ratio.setValueAtTime(12, audioCtx.currentTime);
+      compressor.attack.setValueAtTime(0.003, audioCtx.currentTime);
+      compressor.release.setValueAtTime(0.25, audioCtx.currentTime);
+
+      panner = audioCtx.createStereoPanner();
+      panner.pan.setValueAtTime(0, audioCtx.currentTime);
+
+      convolver = audioCtx.createConvolver();
+
+      // Create a short impulse response for mild reverb
+      const irDuration = 2; // seconds
+      const irSampleRate = audioCtx.sampleRate;
+      const length = irSampleRate * irDuration;
+      const impulse = audioCtx.createBuffer(2, length, irSampleRate);
+
+      for (let channel = 0; channel < 2; channel++) {
+        let impulseData = impulse.getChannelData(channel);
+        for (let i = 0; i < length; i++) {
+          impulseData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2);
+        }
+      }
+      convolver.buffer = impulse;
+
+      gainNode = audioCtx.createGain();
+      dryGain = audioCtx.createGain();
+      wetGain = audioCtx.createGain();
+
+      // Connect source -> EQ chain -> compressor -> panner -> split dry/wet
+      sourceNode
+        .connect(bassEQ)
+        .connect(midEQ)
+        .connect(trebleEQ)
+        .connect(compressor)
+        .connect(panner);
+
+      // Dry path: panner -> dryGain -> gainNode (output)
+      panner.connect(dryGain);
+      dryGain.connect(gainNode);
+
+      // Wet path: panner -> convolver -> wetGain -> gainNode (output)
+      panner.connect(convolver);
+      convolver.connect(wetGain);
+      wetGain.connect(gainNode);
+
+      gainNode.connect(audioCtx.destination);
+
+      // Initialize wet/dry mix
+      dryGain.gain.value = 1 - parseFloat(reverbSlider.value);
+      wetGain.gain.value = parseFloat(reverbSlider.value);
+
+      // Set initial volume
+      gainNode.gain.value = parseFloat(volumeSlider.value);
+    }
+
+    audioFile.addEventListener("change", () => {
+      const file = audioFile.files[0];
+      if (file) {
+        if (!audioCtx) setupAudioContext();
+
+        audio.src = URL.createObjectURL(file);
+        audio.load();
+        audio.play();
+      }
+    });
+
+    speedSlider.addEventListener("input", () => {
+      audio.playbackRate = parseFloat(speedSlider.value);
+    });
+
+    volumeSlider.addEventListener("input", () => {
+      if (gainNode) {
+        gainNode.gain.value = parseFloat(volumeSlider.value);
+      }
+    });
+
+    bassSlider.addEventListener("input", (e) => {
+      if (bassEQ) bassEQ.gain.value = e.target.value;
+    });
+
+    midSlider.addEventListener("input", (e) => {
+      if (midEQ) midEQ.gain.value = e.target.value;
+    });
+
+    trebleSlider.addEventListener("input", (e) => {
+      if (trebleEQ) trebleEQ.gain.value = e.target.value;
+    });
+
+    panSlider.addEventListener("input", (e) => {
+      if (panner) panner.pan.value = parseFloat(e.target.value);
+    });
+
+    reverbSlider.addEventListener("input", (e) => {
+      const wetVal = parseFloat(e.target.value);
+      const dryVal = 1 - wetVal;
+      if (wetGain && dryGain) {
+        wetGain.gain.value = wetVal;
+        dryGain.gain.value = dryVal;
+      }
+    });
+
+    function toggleLoop() {
+      loopEnabled = !loopEnabled;
+      alert(
+        loopEnabled
+          ? "Looping between " + loopStart.value + "s and " + loopEnd.value + "s enabled."
+          : "A→B Looping disabled."
+      );
+    }
+
+    function toggleRepeat() {
+      repeatEnabled = !repeatEnabled;
+      audio.loop = repeatEnabled;
+      alert(
+        repeatEnabled ? "Repeat entire audio enabled." : "Repeat entire audio disabled."
+      );
+    }
+
+    audio.addEventListener("timeupdate", () => {
+      if (loopEnabled && loopEnd.value > 0) {
+        if (audio.currentTime >= parseFloat(loopEnd.value)) {
+          audio.currentTime = parseFloat(loopStart.value);
+        }
+      }
+      progressBar.value = (audio.currentTime / audio.duration) * 100 || 0;
+    });
+
+    progressBar.addEventListener("input", () => {
+      if (!isNaN(audio.duration)) {
+        audio.currentTime = (progressBar.value / 100) * audio.duration;
+      }
+    });
+
+    // Modal Logic
+    const settingsBtn = document.getElementById("settingsBtn");
+    const modal = document.getElementById("settingsModal");
+    const playlistInputs = document.getElementById("playlistInputs");
+
+    settingsBtn.onclick = () => {
+      modal.style.display = "block";
+    };
+
+    function closeModal() {
+      modal.style.display = "none";
+    }
+
+    // Generate 10 MP3 inputs with repeat count
+    for (let i = 1; i <= 10; i++) {
+      const div = document.createElement("div");
+      div.classList.add("file-group");
+      div.innerHTML = `
+        <label>MP3 ${i}</label>
+        <input type="file" accept="audio/*" id="file${i}" />
+        <input type="number" min="1" value="1" placeholder="Repeat count" id="repeat${i}" />
+      `;
+      playlistInputs.appendChild(div);
+    }
+
+    // Playlist Play Logic
+    async function playPlaylist() {
+      const queue = [];
+
+      for (let i = 1; i <= 10; i++) {
+        const fileInput = document.getElementById(`file${i}`);
+        const repeatInput = document.getElementById(`repeat${i}`);
+        const file = fileInput.files[0];
+        const repeat = parseInt(repeatInput.value) || 0;
+
+        if (file && repeat > 0) {
+          for (let r = 0; r < repeat; r++) {
+            queue.push(URL.createObjectURL(file));
+          }
+        }
+      }
+
+      if (!queue.length) {
+        alert("Please select at least one MP3 with repeat count.");
+        return;
+      }
+
+      if (!audioCtx) setupAudioContext();
+
+      let current = 0;
+      audio.src = queue[current];
+      audio.load();
+      audio.play();
+
+      audio.onended = () => {
+        current++;
+        if (current < queue.length) {
+          audio.src = queue[current];
+          audio.load();
+          audio.play();
+        }
+      };
+
+      modal.style.display = "none";
+    }
+let stopTimerId = null;
+
+function startStopTimer() {
+  clearTimeout(stopTimerId);
+  const minutes = parseFloat(document.getElementById("stopTimer").value) || 0;
+  if (minutes > 0) {
+    stopTimerId = setTimeout(() => {
+      audio.pause();
+      alert(`Playback stopped after ${minutes} minute(s).`);
+    }, minutes * 60 * 1000);
+  }
+}
+
+audio.addEventListener("play", startStopTimer);
+audio.addEventListener("pause", () => clearTimeout(stopTimerId));
+
+  </script>
+</body>
+</html>
