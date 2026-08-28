@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Joy's Whatsapp</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;background-color: #000;color: #fff; }
+  input, textarea, button { width: 100%; margin: 5px 0; padding: 8px; font-size: 16px; }
+  button { background: green; color: white; border: none; cursor: pointer; padding: 10px; }
+  .link-list { margin-top: 15px; }
+  .vendor { display: flex; align-items: center; margin-bottom: 10px; gap: 5px; }
+  .vendor a { flex: 1; color: blue; text-decoration: underline; }
+  .vendor input[type="text"] { flex: 2; padding: 6px; }
+</style>
+</head>
+<body>
+
+<h2>Joy's Whatsapp</h2>
+
+<label>Message:</label>
+<textarea id="message" rows="4" placeholder="Type your message here..."></textarea>
+
+<h3>Mobile Numbers</h3>
+<div id="numbers"></div>
+
+<button onclick="generateLinks()">Generate Links</button>
+
+<h3>Sent Vendors & Notes</h3>
+<div id="linkContainer" class="link-list"></div>
+<button onclick="saveAllNotes()">Save All Notes</button>
+
+<script>
+// Load saved numbers & notes from localStorage
+function loadData() {
+  const savedNumbers = JSON.parse(localStorage.getItem('whatsappNumbers')) || ["","","","","","","","","",""];
+  const numbersDiv = document.getElementById('numbers');
+  numbersDiv.innerHTML = '';
+  savedNumbers.forEach(num => {
+    const input = document.createElement('input');
+    input.type = "text";
+    input.placeholder = "Enter mobile number with country code";
+    input.value = num;
+    numbersDiv.appendChild(input);
+  });
+
+  // Load saved notes
+  const savedNotes = JSON.parse(localStorage.getItem('vendorNotes')) || {};
+  const container = document.getElementById('linkContainer');
+  container.innerHTML = '';
+  for (let number in savedNotes) {
+    createVendorRow(number, savedNotes[number]);
+  }
+}
+
+// Save numbers to localStorage
+function saveNumbers() {
+  const inputs = document.querySelectorAll('#numbers input');
+  const numbers = Array.from(inputs).map(input => input.value.trim());
+  localStorage.setItem('whatsappNumbers', JSON.stringify(numbers));
+}
+
+// Create a row for vendor with link + notes box
+function createVendorRow(number, note="") {
+  const div = document.createElement('div');
+  div.className = "vendor";
+  
+  const link = document.createElement('a');
+  link.href = `https://wa.me/${number}?text=${encodeURIComponent(document.getElementById('message').value.trim())}`;
+  link.target = "_blank";
+  link.textContent = `Send to ${number}`;
+  
+  const noteBox = document.createElement('input');
+  noteBox.type = "text";
+  noteBox.placeholder = "Enter price or note";
+  noteBox.value = note;
+  noteBox.dataset.number = number; // store number for saving
+  
+  div.appendChild(link);
+  div.appendChild(noteBox);
+  document.getElementById('linkContainer').appendChild(div);
+}
+
+// Generate links and save numbers
+function generateLinks() {
+  saveNumbers();
+  const inputs = document.querySelectorAll('#numbers input');
+  const message = document.getElementById('message').value.trim();
+  const container = document.getElementById('linkContainer');
+  container.innerHTML = '';
+  
+  inputs.forEach(input => {
+    const number = input.value.trim();
+    if (number) {
+      createVendorRow(number);
+    }
+  });
+}
+
+// Save all notes to localStorage
+function saveAllNotes() {
+  const notes = {};
+  const noteBoxes = document.querySelectorAll('#linkContainer input[type="text"]');
+  noteBoxes.forEach(box => {
+    notes[box.dataset.number] = box.value.trim();
+  });
+  localStorage.setItem('vendorNotes', JSON.stringify(notes));
+  alert("Notes saved!");
+}
+
+// Load data when page starts
+loadData();
+</script>
+
+</body>
+</html>
