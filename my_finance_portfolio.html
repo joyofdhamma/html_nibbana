@@ -2540,6 +2540,50 @@ const stpAllocations = [
 function updateCharts(data) {
     if (data.length === 0) return;
     
+    // ---- CHART 1: Category Combined (Bar + Line) ----
+    const ctxCombined = document.getElementById('categoryCombinedChart').getContext('2d');
+    if (chart1) chart1.destroy();
+    const catTotals = {};
+    const catReturns = {};
+    data.forEach(d => {
+        catTotals[d.category] = (catTotals[d.category] || 0) + d.invested;
+        if (!catReturns[d.category]) catReturns[d.category] = { total: 0, count: 0 };
+        catReturns[d.category].total += d.returnsPct;
+        catReturns[d.category].count++;
+    });
+    const catLabels = Object.keys(catTotals);
+    const catInvested = Object.values(catTotals);
+    const catAvgReturns = catLabels.map(c => catReturns[c] ? catReturns[c].total / catReturns[c].count : 0);
+    const totalCat = catInvested.reduce((a,b) => a+b, 0);
+    chart1 = new Chart(ctxCombined, {
+        type: 'bar',
+        data: {
+            labels: catLabels,
+            datasets: [
+                { label: 'Investment (₹)', data: catInvested, backgroundColor: 'rgba(46, 204, 113, 0.7)', borderColor: '#2ecc71', borderWidth: 2, borderRadius: 4, order: 1, yAxisID: 'y' },
+                { label: 'Avg Return %', data: catAvgReturns, type: 'line', borderColor: '#e74c3c', backgroundColor: 'rgba(231, 76, 60, 0.1)', pointBackgroundColor: '#e74c3c', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 5, tension: 0.3, fill: true, order: 0, yAxisID: 'y1' }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'top', labels: { font: { size: 9 }, boxWidth: 12, padding: 8 } },
+                datalabels: {
+                    color: '#fff', backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 4, padding: 3,
+                    font: { size: 8, weight: 'bold' },
+                    formatter: (v, ctx) => { if (ctx.datasetIndex === 0) return `${((v/totalCat)*100).toFixed(1)}%`; return `${v.toFixed(1)}%`; },
+                    anchor: 'end', align: 'top', offset: 2
+                }
+            },
+            scales: {
+                y: { beginAtZero: true, position: 'left', ticks: { callback: (v) => `₹${(v/1000).toFixed(0)}K`, font: { size: 8 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                y1: { beginAtZero: true, position: 'right', ticks: { callback: (v) => v + '%', font: { size: 8 } }, grid: { drawOnChartArea: false } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // ---- CHART 2: Fund Type Allocation Matrix (Table) ----
     // Calculate fund type totals
     const ftTotals = {};
     data.forEach(d => { 
@@ -2669,7 +2713,7 @@ function updateCharts(data) {
     // Store reference for cleanup
     chart2 = tableContainer;
 
-    // chart3: top performers
+    // ---- CHART 3: Top 5 Performers ----
     const ctxTop = document.getElementById('topPerformersChart').getContext('2d');
     if (chart3) chart3.destroy();
     const top5 = [...data].sort((a,b) => b.returnsPct - a.returnsPct).slice(0,5);
@@ -2696,7 +2740,7 @@ function updateCharts(data) {
         }
     });
 
-    // chart4: returns by type
+    // ---- CHART 4: Returns by Type ----
     const ctxRetType = document.getElementById('returnsByTypeChart').getContext('2d');
     if (chart4) chart4.destroy();
     const typeRet = {};
@@ -2724,7 +2768,7 @@ function updateCharts(data) {
         }
     });
 
-    // chart5: investment vs current
+    // ---- CHART 5: Investment vs Current ----
     const ctxComp = document.getElementById('comparisonChart').getContext('2d');
     if (chart5) chart5.destroy();
     chart5 = new Chart(ctxComp, {
@@ -2754,7 +2798,7 @@ function updateCharts(data) {
         }
     });
 
-    // chart6: fund type allocation (doughnut)
+    // ---- CHART 6: Fund Type Allocation (Doughnut) ----
     const ctxFtAlloc = document.getElementById('fundTypeAllocationChart').getContext('2d');
     if (chart6) chart6.destroy();
     const ftAllocData = {};
@@ -2780,7 +2824,6 @@ function updateCharts(data) {
         }
     });
 }
-		
         function updateStats(data) {
             const totalInv = data.reduce((s,d) => s + d.invested, 0);
             const totalCurr = data.reduce((s,d) => s + d.currentValue, 0);
@@ -2800,11 +2843,6 @@ function updateCharts(data) {
             `;
         }
       
-    
-	
-
-
- 
         function updateTable(data) {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
