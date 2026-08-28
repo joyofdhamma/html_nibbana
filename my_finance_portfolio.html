@@ -1227,12 +1227,7 @@
                     <option value="all" selected>All</option>
                 </select>
             </div>
-            <div class="filter-group">
-                <label>Bank</label>
-                <select id="bankFilter" multiple>
-                    <option value="all" selected>All</option>
-                </select>
-            </div>
+           
             <div class="filter-group">
                 <label>Perf</label>
                 <select id="perfFilter" multiple>
@@ -1254,7 +1249,7 @@
                     <option value="current">Current</option>
                     <option value="returnsAsc">Returns ↑</option>
                     <option value="investedAsc">Invested ↑</option>
-                  <option value="linkedAccount">Bank A/C</option>
+                 
                     <option value="xirr">XIRR %</option>
                     <option value="nav">NAV</option>
                 </select>
@@ -2214,15 +2209,7 @@ const stpAllocations = [
             Array.from(amcs).sort().forEach(amc => { amcFilter.innerHTML += `<option value="${amc}">${amc}</option>`; });
             if (currentSelected) { for (let option of amcFilter.options) { if (currentSelected.includes(option.value)) option.selected = true; } }
         }
-        function updateBankFilter() {
-            const bankFilter = document.getElementById('bankFilter');
-            const accounts = new Set();
-            portfolioData.forEach(item => { const account = item.linkedAccount || getLinkedAccount(item.folio); if (account && account !== 'N/A') accounts.add(account); });
-            const currentSelected = getSelectedValues(bankFilter);
-            bankFilter.innerHTML = '<option value="all">All</option>';
-            Array.from(accounts).sort().forEach(account => { bankFilter.innerHTML += `<option value="${account}">${account}</option>`; });
-            if (currentSelected) { for (let option of bankFilter.options) { if (currentSelected.includes(option.value)) option.selected = true; } }
-        }
+       
 
         const STORAGE_KEY = 'mf_portfolio_data';
         const LAST_UPDATE_KEY = 'mf_portfolio_last_update';
@@ -2245,7 +2232,7 @@ const stpAllocations = [
                     case 'returnsPct': valA = a.returnsPct; valB = b.returnsPct; break;
                     case 'units': valA = a.units || 0; valB = b.units || 0; break;
                     case 'nav': valA = a.nav || 0; valB = b.nav || 0; break;
-                    case 'linkedAccount': valA = (a.linkedAccount || getLinkedAccount(a.folio) || '').toLowerCase(); valB = (b.linkedAccount || getLinkedAccount(b.folio) || '').toLowerCase(); break;
+                    
                     case 'xirr': const xA = getXIRRForFund(a.scheme); const xB = getXIRRForFund(b.scheme); valA = xA !== null ? xA : -999; valB = xB !== null ? xB : -999; break;
                     default: valA = (a.folio || '').toLowerCase(); valB = (b.folio || '').toLowerCase();
                 }
@@ -2540,8 +2527,6 @@ const stpAllocations = [
             if (amcSelected) filtered = filtered.filter(d => amcSelected.includes(d.amc));
             const fundTypeSelected = getSelectedValues(document.getElementById('fundTypeFilter'));
             if (fundTypeSelected) filtered = filtered.filter(d => fundTypeSelected.includes(d.fundType));
-            const bankSelected = getSelectedValues(document.getElementById('bankFilter'));
-            if (bankSelected) filtered = filtered.filter(d => bankSelected.includes(d.linkedAccount || getLinkedAccount(d.folio)));
             const perfSelected = getSelectedValues(document.getElementById('perfFilter'));
             if (perfSelected) filtered = filtered.filter(d => perfSelected.includes(d.performance));
             return filtered;
@@ -2804,7 +2789,7 @@ const stpAllocations = [
                 row.insertCell(13).innerHTML = `<span class="perf-badge ${perfClass}">${perfLabel}</span>`;
                 row.insertCell(14).innerHTML = d.units !== undefined ? d.units.toLocaleString('en-IN') : '0';
                 row.insertCell(15).innerHTML = navDisplay;
-                row.insertCell(16).innerHTML = d.linkedAccount || getLinkedAccount(d.folio);
+               
             });
         }
         function updateInsights(data) {
@@ -2839,7 +2824,7 @@ const stpAllocations = [
         document.getElementById('categoryFilter').addEventListener('change', function() { updateDashboard(); });
         document.getElementById('fundTypeFilter').addEventListener('change', function() { updateDashboard(); });
         document.getElementById('amcFilter').addEventListener('change', function() { updateDashboard(); });
-        document.getElementById('bankFilter').addEventListener('change', function() { updateDashboard(); });
+       
         document.getElementById('perfFilter').addEventListener('change', function() { updateDashboard(); });
         document.getElementById('sortBy').addEventListener('change', function() { updateDashboard(); });
         document.getElementById('searchBox').addEventListener('input', function() { updateDashboard(); });
