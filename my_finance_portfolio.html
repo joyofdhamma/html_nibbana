@@ -2309,68 +2309,103 @@ const stpAllocations = [
             else alert('Unsupported format. Use Excel or JSON.');
         });
 
-        function loadExcelFile(file) {
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                try {
-                    const data = new Uint8Array(evt.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-                    const debugDiv = document.getElementById('debugArea');
-                    debugDiv.style.display = 'block';
-                    debugDiv.innerHTML = `<strong>File:</strong> ${file.name}<br><strong>Rows:</strong> ${jsonData.length}<br><br>`;
-                    if (jsonData.length > 0) { debugDiv.innerHTML += `<strong>Columns:</strong><br>`; Object.keys(jsonData[0]).forEach(col => debugDiv.innerHTML += `- "${col}"<br>`); }
-                    portfolioData = [];
-                    let autoDetectCount = 0;
-                    jsonData.forEach((row, index) => {
-                        let folio = row['Folio No.'] || row['Folio No'] || row['Folio'] || row['folio'] || `FOLIO${String(index+1).padStart(4,'0')}`;
-                        let scheme = row['Scheme Name'] || row['Scheme Details'] || row['Scheme'] || row['Fund Name'] || `Fund ${index+1}`;
-                        let amc = row['AMC Name'] || row['AMC'] || row['Amc'] || row['Fund House'] || 'N/A';
-                        let type = row['Type'] || row['Fund Type'] || null;
-                        let category = row['Category'] || row['category'] || 'Other';
-                        let invested = parseFloat(row['Invested Value'] || row['Invested Value(INR)'] || row['Invested Amount'] || row['Invested'] || 0);
-                        let currentValue = parseFloat(row['Current Value'] || row['Market Value(INR)']|| row['Market Value'] || row['Current'] || 0);
-                        let returnPct = parseFloat(row['Return %'] || row['Return'] || 0);
-                        let units = parseFloat(row['Units'] || row['Unit'] || row['units'] || 0);
-                        let detectedType = type;
-                        if (!detectedType || detectedType === 'Regular') {
-                            const autoType = autoDetectType(scheme);
-                            if (autoType === 'Direct') { detectedType = 'Direct'; autoDetectCount++; }
-                            else detectedType = 'Regular';
-                        }
-                        if (type === 'Regular' && autoDetectType(scheme) === 'Direct') { detectedType = 'Direct'; autoDetectCount++; }
-                        if (category.toLowerCase().includes('equity')) category = 'Equity';
-                        else if (category.toLowerCase().includes('debt')) category = 'Debt';
-                        else if (category.toLowerCase().includes('cash')) category = 'Cash';
-                        else if (category.toLowerCase().includes('hybrid')) category = 'Hybrid';
-                        else category = category.charAt(0).toUpperCase() + category.slice(1);
-                        if (!isNaN(invested) && !isNaN(currentValue) && invested > 0) {
-                            const returns = currentValue - invested;
-                            const finalReturnPct = returnPct || ((currentValue - invested) / invested * 100);
-                            const nav = units > 0 ? currentValue / units : 0;
-                            const fundType = getFundType(scheme);
-                            portfolioData.push({
-                                folio: String(folio).trim(), scheme: String(scheme).trim(), amc: String(amc).trim(),
-                                type: detectedType, category, fundType, invested, currentValue, returns, returnsPct: finalReturnPct,
-                                units: units || 0, nav, linkedAccount: getLinkedAccount(folio),
-                                performance: getPerformanceLabel(finalReturnPct), perfClass: getPerformanceClass(finalReturnPct)
-                            });
-                        }
-                    });
-                    if (portfolioData.length === 0) throw new Error('No valid data found');
-                    debugDiv.innerHTML += `<br><strong>✅ Parsed ${portfolioData.length} records (${autoDetectCount} auto-detected Direct)</strong>`;
-                    updateFilters();
-                    showStatus(`✅ Loaded ${portfolioData.length} records`, 'success');
-                    updateDashboard();
-                    autoSaveData();
-                } catch(error) {
-                    document.getElementById('debugArea').innerHTML += `<br><span style="color:#ff6b6b;">❌ Error: ${error.message}</span>`;
-                    showStatus(`❌ Error: ${error.message}`, 'error');
+       function loadExcelFile(file) {
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+        try {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+            const debugDiv = document.getElementById('debugArea');
+            debugDiv.style.display = 'block';
+            debugDiv.innerHTML = `<strong>File:</strong> ${file.name}<br><strong>Rows:</strong> ${jsonData.length}<br><br>`;
+            if (jsonData.length > 0) { debugDiv.innerHTML += `<strong>Columns:</strong><br>`; Object.keys(jsonData[0]).forEach(col => debugDiv.innerHTML += `- "${col}"<br>`); }
+            portfolioData = [];
+            let autoDetectCount = 0;
+            jsonData.forEach((row, index) => {
+                let folio = row['Folio No.'] || row['Folio No'] || row['Folio'] || row['folio'] || `FOLIO${String(index+1).padStart(4,'0')}`;
+                let scheme = row['Scheme Name'] || row['Scheme Details'] || row['Scheme'] || row['Fund Name'] || `Fund ${index+1}`;
+                let amc = row['AMC Name'] || row['AMC'] || row['Amc'] || row['Fund House'] || 'N/A';
+                let type = row['Type'] || row['Fund Type'] || null;
+                let category = row['Category'] || row['category'] || 'Other';
+                let invested = parseFloat(row['Invested Value'] || row['Invested Value(INR)'] || row['Invested Amount'] || row['Invested'] || 0);
+                let currentValue = parseFloat(row['Current Value'] || row['Market Value(INR)']|| row['Market Value'] || row['Current'] || 0);
+                let returnPct = parseFloat(row['Return %'] || row['Return'] || 0);
+                let units = parseFloat(row['Units'] || row['Unit'] || row['units'] || 0);
+                let detectedType = type;
+                if (!detectedType || detectedType === 'Regular') {
+                    const autoType = autoDetectType(scheme);
+                    if (autoType === 'Direct') { detectedType = 'Direct'; autoDetectCount++; }
+                    else detectedType = 'Regular';
                 }
-            };
-            reader.readAsArrayBuffer(file);
+                if (type === 'Regular' && autoDetectType(scheme) === 'Direct') { detectedType = 'Direct'; autoDetectCount++; }
+                
+                // FIX: Normalize category values
+                let normalizedCategory = category;
+                if (typeof category === 'string') {
+                    const catLower = category.toLowerCase().trim();
+                    if (catLower.includes('equity') || catLower === 'equity') {
+                        normalizedCategory = 'Equity';
+                    } else if (catLower.includes('debt') || catLower === 'debt') {
+                        normalizedCategory = 'Debt';
+                    } else if (catLower.includes('hybrid') || catLower === 'hybrid') {
+                        normalizedCategory = 'Hybrid';
+                    } else if (catLower.includes('cash') || catLower.includes('liquid') || catLower.includes('liquid fund') || catLower === 'liquid' || catLower === 'cash') {
+                        normalizedCategory = 'Cash';
+                    } else if (catLower.includes('index') || catLower === 'index') {
+                        normalizedCategory = 'Index';
+                    } else if (catLower.includes('large cap') || catLower === 'large cap' || catLower === 'largecap') {
+                        normalizedCategory = 'Large Cap';
+                    } else if (catLower.includes('mid cap') || catLower === 'mid cap' || catLower === 'midcap') {
+                        normalizedCategory = 'Mid Cap';
+                    } else if (catLower.includes('small cap') || catLower === 'small cap' || catLower === 'smallcap') {
+                        normalizedCategory = 'Small Cap';
+                    } else if (catLower.includes('flexi cap') || catLower === 'flexi cap' || catLower === 'flexicap') {
+                        normalizedCategory = 'Flexi Cap';
+                    } else {
+                        // Capitalize first letter of each word for other categories
+                        normalizedCategory = category.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+                    }
+                }
+                
+                if (!isNaN(invested) && !isNaN(currentValue) && invested > 0) {
+                    const returns = currentValue - invested;
+                    const finalReturnPct = returnPct || ((currentValue - invested) / invested * 100);
+                    const nav = units > 0 ? currentValue / units : 0;
+                    const fundType = getFundType(scheme);
+                    portfolioData.push({
+                        folio: String(folio).trim(), 
+                        scheme: String(scheme).trim(), 
+                        amc: String(amc).trim(),
+                        type: detectedType, 
+                        category: normalizedCategory, 
+                        fundType, 
+                        invested, 
+                        currentValue, 
+                        returns, 
+                        returnsPct: finalReturnPct,
+                        units: units || 0, 
+                        nav, 
+                        linkedAccount: getLinkedAccount(folio),
+                        performance: getPerformanceLabel(finalReturnPct), 
+                        perfClass: getPerformanceClass(finalReturnPct)
+                    });
+                }
+            });
+            if (portfolioData.length === 0) throw new Error('No valid data found');
+            debugDiv.innerHTML += `<br><strong>✅ Parsed ${portfolioData.length} records (${autoDetectCount} auto-detected Direct)</strong>`;
+            updateFilters();
+            showStatus(`✅ Loaded ${portfolioData.length} records`, 'success');
+            updateDashboard();
+            autoSaveData();
+        } catch(error) {
+            document.getElementById('debugArea').innerHTML += `<br><span style="color:#ff6b6b;">❌ Error: ${error.message}</span>`;
+            showStatus(`❌ Error: ${error.message}`, 'error');
         }
+    };
+    reader.readAsArrayBuffer(file);
+}
 
         function loadJSONFile(file = null) {
             if (file) {
