@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Interval Timer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    body {
+      background-color: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+      position: relative;
+      margin: 0;
+      min-height: 100vh;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    /* Current Time Display */
+    #current-time {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 3.2em;
+      font-weight: bold;
+      color: #0f0;
+      z-index: 1000;
+      padding: 5px 15px;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 20px;
+      transition: opacity 0.3s;
+    }
+    
+    body.full-screen #current-time {
+      font-size: 1.5em;
+      top: 30px;
+    }
+
+    input {
+      font-size: 1.2em;
+      padding: 8px;
+      margin: 10px;
+      width: 100px;
+      background: #222;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 5px;
+    }
+
+    button {
+      font-size: 1.2em;
+      padding: 10px 20px;
+      margin-top: 20px;
+      background: #0f0;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    button:active {
+      transform: scale(0.95);
+    }
+
+    #status {
+      font-size: 2em;
+      margin-top: 20px;
+    }
+
+    #counter {
+      font-size: 1.5em;
+      margin-top: 10px;
+    }
+
+    .time-info {
+      font-size: 1.2em;
+      margin: 15px 0;
+      padding: 10px;
+      background: #111;
+      border-radius: 8px;
+    }
+
+    /* Settings icon styles */
+    .settings-icon {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 24px;
+      cursor: pointer;
+      z-index: 1000;
+      padding: 10px;
+      transition: all 0.3s;
+    }
+    
+    .settings-icon:active {
+      transform: scale(0.9);
+    }
+
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.9);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background-color: #222;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-content h2 {
+      margin-top: 0;
+      color: #0f0;
+    }
+
+    .modal-content label {
+      display: block;
+      margin: 15px 0 5px;
+      text-align: left;
+    }
+
+    .modal-content select, .modal-content input[type="range"] {
+      width: 100%;
+      padding: 8px;
+      background: #333;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 5px;
+    }
+
+    .modal-buttons {
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .modal-buttons button {
+      flex: 1;
+      margin: 0 5px;
+    }
+
+    .close-modal {
+      background: #f00 !important;
+    }
+
+    .phrase-select {
+      margin-bottom: 15px;
+    }
+    
+    /* Lock screen button */
+    .lock-icon {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      font-size: 24px;
+      cursor: pointer;
+      z-index: 1000;
+      padding: 10px;
+      transition: all 0.3s;
+    }
+    
+    .lock-icon:active {
+      transform: scale(0.9);
+    }
+    
+    /* Timer controls in settings */
+    .timer-controls {
+      margin: 20px 0;
+      padding: 15px;
+      background: #333;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-around;
+    }
+    
+    .timer-controls button {
+      margin: 0 5px;
+      flex: 1;
+    }
+    
+    /* Full screen mode */
+    body.full-screen {
+      padding: 0;
+    }
+    
+    body.full-screen .settings-icon,
+    body.full-screen .lock-icon {
+      opacity: 0.3;
+      transition: opacity 0.3s;
+    }
+    
+    body.full-screen .settings-icon:hover,
+    body.full-screen .lock-icon:hover {
+      opacity: 1;
+    }
+    
+    body.full-screen .time-info {
+      margin-top: 80px;
+      font-size: 1.4em;
+    }
+    
+    body.full-screen #status {
+      font-size: 3em;
+      margin-top: 40px;
+    }
+    
+    body.full-screen #counter {
+      font-size: 2em;
+      margin-top: 20px;
+    }
+    
+    /* Input container */
+    .input-container {
+      margin: 20px 0;
+    }
+    
+    /* Lock screen overlay message */
+    .lock-message {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.8);
+      padding: 20px;
+      border-radius: 10px;
+      z-index: 1500;
+      font-size: 1.5em;
+    }
+    
+    /* Instructions */
+    .instructions {
+      margin: 20px auto;
+      max-width: 500px;
+      padding: 15px;
+      background: #111;
+      border-radius: 8px;
+      font-size: 0.9em;
+    }
+
+    /* Warmup input styling */
+    .warmup-container {
+      margin: 15px 0;
+      padding: 10px;
+      background: #111;
+      border-radius: 8px;
+    }
+    
+    /* Background operation indicator */
+    .background-indicator {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      padding: 5px 10px;
+      background: rgba(0, 255, 0, 0.3);
+      border-radius: 5px;
+      font-size: 0.8em;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="current-time">--:--:-- --</div>
+  <div class="settings-icon" onclick="openSettings()">⚙️</div>
+  <div class="lock-icon" onclick="toggleLockScreen()">🔒</div>
+  
+  <h1>🏃‍♂️ Interval Timer</h1>
+
+  <div class="time-info">
+    <div id="totalTime">Total Target Time: 0:00</div>
+    <div id="progressTime">Progress: 0:00</div>
+    <div id="remainingTime">Remaining: 0:00</div>
+  </div>
+
+  <div class="input-container">
+    <label>Run (sec):</label><br />
+    <input type="number" id="runTime" value="20" onchange="calculateTotalTime()" /><br />
+
+    <label>Walk (sec):</label><br />
+    <input type="number" id="walkTime" value="20" onchange="calculateTotalTime()" /><br />
+
+    <label>Laps:</label><br />
+    <input type="number" id="laps" value="60" onchange="calculateTotalTime()" /><br />
+    
+    <!-- Warmup input field -->
+    <div class="warmup-container">
+      <label>Warmup (min):</label><br />
+      <input type="number" id="warmupTime" value="10" min="0" onchange="calculateTotalTime()" /><br />
+    </div>
+  </div>
+
+  <div id="status"></div>
+  <div id="counter"></div>
+  
+  <div class="instructions">
+    <p>Set your intervals and click the lock icon to enter full-screen mode during your workout.</p>
+    <p><strong>Note:</strong> Timer will continue running even when screen is off or in background.</p>
+  </div>
+
+  <!-- Background operation indicator -->
+  <div class="background-indicator" id="backgroundIndicator">Running in background</div>
+
+  <!-- Lock message -->
+  <div class="lock-message" id="lockMessage">
+    Screen is locked. Tap the unlock icon to exit full-screen mode.
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal">
+    <div class="modal-content">
+      <h2>Timer Settings</h2>
+      
+      <div class="timer-controls">
+        <button onclick="startTimer()" id="startButton">Start</button>
+        <button onclick="stopTimer()" id="stopButton" style="background: #f00;">Stop</button>
+      </div>
+      
+      <label for="voiceSelect">Voice:</label>
+      <select id="voiceSelect"></select>
+      
+      <div class="phrase-select">
+        <label for="runPhrase">Run Phase Phrase:</label>
+        <select id="runPhrase">
+          <option value="Run">Run</option>
+          <option value="GO">GO</option>
+          <option value="Jump">Jump</option>
+          <option value="Start">Start</option>
+          <option value="Work">Work</option>
+          <option value="Workout">Workout</option>
+        </select>
+      </div>
+      
+      <div class="phrase-select">
+        <label for="walkPhrase">Walk Phase Phrase:</label>
+        <select id="walkPhrase">
+          <option value="Walk">Walk</option>
+          <option value="Stop">Stop</option>
+          <option value="Jump">Jump</option>
+          <option value="Done">Done</option>
+        </select>
+      </div>
+      
+      <label for="volumeControl">Volume: <span id="volumeValue">1</span></label>
+      <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="1">
+      
+      <label for="rateControl">Speed: <span id="rateValue">1</span></label>
+      <input type="range" id="rateControl" min="0.5" max="2" step="0.1" value="1">
+      
+      <div class="modal-buttons">
+        <button onclick="saveSettings()">Save</button>
+        <button class="close-modal" onclick="closeSettings()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Web Worker code as a Blob -->
+  <script id="worker-code" type="javascript/worker">
+    let timerInterval;
+    let startTime;
+    let elapsedBeforePause = 0;
+    let isRunning = false;
+    let currentPhase = 'warmup'; // 'warmup', 'run', 'walk'
+    let phaseStartTime;
+    let warmupDuration = 0;
+    let runDuration = 0;
+    let walkDuration = 0;
+    let totalLaps = 0;
+    let currentLap = 0;
+    
+    self.onmessage = function(e) {
+      const data = e.data;
+      
+      switch(data.command) {
+        case 'start':
+          if (!isRunning) {
+            warmupDuration = data.warmupDuration || 0;
+            runDuration = data.runDuration || 0;
+            walkDuration = data.walkDuration || 0;
+            totalLaps = data.totalLaps || 0;
+            currentLap = data.currentLap || 0;
+            currentPhase = data.currentPhase || 'warmup';
+            
+            startTime = Date.now() - elapsedBeforePause;
+            isRunning = true;
+            
+            timerInterval = setInterval(() => {
+              const elapsed = Date.now() - startTime;
+              self.postMessage({
+                type: 'tick',
+                elapsed: elapsed,
+                currentPhase: currentPhase,
+                currentLap: currentLap
+              });
+            }, 1000);
+          }
+          break;
+          
+        case 'pause':
+          if (isRunning) {
+            clearInterval(timerInterval);
+            elapsedBeforePause = Date.now() - startTime;
+            isRunning = false;
+          }
+          break;
+          
+        case 'stop':
+          clearInterval(timerInterval);
+          isRunning = false;
+          elapsedBeforePause = 0;
+          currentLap = 0;
+          currentPhase = 'warmup';
+          break;
+          
+        case 'updatePhase':
+          currentPhase = data.phase;
+          currentLap = data.lap || currentLap;
+          break;
+          
+        case 'updateSettings':
+          warmupDuration = data.warmupDuration || warmupDuration;
+          runDuration = data.runDuration || runDuration;
+          walkDuration = data.walkDuration || walkDuration;
+          totalLaps = data.totalLaps || totalLaps;
+          break;
+      }
+    };
+  </script>
+
+  <script>
+    let lapCount = 0;
+    let voices = [];
+    let currentSettings = {
+      voice: null,
+      volume: 1,
+      rate: 1,
+      runPhrase: "Run",
+      walkPhrase: "Walk"
+    };
+    let startTime = 0;
+    let elapsedTime = 0;
+    let totalTargetTime = 0;
+    let isScreenLocked = false;
+    let isTimerRunning = false;
+    let timeUpdateInterval = null;
+    let isWarmupPhase = false;
+    let timerWorker = null;
+    let wakeLock = null;
+
+    // Initialize when page loads
+    window.onload = function() {
+      loadVoices();
+      // Load saved settings if any
+      const savedSettings = localStorage.getItem('ttsSettings');
+      if (savedSettings) {
+        currentSettings = JSON.parse(savedSettings);
+        document.getElementById('volumeControl').value = currentSettings.volume;
+        document.getElementById('volumeValue').textContent = currentSettings.volume;
+        document.getElementById('rateControl').value = currentSettings.rate;
+        document.getElementById('rateValue').textContent = currentSettings.rate;
+        document.getElementById('runPhrase').value = currentSettings.runPhrase;
+        document.getElementById('walkPhrase').value = currentSettings.walkPhrase;
+      }
+      calculateTotalTime();
+      startTimeUpdater();
+      initializeWorker();
+      requestWakeLock();
+    };
+
+    // Initialize Web Worker for background timer
+    function initializeWorker() {
+      // Create a Blob from the worker code
+      const blob = new Blob([
+        document.querySelector('#worker-code').textContent
+      ], { type: 'application/javascript' });
+      
+      // Create a worker from the Blob
+      timerWorker = new Worker(URL.createObjectURL(blob));
+      
+      // Handle messages from the worker
+      timerWorker.onmessage = function(e) {
+        if (e.data.type === 'tick') {
+          elapsedTime = e.data.elapsed;
+          updateProgressTime();
+          
+          // Check if we need to transition to next phase
+          checkPhaseTransition();
+        }
+      };
+    }
+
+    // Request wake lock to keep device awake
+    async function requestWakeLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+          console.log('Wake Lock is active');
+          
+          wakeLock.addEventListener('release', () => {
+            console.log('Wake Lock was released');
+          });
+        }
+      } catch (err) {
+        console.error(`${err.name}, ${err.message}`);
+      }
+    }
+
+    // Format time to 12-hour format with AM/PM
+    function formatTime12Hour(date) {
+      let hours = date.getHours();
+      let minutes = date.getMinutes();
+      let seconds = date.getSeconds();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      
+      hours = hours % 12;
+      hours = hours ? hours : 12; // Convert 0 to 12
+      
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} ${ampm}`;
+    }
+
+    // Update current time display
+    function updateCurrentTime() {
+      const now = new Date();
+      document.getElementById('current-time').textContent = formatTime12Hour(now);
+    }
+
+    // Start time updater with battery-efficient approach
+    function startTimeUpdater() {
+      // Update immediately
+      updateCurrentTime();
+      
+      // Calculate time until next second
+      const now = new Date();
+      const delay = 1000 - now.getMilliseconds();
+      
+      // Set timeout for the next second with precise timing
+      setTimeout(function() {
+        updateCurrentTime();
+        // Then set up efficient interval
+        timeUpdateInterval = setInterval(updateCurrentTime, 1000);
+      }, delay);
+    }
+
+    // Stop time updater when not needed (for battery efficiency)
+    function stopTimeUpdater() {
+      if (timeUpdateInterval) {
+        clearInterval(timeUpdateInterval);
+        timeUpdateInterval = null;
+      }
+    }
+
+    // Toggle screen lock with full-screen API
+    function toggleLockScreen() {
+      isScreenLocked = !isScreenLocked;
+      const lockIcon = document.querySelector('.lock-icon');
+      const lockMessage = document.getElementById('lockMessage');
+      
+      if (isScreenLocked) {
+        // Enter full-screen mode
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen().catch(err => {
+            console.error('Error attempting to enable full-screen mode:', err);
+          });
+        }
+        
+        lockIcon.textContent = '🔓';
+        document.body.classList.add('full-screen');
+        
+        // Hide input fields when locked
+        document.querySelectorAll('input').forEach(input => {
+          input.style.visibility = 'hidden';
+        });
+        
+        // Show instructions briefly
+        lockMessage.style.display = 'block';
+        setTimeout(() => {
+          lockMessage.style.display = 'none';
+        }, 2000);
+      } else {
+        // Exit full-screen mode
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+        
+        lockIcon.textContent = '🔒';
+        document.body.classList.remove('full-screen');
+        
+        // Show input fields when unlocked
+        document.querySelectorAll('input').forEach(input => {
+          input.style.visibility = 'visible';
+        });
+      }
+    }
+
+    // Handle full-screen change events
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement) {
+        // User exited full-screen mode
+        isScreenLocked = false;
+        document.querySelector('.lock-icon').textContent = '🔒';
+        document.body.classList.remove('full-screen');
+        document.querySelectorAll('input').forEach(input => {
+          input.style.visibility = 'visible';
+        });
+      }
+    });
+
+    // Calculate total target time
+    function calculateTotalTime() {
+      const runSec = parseInt(document.getElementById('runTime').value, 10) || 0;
+      const walkSec = parseInt(document.getElementById('walkTime').value, 10) || 0;
+      const totalLaps = parseInt(document.getElementById('laps').value, 10) || 0;
+      const warmupMin = parseInt(document.getElementById('warmupTime').value, 10) || 0;
+      
+      totalTargetTime = (runSec + walkSec) * totalLaps + (warmupMin * 60);
+      document.getElementById('totalTime').textContent = `Total Target Time: ${formatTime(totalTargetTime)}`;
+      updateProgressTime();
+    }
+
+    // Format seconds to MM:SS
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+
+    // Update progress time display
+    function updateProgressTime() {
+      const runSec = parseInt(document.getElementById('runTime').value, 10) || 0;
+      const walkSec = parseInt(document.getElementById('walkTime').value, 10) || 0;
+      const warmupMin = parseInt(document.getElementById('warmupTime').value, 10) || 0;
+      const warmupSec = warmupMin * 60;
+      
+      let progressSeconds = Math.floor(elapsedTime / 1000);
+      
+      document.getElementById('progressTime').textContent = `Progress: ${formatTime(progressSeconds)}`;
+      document.getElementById('remainingTime').textContent = `Remaining: ${formatTime(Math.max(0, totalTargetTime - progressSeconds))}`;
+    }
+
+    // Check if we need to transition to the next phase
+    function checkPhaseTransition() {
+      const runSec = parseInt(document.getElementById('runTime').value, 10) || 0;
+      const walkSec = parseInt(document.getElementById('walkTime').value, 10) || 0;
+      const totalLaps = parseInt(document.getElementById('laps').value, 10) || 0;
+      const warmupMin = parseInt(document.getElementById('warmupTime').value, 10) || 0;
+      const warmupSec = warmupMin * 60;
+      
+      const elapsedSeconds = Math.floor(elapsedTime / 1000);
+      
+      // If we're in warmup phase and warmup time is complete
+      if (isWarmupPhase && elapsedSeconds >= warmupSec && warmupSec > 0) {
+        isWarmupPhase = false;
+        lapCount = 1;
+        document.getElementById('status').innerText = '🏃 Run';
+        document.getElementById('counter').innerText = `Lap ${lapCount} / ${totalLaps}`;
+        speak(currentSettings.runPhrase);
+        
+        // Update worker with new phase
+        if (timerWorker) {
+          timerWorker.postMessage({
+            command: 'updatePhase',
+            phase: 'run',
+            lap: lapCount
+          });
+        }
+      }
+      // If we're in run phase and run time is complete
+      else if (!isWarmupPhase && document.getElementById('status').innerText.includes('Run')) {
+        const runStartTime = warmupSec + (runSec + walkSec) * (lapCount - 1);
+        if (elapsedSeconds >= runStartTime + runSec) {
+          document.getElementById('status').innerText = '🚶 Walk';
+          document.getElementById('counter').innerText = `Lap ${lapCount} / ${totalLaps}`;
+          speak(currentSettings.walkPhrase);
+          
+          // Update worker with new phase
+          if (timerWorker) {
+            timerWorker.postMessage({
+              command: 'updatePhase',
+              phase: 'walk',
+              lap: lapCount
+            });
+          }
+        }
+      }
+      // If we're in walk phase and walk time is complete
+      else if (!isWarmupPhase && document.getElementById('status').innerText.includes('Walk')) {
+        const walkStartTime = warmupSec + (runSec + walkSec) * (lapCount - 1) + runSec;
+        if (elapsedSeconds >= walkStartTime + walkSec) {
+          lapCount++;
+          
+          if (lapCount > totalLaps) {
+            document.getElementById('status').innerText = '✅ Done!';
+            document.getElementById('counter').innerText = '';
+            speak('Workout complete');
+            isTimerRunning = false;
+            
+            // Stop the worker
+            if (timerWorker) {
+              timerWorker.postMessage({ command: 'stop' });
+            }
+            
+            // Release wake lock
+            if (wakeLock) {
+              wakeLock.release().then(() => {
+                wakeLock = null;
+              });
+            }
+            
+            return;
+          }
+          
+          document.getElementById('status').innerText = '🏃 Run';
+          document.getElementById('counter').innerText = `Lap ${lapCount} / ${totalLaps}`;
+          speak(currentSettings.runPhrase);
+          
+          // Update worker with new phase
+          if (timerWorker) {
+            timerWorker.postMessage({
+              command: 'updatePhase',
+              phase: 'run',
+              lap: lapCount
+            });
+          }
+        }
+      }
+    }
+
+    // Load available voices
+    function loadVoices() {
+      voices = window.speechSynthesis.getVoices();
+      const voiceSelect = document.getElementById('voiceSelect');
+      voiceSelect.innerHTML = '';
+      
+      voices.forEach((voice, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = `${voice.name} (${voice.lang})`;
+        voiceSelect.appendChild(option);
+        
+        // Select the saved voice if available
+        if (currentSettings.voice && voice.name === currentSettings.voice.name && 
+            voice.lang === currentSettings.voice.lang) {
+          voiceSelect.value = index;
+        }
+      });
+      
+      // If no voice selected yet and voices are available, select the first one
+      if (!currentSettings.voice && voices.length > 0) {
+        currentSettings.voice = voices[0];
+      }
+    }
+
+    // Retry loading voices if they aren't loaded yet
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+
+    // Speak text using SpeechSynthesis API offline
+    function speak(text) {
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        
+        // Apply settings
+        if (currentSettings.voice) {
+          utterance.voice = currentSettings.voice;
+        }
+        utterance.volume = currentSettings.volume;
+        utterance.rate = currentSettings.rate;
+        utterance.lang = 'en-US';
+        
+        window.speechSynthesis.cancel(); // Cancel previous speech if any
+        window.speechSynthesis.speak(utterance);
+      } else {
+        console.log('Speech Synthesis not supported.');
+      }
+    }
+
+    function startTimer() {
+      const runSec = parseInt(document.getElementById('runTime').value, 10);
+      const walkSec = parseInt(document.getElementById('walkTime').value, 10);
+      const totalLaps = parseInt(document.getElementById('laps').value, 10);
+      const warmupMin = parseInt(document.getElementById('warmupTime').value, 10) || 0;
+      const warmupSec = warmupMin * 60;
+
+      lapCount = 0;
+      startTime = Date.now();
+      elapsedTime = 0;
+      isTimerRunning = true;
+      calculateTotalTime();
+      
+      // Show background indicator
+      document.getElementById('backgroundIndicator').style.display = 'block';
+      
+      // Close settings when starting timer
+      closeSettings();
+
+      // Start with warmup phase if warmup time is set
+      if (warmupSec > 0) {
+        isWarmupPhase = true;
+        document.getElementById('status').innerText = '🔥 Warmup';
+        document.getElementById('counter').innerText = `Starting in ${formatTime(warmupSec)}`;
+        speak(`Warmup for ${warmupMin} minutes`);
+      } else {
+        // No warmup, start intervals immediately
+        isWarmupPhase = false;
+        lapCount = 1;
+        document.getElementById('status').innerText = '🏃 Run';
+        document.getElementById('counter').innerText = `Lap ${lapCount} / ${totalLaps}`;
+        speak(currentSettings.runPhrase);
+      }
+
+      // Start the worker
+      if (timerWorker) {
+        timerWorker.postMessage({
+          command: 'start',
+          warmupDuration: warmupSec * 1000,
+          runDuration: runSec * 1000,
+          walkDuration: walkSec * 1000,
+          totalLaps: totalLaps,
+          currentLap: lapCount,
+          currentPhase: isWarmupPhase ? 'warmup' : 'run'
+        });
+      }
+    }
+    
+    function stopTimer() {
+      document.getElementById('status').innerText = '⏹️ Stopped';
+      document.getElementById('counter').innerText = '';
+      isTimerRunning = false;
+      isWarmupPhase = false;
+      
+      // Hide background indicator
+      document.getElementById('backgroundIndicator').style.display = 'none';
+      
+      // Stop the worker
+      if (timerWorker) {
+        timerWorker.postMessage({ command: 'stop' });
+      }
+      
+      // Release wake lock
+      if (wakeLock) {
+        wakeLock.release().then(() => {
+          wakeLock = null;
+        });
+      }
+      
+      closeSettings();
+    }
+
+    // Modal functions
+    function openSettings() {
+      const modal = document.getElementById('settingsModal');
+      modal.style.display = 'flex';
+      
+      // Update volume display
+      document.getElementById('volumeControl').addEventListener('input', function() {
+        document.getElementById('volumeValue').textContent = this.value;
+      });
+      
+      // Update rate display
+      document.getElementById('rateControl').addEventListener('input', function() {
+        document.getElementById('rateValue').textContent = this.value;
+      });
+    }
+
+    function closeSettings() {
+      const modal = document.getElementById('settingsModal');
+      modal.style.display = 'none';
+    }
+
+    function saveSettings() {
+      const voiceSelect = document.getElementById('voiceSelect');
+      const selectedVoiceIndex = voiceSelect.value;
+      
+      if (selectedVoiceIndex && voices[selectedVoiceIndex]) {
+        currentSettings.voice = voices[selectedVoiceIndex];
+      }
+      
+      currentSettings.volume = parseFloat(document.getElementById('volumeControl').value);
+      currentSettings.rate = parseFloat(document.getElementById('rateControl').value);
+      currentSettings.runPhrase = document.getElementById('runPhrase').value;
+      currentSettings.walkPhrase = document.getElementById('walkPhrase').value;
+      
+      // Save to localStorage
+      localStorage.setItem('ttsSettings', JSON.stringify(currentSettings));
+      
+      // Test the voice with current settings
+      speak('Settings saved');
+      
+      closeSettings();
+    }
+    
+    // Prevent accidental touches when screen is locked
+    document.addEventListener('click', function(e) {
+      if (isScreenLocked && isTimerRunning) {
+        // Allow only settings and lock icons to be clickable
+        if (!e.target.closest('.settings-icon') && !e.target.closest('.lock-icon')) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          // Briefly show lock message
+          const lockMessage = document.getElementById('lockMessage');
+          lockMessage.style.display = 'block';
+          setTimeout(() => {
+            lockMessage.style.display = 'none';
+          }, 1000);
+          
+          return false;
+        }
+      }
+    }, true);
+    
+    // Battery efficiency: Stop time updates when page is not visible
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden) {
+        stopTimeUpdater();
+      } else {
+        startTimeUpdater();
+      }
+    });
+    
+    // Handle page visibility changes
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden && isTimerRunning) {
+        // Page is visible again, update the UI
+        updateProgressTime();
+        checkPhaseTransition();
+      }
+    });
+  </script>
+</body>
+</html>
