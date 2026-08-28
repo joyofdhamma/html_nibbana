@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fixed Deposit Portfolio Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #0a0a0a;
+            color: #e0e0e0;
+            padding: 20px; 
+            min-height: 100vh; 
+        }
+        .dashboard { max-width: 1400px; margin: 0 auto; }
+        
+        /* Header with compact upload */
+        .header { 
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 1px solid #2a2a4a;
+            border-radius: 15px; 
+            padding: 15px 20px; 
+            margin-bottom: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .header-left h1 { 
+            color: #ffffff; 
+            font-size: 20px;
+            font-weight: 700; 
+        }
+        .header-left .subtitle { 
+            color: #8899bb; 
+            font-size: 12px; 
+            display: block;
+        }
+        
+        /* Compact Upload Button */
+        .upload-btn-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        .upload-btn-wrapper input[type=file] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        .upload-btn {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .upload-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+        }
+        .upload-btn .icon {
+            font-size: 16px;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header-right .debug-link {
+            color: #8899bb;
+            cursor: pointer;
+            font-size: 12px;
+            transition: color 0.3s;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: #2a2a4a;
+        }
+        .header-right .debug-link:hover {
+            color: #ffffff;
+            background: #3a3a5a;
+        }
+        
+        /* Status Message - Compact */
+        .status-msg { 
+            padding: 8px 14px; 
+            margin-bottom: 15px; 
+            border-radius: 8px; 
+            display: none; 
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .status-msg.success { 
+            background: #1a3a2a; 
+            color: #66dd88; 
+            border: 1px solid #2a5a3a;
+            display: block; 
+        }
+        .status-msg.error { 
+            background: #3a1a1a; 
+            color: #dd6666; 
+            border: 1px solid #5a2a2a;
+            display: block; 
+        }
+        .status-msg.info { 
+            background: #1a2a3a; 
+            color: #66aadd; 
+            border: 1px solid #2a4a5a;
+            display: block; 
+        }
+        
+        /* Stats Grid */
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+            gap: 15px; 
+            margin-bottom: 20px; 
+        }
+        .stat-card { 
+            background: linear-gradient(135deg, #1a1a2e 0%, #2a2a4a 100%);
+            border: 1px solid #2a2a4a;
+            padding: 15px 18px; 
+            border-radius: 12px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            transition: transform 0.3s, border-color 0.3s;
+        }
+        .stat-card:hover { 
+            transform: translateY(-3px);
+            border-color: #667eea;
+        }
+        .stat-card h3 { 
+            color: #8899bb; 
+            font-size: 11px; 
+            margin-bottom: 6px; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .stat-card .value { 
+            font-size: 24px; 
+            font-weight: bold; 
+            color: #ffffff; 
+        }
+        .stat-card .trend { 
+            font-size: 11px; 
+            margin-top: 4px; 
+            color: #8899bb;
+        }
+        .trend.up { color: #66dd88; }
+        .trend.down { color: #dd6666; }
+        
+        /* Charts Container */
+        .charts-container { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 15px; 
+            margin-bottom: 20px; 
+        }
+        .chart-card { 
+            background: linear-gradient(135deg, #1a1a2e 0%, #2a2a4a 100%);
+            border: 1px solid #2a2a4a;
+            padding: 15px 18px; 
+            border-radius: 12px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .chart-card h3 { 
+            color: #ffffff; 
+            margin-bottom: 12px; 
+            border-left: 3px solid #667eea; 
+            padding-left: 10px;
+            font-size: 14px;
+        }
+        .chart-wrapper { 
+            position: relative; 
+            height: 280px; 
+        }
+        
+        /* Controls */
+        .controls { 
+            background: linear-gradient(135deg, #1a1a2e 0%, #2a2a4a 100%);
+            border: 1px solid #2a2a4a;
+            padding: 12px 15px; 
+            border-radius: 12px; 
+            margin-bottom: 15px; 
+            display: flex; 
+            gap: 12px; 
+            flex-wrap: wrap; 
+            align-items: center; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .controls input { 
+            padding: 8px 12px; 
+            border: 1px solid #2a2a4a; 
+            border-radius: 6px; 
+            flex: 1; 
+            min-width: 150px;
+            background: #2a2a4a;
+            color: #e0e0e0;
+            font-size: 13px;
+            transition: border-color 0.3s;
+        }
+        .controls input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .controls input::placeholder {
+            color: #666688;
+        }
+        .btn { 
+            padding: 8px 16px; 
+            background: #667eea; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            transition: all 0.3s;
+            font-weight: 500;
+            font-size: 13px;
+        }
+        .btn:hover { 
+            background: #764ba2; 
+            transform: scale(1.04); 
+        }
+        .btn-danger { 
+            background: #e74c3c; 
+        }
+        .btn-danger:hover { 
+            background: #c0392b; 
+        }
+        
+        .live-date {
+            background: #2a2a4a;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #8899bb;
+            border: 1px solid #3a3a5a;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .live-date strong {
+            color: #ffffff;
+        }
+        
+        /* Table */
+        .table-container { 
+            background: linear-gradient(135deg, #1a1a2e 0%, #2a2a4a 100%);
+            border: 1px solid #2a2a4a;
+            border-radius: 12px; 
+            padding: 15px 18px; 
+            overflow-x: auto; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .table-container h3 {
+            color: #ffffff;
+            margin-bottom: 12px;
+            font-size: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .table-container h3 span {
+            font-size: 11px;
+            color: #8899bb;
+            font-weight: 400;
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            font-size: 12px; 
+        }
+        th, td { 
+            padding: 10px 12px; 
+            text-align: left; 
+            border-bottom: 1px solid #2a2a4a; 
+        }
+        th { 
+            background: #2a2a4a; 
+            color: #8899bb; 
+            position: sticky; 
+            top: 0; 
+            cursor: pointer; 
+            user-select: none;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 10px;
+            letter-spacing: 0.5px;
+        }
+        th:hover { 
+            background: #3a3a5a; 
+            color: #ffffff;
+        }
+        tr:hover { 
+            background: #2a2a4a; 
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        /* Status Badges */
+        .status-badge { 
+            padding: 3px 10px; 
+            border-radius: 16px; 
+            font-size: 10px; 
+            font-weight: 600; 
+            display: inline-block; 
+        }
+        .status-active { 
+            background: #1a3a2a; 
+            color: #66dd88; 
+            border: 1px solid #2a5a3a;
+        }
+        .status-matured { 
+            background: #3a1a1a; 
+            color: #dd6666; 
+            border: 1px solid #5a2a2a;
+        }
+        .status-30days { 
+            background: #3a2a1a; 
+            color: #ddbb66; 
+            border: 1px solid #5a4a2a;
+        }
+        .status-90days { 
+            background: #1a2a3a; 
+            color: #66aadd; 
+            border: 1px solid #2a4a5a;
+        }
+        
+        /* Day count styles */
+        .days-passed {
+            color: #8899bb;
+            font-size: 12px;
+        }
+        .days-left {
+            font-weight: 600;
+            font-size: 12px;
+        }
+        .days-left.matured {
+            color: #dd6666;
+        }
+        .days-left.urgent {
+            color: #ddbb66;
+        }
+        .days-left.active {
+            color: #66dd88;
+        }
+        
+        /* Debug Area - Hidden by default */
+        .debug-area { 
+            background: #1a1a2e; 
+            color: #8899bb; 
+            border: 1px solid #2a2a4a;
+            padding: 12px 15px; 
+            border-radius: 10px; 
+            margin-top: 15px; 
+            font-family: monospace; 
+            font-size: 11px; 
+            overflow-x: auto; 
+            max-height: 250px; 
+            display: none; 
+        }
+        .debug-area strong {
+            color: #ffffff;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) { 
+            .charts-container { grid-template-columns: 1fr; } 
+            .stats-grid { grid-template-columns: 1fr; }
+            .controls { flex-direction: column; }
+            .controls input { min-width: 100%; }
+            .live-date { width: 100%; justify-content: center; }
+            .header { flex-direction: column; align-items: stretch; }
+            .header-right { justify-content: flex-start; }
+        }
+        @media (max-width: 1024px) and (min-width: 769px) {
+            .charts-container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="status-msg success" id="statusMsg">✅ Welcome! Upload your FD Excel file to start</div>
+        
+        <!-- Header with Compact Upload -->
+        <div class="header">
+            <div class="header-left">
+                <h1>🏦 FD Portfolio</h1>
+                <span class="subtitle">Track Maturity & Returns</span>
+            </div>
+            <div class="header-right">
+                <span class="debug-link" onclick="showDebug()">🔍 Debug</span>
+                <div class="upload-btn-wrapper">
+                    <button class="upload-btn">
+                        <span class="icon">📁</span> Upload
+                    </button>
+                    <input type="file" id="fileUpload" accept=".xlsx, .xls, .csv">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Controls -->
+        <div class="controls">
+            <input type="text" id="searchBox" placeholder="🔍 Search by Account No..." style="flex: 1;">
+            <div class="live-date">
+                📅 <strong id="liveDateDisplay">Loading...</strong>
+            </div>
+            <button class="btn" onclick="refreshDashboard()">🔄 Refresh</button>
+            <button class="btn btn-danger" onclick="resetFilters()">✕ Reset</button>
+        </div>
+        
+        <div class="stats-grid" id="statsGrid"></div>
+        
+        <div class="charts-container">
+            <div class="chart-card">
+                <h3>💰 Principal vs Maturity Amount</h3>
+                <div class="chart-wrapper">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>📈 Maturity Timeline (Monthly)</h3>
+                <div class="chart-wrapper">
+                    <canvas id="maturityTimelineChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <h3>
+                <span>📋 Detailed FD Portfolio</span>
+                <span>As of <span id="tableDateDisplay"></span></span>
+            </h3>
+            <table id="fdTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable('accountNo')">Account No.</th>
+                        <th onclick="sortTable('principal')">Principal (₹)</th>
+                        <th onclick="sortTable('maturityAmount')">Maturity (₹)</th>
+                        <th onclick="sortTable('interest')">Interest (₹)</th>
+                        <th onclick="sortTable('rate')">Rate (%)</th>
+                        <th onclick="sortTable('startDate')">Start Date</th>
+                        <th onclick="sortTable('maturityDate')">Maturity Date</th>
+                        <th onclick="sortTable('daysPassed')">Days Passed</th>
+                        <th onclick="sortTable('daysLeft')">Days Left</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr><td colspan="10" style="text-align: center; color: #8899bb; padding: 30px;">Upload Excel file to see FD data</td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="debug-area" id="debugArea">
+            <strong>🔍 Debug Information:</strong><br>
+            Waiting for file upload...
+        </div>
+    </div>
+
+    <script>
+        Chart.register(ChartDataLabels);
+        
+        let fdData = [];
+        let sortColumn = 'accountNo';
+        let sortDirection = 'asc';
+        let currentDate = new Date();
+        
+        // ==========================================
+        // LIVE DATE UPDATE
+        // ==========================================
+        function updateLiveDate() {
+            currentDate = new Date();
+            const dateStr = currentDate.toLocaleDateString('en-IN', {
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            });
+            const timeStr = currentDate.toLocaleTimeString('en-IN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('liveDateDisplay').textContent = `${dateStr} | ${timeStr}`;
+            document.getElementById('tableDateDisplay').textContent = `${dateStr} ${timeStr}`;
+        }
+        
+        setInterval(updateLiveDate, 1000);
+        
+        // ==========================================
+        // DATE UTILITIES
+        // ==========================================
+        function calculateDaysLeft(maturityDate) {
+            if (!maturityDate) return 0;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const maturity = new Date(maturityDate);
+            maturity.setHours(0, 0, 0, 0);
+            const diffTime = maturity - today;
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+        
+        function calculateDaysPassed(startDate) {
+            if (!startDate) return 0;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            const diffTime = today - start;
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+        
+        function getStatus(daysLeft) {
+            if (daysLeft < 0) return { text: 'Matured', class: 'status-matured', icon: '❌' };
+            if (daysLeft <= 30) return { text: 'Maturing Soon', class: 'status-30days', icon: '⚠️' };
+            if (daysLeft <= 90) return { text: 'Maturing in 3 months', class: 'status-90days', icon: '⏰' };
+            return { text: 'Active', class: 'status-active', icon: '✅' };
+        }
+        
+        function parseDate(dateValue) {
+            if (!dateValue) return null;
+            if (dateValue instanceof Date) return dateValue;
+            if (typeof dateValue === 'number') {
+                return new Date((dateValue - 25569) * 86400000);
+            }
+            if (typeof dateValue === 'string') {
+                let parts = dateValue.split(/[/-]/);
+                if (parts.length === 3) {
+                    let day = parseInt(parts[0]);
+                    let month = parseInt(parts[1]) - 1;
+                    let year = parseInt(parts[2]);
+                    let date = new Date(year, month, day);
+                    if (!isNaN(date.getTime())) return date;
+                    
+                    day = parseInt(parts[1]);
+                    month = parseInt(parts[0]) - 1;
+                    year = parseInt(parts[2]);
+                    date = new Date(year, month, day);
+                    if (!isNaN(date.getTime())) return date;
+                }
+                let date = new Date(dateValue);
+                if (!isNaN(date.getTime())) return date;
+            }
+            return null;
+        }
+        
+        function findColumn(row, possibleNames) {
+            for (let name of possibleNames) {
+                if (row[name] !== undefined) return row[name];
+                for (let key in row) {
+                    if (key.toLowerCase() === name.toLowerCase()) return row[key];
+                    if (key.toLowerCase().includes(name.toLowerCase())) return row[key];
+                }
+            }
+            return null;
+        }
+        
+        function showDebug() {
+            const debug = document.getElementById('debugArea');
+            debug.style.display = debug.style.display === 'block' ? 'none' : 'block';
+            if (debug.style.display === 'block') {
+                debug.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+        
+        // ==========================================
+        // FILE LOADING
+        // ==========================================
+        function loadExcelFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                    
+                    const debugDiv = document.getElementById('debugArea');
+                    debugDiv.style.display = 'block';
+                    debugDiv.innerHTML = '<strong>🔍 Debug Information:</strong><br>';
+                    debugDiv.innerHTML += `File: ${file.name}<br>`;
+                    debugDiv.innerHTML += `Rows found: ${jsonData.length}<br><br>`;
+                    
+                    if (jsonData.length > 0) {
+                        debugDiv.innerHTML += `<strong>Column headers found in Excel:</strong><br>`;
+                        const headers = Object.keys(jsonData[0]);
+                        headers.forEach(col => {
+                            debugDiv.innerHTML += `- "${col}"<br>`;
+                        });
+                        debugDiv.innerHTML += `<br><strong>First row data (raw):</strong><br>`;
+                        debugDiv.innerHTML += `<pre>${JSON.stringify(jsonData[0], null, 2)}</pre><br>`;
+                    }
+                    
+                    fdData = [];
+                    let parsedCount = 0;
+                    
+                    jsonData.forEach((row, index) => {
+                        let accountNo = findColumn(row, ['Account No.', 'Account No', 'Account Number', 'Acc No', 'A/C No', 'Account']);
+                        let principal = findColumn(row, ['Principal Amount', 'Principal', 'Principal Amt', 'Deposit Amount', 'Amount', 'Investment']);
+                        principal = parseFloat(principal) || 0;
+                        let maturityAmount = findColumn(row, ['Maturity Amount', 'Maturity', 'Maturity Amt', 'Maturity Value', 'Maturity Amount']);
+                        maturityAmount = parseFloat(maturityAmount) || 0;
+                        let rate = findColumn(row, ['Rate of Interest', 'Rate', 'Interest Rate', 'RoI', 'Interest']);
+                        rate = parseFloat(rate) || 0;
+                        let startDateValue = findColumn(row, ['Deposit Start Date', 'Start Date', 'Opening Date', 'Start Date', 'Date of Deposit', 'Start']);
+                        let startDate = parseDate(startDateValue);
+                        let maturityDateValue = findColumn(row, ['Maturity Date', 'Closing Date', 'End Date', 'Maturity']);
+                        let maturityDate = parseDate(maturityDateValue);
+                        
+                        debugDiv.innerHTML += `<br><strong>Row ${index + 1}:</strong><br>`;
+                        debugDiv.innerHTML += `Account: ${accountNo}<br>`;
+                        debugDiv.innerHTML += `Principal: ${principal}<br>`;
+                        debugDiv.innerHTML += `Maturity Amount: ${maturityAmount}<br>`;
+                        debugDiv.innerHTML += `Rate: ${rate}<br>`;
+                        debugDiv.innerHTML += `Start Date: ${startDateValue} → ${startDate ? startDate.toLocaleDateString() : 'null'}<br>`;
+                        
+                        if (principal > 0 && accountNo) {
+                            const interest = maturityAmount - principal;
+                            const daysPassed = startDate ? calculateDaysPassed(startDate) : 0;
+                            const daysLeft = maturityDate ? calculateDaysLeft(maturityDate) : (startDate ? calculateDaysLeft(new Date(startDate.getFullYear() + 1, startDate.getMonth(), startDate.getDate())) : 0);
+                            const status = getStatus(daysLeft);
+                            
+                            let finalMaturityAmount = maturityAmount;
+                            let finalInterest = interest;
+                            
+                            if (maturityAmount <= principal && rate > 0 && startDate) {
+                                let years = 1;
+                                if (maturityDate) {
+                                    years = (maturityDate - startDate) / (1000 * 60 * 60 * 24 * 365);
+                                }
+                                finalInterest = principal * rate * years / 100;
+                                finalMaturityAmount = principal + finalInterest;
+                                debugDiv.innerHTML += `Calculated Maturity: ${finalMaturityAmount} (using rate)<br>`;
+                            }
+                            
+                            fdData.push({
+                                accountNo: String(accountNo),
+                                principal: principal,
+                                maturityAmount: finalMaturityAmount,
+                                interest: finalInterest,
+                                rate: rate,
+                                startDate: startDate,
+                                maturityDate: maturityDate || (startDate ? new Date(startDate.getFullYear() + 1, startDate.getMonth(), startDate.getDate()) : null),
+                                daysPassed: daysPassed,
+                                daysLeft: daysLeft,
+                                status: status,
+                                formattedStartDate: startDate ? startDate.toLocaleDateString('en-IN') : 'N/A',
+                                formattedMaturityDate: (maturityDate || (startDate ? new Date(startDate.getFullYear() + 1, startDate.getMonth(), startDate.getDate()) : null)) ? 
+                                    (maturityDate || new Date(startDate.getFullYear() + 1, startDate.getMonth(), startDate.getDate())).toLocaleDateString('en-IN') : 'N/A'
+                            });
+                            parsedCount++;
+                        }
+                    });
+                    
+                    debugDiv.innerHTML += `<br><strong>✅ Successfully parsed ${parsedCount} FD records</strong>`;
+                    
+                    if (fdData.length === 0) {
+                        debugDiv.innerHTML += `<br><span style="color: #ff6b6b;">❌ No valid FD records found. Please check column names in your Excel.</span>`;
+                        showMessage('❌ No valid FD records found. Check Debug panel for column names.', 'error');
+                        return;
+                    }
+                    
+                    debugDiv.innerHTML += `<br><strong>📊 First 3 parsed records:</strong><br>`;
+                    debugDiv.innerHTML += `<pre>${JSON.stringify(fdData.slice(0, 3).map(fd => ({
+                        account: fd.accountNo,
+                        principal: fd.principal,
+                        maturity: fd.maturityAmount,
+                        interest: fd.interest,
+                        rate: fd.rate,
+                        daysPassed: fd.daysPassed,
+                        daysLeft: fd.daysLeft
+                    })), null, 2)}</pre>`;
+                    
+                    localStorage.setItem('fd_portfolio_data', JSON.stringify(fdData));
+                    showMessage(`✅ Loaded ${fdData.length} FD records!`, 'success');
+                    updateDashboard();
+                    
+                } catch(error) {
+                    debugDiv.innerHTML += `<br><span style="color: #ff6b6b;">❌ Error: ${error.message}</span>`;
+                    showMessage(`❌ Error loading file: ${error.message}`, 'error');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        
+        function loadSavedData() {
+            const saved = localStorage.getItem('fd_portfolio_data');
+            if (saved) {
+                try {
+                    fdData = JSON.parse(saved);
+                    if (fdData.length > 0) {
+                        updateDashboard();
+                        document.getElementById('debugArea').innerHTML = `<strong>🔍 Debug Information:</strong><br>Loaded ${fdData.length} records from saved data.`;
+                        showMessage(`✅ Loaded ${fdData.length} FD records from saved data`, 'success');
+                        return true;
+                    }
+                } catch(e) {}
+            }
+            return false;
+        }
+        
+        function formatCurrency(amount) {
+            return '₹' + amount.toLocaleString('en-IN');
+        }
+        
+        // ==========================================
+        // DASHBOARD UPDATE
+        // ==========================================
+        function updateDashboard() {
+            if (!fdData || fdData.length === 0) return;
+            
+            fdData = fdData.map(fd => {
+                const daysPassed = fd.startDate ? calculateDaysPassed(fd.startDate) : fd.daysPassed || 0;
+                const daysLeft = fd.maturityDate ? calculateDaysLeft(fd.maturityDate) : fd.daysLeft || 0;
+                return {
+                    ...fd,
+                    daysPassed: daysPassed,
+                    daysLeft: daysLeft,
+                    status: getStatus(daysLeft)
+                };
+            });
+            
+            let filtered = fdData;
+            const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            if (searchTerm) {
+                filtered = filtered.filter(fd => fd.accountNo.toLowerCase().includes(searchTerm));
+            }
+            
+            filtered = [...filtered].sort((a, b) => {
+                let valA, valB;
+                switch(sortColumn) {
+                    case 'accountNo': valA = a.accountNo; valB = b.accountNo; break;
+                    case 'principal': valA = a.principal; valB = b.principal; break;
+                    case 'maturityAmount': valA = a.maturityAmount; valB = b.maturityAmount; break;
+                    case 'interest': valA = a.interest; valB = b.interest; break;
+                    case 'rate': valA = a.rate; valB = b.rate; break;
+                    case 'startDate': valA = a.startDate ? a.startDate.getTime() : 0; valB = b.startDate ? b.startDate.getTime() : 0; break;
+                    case 'maturityDate': valA = a.maturityDate ? a.maturityDate.getTime() : 0; valB = b.maturityDate ? b.maturityDate.getTime() : 0; break;
+                    case 'daysPassed': valA = a.daysPassed; valB = b.daysPassed; break;
+                    case 'daysLeft': valA = a.daysLeft; valB = b.daysLeft; break;
+                    default: valA = a.accountNo; valB = b.accountNo;
+                }
+                if (typeof valA === 'number') {
+                    return sortDirection === 'asc' ? valA - valB : valB - valA;
+                }
+                return sortDirection === 'asc' ? String(valA).localeCompare(String(valB)) : String(valB).localeCompare(String(valA));
+            });
+            
+            updateStats(filtered);
+            updateCharts(filtered);
+            updateTable(filtered);
+        }
+        
+        function updateStats(data) {
+            const totalPrincipal = data.reduce((sum, fd) => sum + fd.principal, 0);
+            const totalMaturity = data.reduce((sum, fd) => sum + fd.maturityAmount, 0);
+            const totalInterest = totalMaturity - totalPrincipal;
+            const activeFDs = data.filter(fd => fd.daysLeft > 0).length;
+            const maturedFDs = data.filter(fd => fd.daysLeft <= 0).length;
+            const maturingSoon = data.filter(fd => fd.daysLeft > 0 && fd.daysLeft <= 30).length;
+            const returnPct = totalPrincipal > 0 ? (totalInterest / totalPrincipal * 100).toFixed(2) : 0;
+            
+            document.getElementById('statsGrid').innerHTML = `
+                <div class="stat-card"><h3>Total Principal</h3><div class="value">${formatCurrency(totalPrincipal)}</div></div>
+                <div class="stat-card"><h3>Total Maturity</h3><div class="value">${formatCurrency(totalMaturity)}</div><div class="trend up">+${formatCurrency(totalInterest)}</div></div>
+                <div class="stat-card"><h3>Total Interest</h3><div class="value">${formatCurrency(totalInterest)}</div><div class="trend up">${returnPct}% return</div></div>
+                <div class="stat-card"><h3>FD Status</h3><div class="value">${activeFDs} Active</div><div class="trend">${maturedFDs} Matured | ${maturingSoon} Soon</div></div>
+                <div class="stat-card"><h3>Total FDs</h3><div class="value">${data.length}</div></div>
+            `;
+        }
+        
+        let chart1, chart2;
+        
+        function updateCharts(data) {
+            const ctx1 = document.getElementById('comparisonChart').getContext('2d');
+            if (chart1) chart1.destroy();
+            
+            const labels = data.map(fd => fd.accountNo.length > 15 ? fd.accountNo.substring(0, 12) + '...' : fd.accountNo);
+            chart1 = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Principal Amount', data: data.map(fd => fd.principal), backgroundColor: '#667eea', borderRadius: 5 },
+                        { label: 'Maturity Amount', data: data.map(fd => fd.maturityAmount), backgroundColor: '#2ecc71', borderRadius: 5 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { 
+                            position: 'top',
+                            labels: { color: '#e0e0e0', font: { size: 11 } }
+                        },
+                        datalabels: {
+                            color: '#fff',
+                            backgroundColor: 'rgba(0,0,0,0.6)',
+                            borderRadius: 4,
+                            padding: { left: 3, right: 3, top: 2, bottom: 2 },
+                            font: { size: 8 },
+                            formatter: (value) => `₹${(value/1000).toFixed(0)}K`,
+                            anchor: 'end',
+                            align: 'top'
+                        }
+                    },
+                    scales: { 
+                        y: { 
+                            title: { display: true, text: 'Amount (₹)', color: '#8899bb' }, 
+                            ticks: { callback: (v) => `₹${v/1000}K`, color: '#8899bb' } 
+                        },
+                        x: {
+                            ticks: { color: '#e0e0e0', font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+            
+            const ctx2 = document.getElementById('maturityTimelineChart').getContext('2d');
+            if (chart2) chart2.destroy();
+            
+            const monthlyData = {};
+            data.forEach(fd => {
+                if (fd.maturityDate && fd.daysLeft > 0) {
+                    const monthYear = fd.maturityDate.toLocaleString('default', { month: 'short', year: 'numeric' });
+                    monthlyData[monthYear] = (monthlyData[monthYear] || 0) + fd.maturityAmount;
+                }
+            });
+            
+            const sortedMonths = Object.keys(monthlyData).sort((a,b) => {
+                const dateA = new Date(a);
+                const dateB = new Date(b);
+                return dateA - dateB;
+            });
+            
+            if (sortedMonths.length > 0) {
+                chart2 = new Chart(ctx2, {
+                    type: 'line',
+                    data: {
+                        labels: sortedMonths,
+                        datasets: [{
+                            label: 'Maturity Amount',
+                            data: sortedMonths.map(m => monthlyData[m]),
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231,76,60,0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { 
+                                position: 'top',
+                                labels: { color: '#e0e0e0', font: { size: 11 } }
+                            },
+                            datalabels: {
+                                color: '#e74c3c',
+                                backgroundColor: '#1a1a2e',
+                                borderRadius: 4,
+                                padding: { left: 3, right: 3, top: 2, bottom: 2 },
+                                font: { size: 9, weight: 'bold' },
+                                formatter: (value) => `₹${(value/1000).toFixed(0)}K`,
+                                align: 'top',
+                                offset: 4
+                            }
+                        },
+                        scales: { 
+                            y: { 
+                                title: { display: true, text: 'Amount (₹)', color: '#8899bb' }, 
+                                ticks: { callback: (v) => `₹${v/1000}K`, color: '#8899bb' } 
+                            },
+                            x: {
+                                ticks: { color: '#e0e0e0', font: { size: 10 } }
+                            }
+                        }
+                    }
+                });
+            } else {
+                chart2 = new Chart(ctx2, {
+                    type: 'line',
+                    data: { labels: ['No upcoming maturities'], datasets: [{ label: 'Maturity Amount', data: [0] }] },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { labels: { color: '#e0e0e0' } }
+                        },
+                        scales: {
+                            y: { ticks: { color: '#8899bb' } },
+                            x: { ticks: { color: '#8899bb' } }
+                        }
+                    }
+                });
+            }
+        }
+        
+        function updateTable(data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            data.forEach(fd => {
+                const row = tbody.insertRow();
+                const interestColor = fd.interest >= 0 ? '#66dd88' : '#dd6666';
+                const interestSign = fd.interest >= 0 ? '+' : '';
+                
+                let daysLeftClass = 'days-left';
+                if (fd.daysLeft <= 0) daysLeftClass += ' matured';
+                else if (fd.daysLeft <= 30) daysLeftClass += ' urgent';
+                else daysLeftClass += ' active';
+                
+                row.insertCell(0).innerHTML = fd.accountNo;
+                row.insertCell(1).innerHTML = formatCurrency(fd.principal);
+                row.insertCell(2).innerHTML = formatCurrency(fd.maturityAmount);
+                row.insertCell(3).innerHTML = `<span style="color:${interestColor}">${interestSign}${formatCurrency(fd.interest)}</span>`;
+                row.insertCell(4).innerHTML = `${fd.rate.toFixed(2)}%`;
+                row.insertCell(5).innerHTML = fd.formattedStartDate;
+                row.insertCell(6).innerHTML = fd.formattedMaturityDate;
+                row.insertCell(7).innerHTML = `<span class="days-passed">${fd.daysPassed > 0 ? fd.daysPassed + ' days' : '0 days'}</span>`;
+                row.insertCell(8).innerHTML = `<span class="${daysLeftClass}">${fd.daysLeft > 0 ? fd.daysLeft + ' days' : 'Matured'}</span>`;
+                row.insertCell(9).innerHTML = `<span class="status-badge ${fd.status.class}">${fd.status.icon} ${fd.status.text}</span>`;
+            });
+        }
+        
+        function sortTable(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            updateDashboard();
+        }
+        
+        function refreshDashboard() { updateDashboard(); }
+        
+        function resetFilters() {
+            document.getElementById('searchBox').value = '';
+            sortColumn = 'accountNo';
+            sortDirection = 'asc';
+            updateDashboard();
+            showMessage('✅ Filters reset', 'success');
+        }
+        
+        function showMessage(msg, type) {
+            const div = document.getElementById('statusMsg');
+            div.innerHTML = msg;
+            div.className = `status-msg ${type}`;
+            div.style.display = 'block';
+            setTimeout(() => {
+                if (div.innerHTML === msg) div.style.display = 'none';
+            }, 5000);
+        }
+        
+        // ==========================================
+        // EVENT LISTENERS & INIT
+        // ==========================================
+        document.getElementById('fileUpload').addEventListener('change', e => {
+            if (e.target.files[0]) loadExcelFile(e.target.files[0]);
+            // Reset so same file can be uploaded again
+            e.target.value = '';
+        });
+        document.getElementById('searchBox').addEventListener('input', () => updateDashboard());
+        
+        // Initialize live date
+        updateLiveDate();
+        
+        // Load saved data on startup
+        const loaded = loadSavedData();
+        if (!loaded) {
+            document.getElementById('tableBody').innerHTML = '<tr><td colspan="10" style="text-align: center; color: #8899bb; padding: 30px;">Upload Excel file to see FD data</td></tr>';
+        }
+    </script>
+</body>
+</html>
