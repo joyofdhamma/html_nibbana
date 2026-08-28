@@ -2584,6 +2584,23 @@ function updateCharts(data) {
     });
 
     // ---- CHART 2: Fund Type Allocation Matrix (Table) ----
+    // Check if we need to restore the canvas first
+    const chartWrapper = document.getElementById('fundTypeWeightChart');
+    let parent = chartWrapper.parentNode;
+    
+    // If the chartWrapper is not a canvas (it was replaced with a table), restore it
+    if (chartWrapper.tagName !== 'CANVAS') {
+        // Remove the table and re-add a canvas
+        const newCanvas = document.createElement('canvas');
+        newCanvas.id = 'fundTypeWeightChart';
+        parent.replaceChild(newCanvas, chartWrapper);
+        // Get the new canvas reference
+        var canvas = document.getElementById('fundTypeWeightChart');
+        parent = canvas.parentNode;
+    } else {
+        var canvas = chartWrapper;
+    }
+    
     // Calculate fund type totals
     const ftTotals = {};
     data.forEach(d => { 
@@ -2617,10 +2634,6 @@ function updateCharts(data) {
     
     // Colors for bars
     const colors = ['#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#34495e', '#2c3e50', '#7f8c8d'];
-    
-    // Create a table/matrix chart using HTML table in the chart wrapper
-    const canvas = document.getElementById('fundTypeWeightChart');
-    const parent = canvas.parentNode;
     
     // Create table container
     const tableContainer = document.createElement('div');
