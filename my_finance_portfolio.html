@@ -1264,7 +1264,7 @@
             
             <div class="analysis-grid">
                 <div class="analysis-card"><h3>📊 Portfolio by Category & Returns</h3><div class="chart-wrapper"><canvas id="categoryCombinedChart"></canvas></div></div>
-              <div class="analysis-card"><h3>📈 Fund Type Allocation Matrix</h3><div class="chart-wrapper"><canvas id="fundTypeWeightChart"></canvas></div></div>
+                <div class="analysis-card"><h3>📈 T. Wt. % by Fund Type (Bar) vs Target (Line)</h3><div class="chart-wrapper"><canvas id="fundTypeWeightChart"></canvas></div></div>
                 <div class="analysis-card"><h3>⭐ Top 5 Performers</h3><div class="chart-wrapper"><canvas id="topPerformersChart"></canvas></div></div>
                 <div class="analysis-card"><h3>📈 Returns by Type</h3><div class="chart-wrapper"><canvas id="returnsByTypeChart"></canvas></div></div>
                 <div class="analysis-card"><h3>🎯 Investment vs Current</h3><div class="chart-wrapper"><canvas id="comparisonChart"></canvas></div></div>
@@ -2190,7 +2190,7 @@ const stpAllocations = [
             if (allSelected || selected.length === 0) return null;
             return selected;
         }
-        function updateFilters() { updateAMCFilter(); updateFundTypeFilter(); }
+        function updateFilters() { updateAMCFilter(); updateBankFilter(); updateFundTypeFilter(); }
         function updateFundTypeFilter() {
             const ftFilter = document.getElementById('fundTypeFilter');
             const types = new Set();
@@ -2244,7 +2244,7 @@ const stpAllocations = [
         function sortByColumn(column) {
             if (currentSortColumn === column) currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
             else { currentSortColumn = column; currentSortDirection = 'asc'; }
-           const sortMap = { 'folio':'folio','scheme':'scheme','amc':'amc','fundType':'fundType','tWeight':'tWeight','weightage':'weightage','invested': currentSortDirection === 'asc' ? 'investedAsc' : 'invested','current':'current','returns':'returns','returnsPct': currentSortDirection === 'asc' ? 'returnsAsc' : 'returns','units':'units','nav':'nav','xirr':'xirr' };
+            const sortMap = { 'folio':'folio','scheme':'scheme','amc':'amc','fundType':'fundType','tWeight':'tWeight','weightage':'weightage','invested': currentSortDirection === 'asc' ? 'investedAsc' : 'invested','current':'current','returns':'returns','returnsPct': currentSortDirection === 'asc' ? 'returnsAsc' : 'returns','units':'units','nav':'nav','linkedAccount':'linkedAccount','xirr':'xirr' };
             document.getElementById('sortBy').value = sortMap[column] || 'folio';
             updateDashboard();
         }
@@ -2501,7 +2501,7 @@ const stpAllocations = [
                 case 'invested': sorted.sort((a,b) => b.invested - a.invested); currentSortColumn='invested'; currentSortDirection='desc'; break;
                 case 'investedAsc': sorted.sort((a,b) => a.invested - b.invested); currentSortColumn='invested'; currentSortDirection='asc'; break;
                 case 'current': sorted.sort((a,b) => b.currentValue - a.currentValue); currentSortColumn='current'; currentSortDirection='desc'; break;
-   
+                case 'linkedAccount': sorted.sort((a,b) => (a.linkedAccount||'').localeCompare(b.linkedAccount||'')); currentSortColumn='linkedAccount'; currentSortDirection='asc'; break;
                 case 'nav': sorted.sort((a,b) => (a.nav||0) - (b.nav||0)); currentSortColumn='nav'; currentSortDirection='asc'; break;
                 case 'xirr': sorted.sort((a,b) => { const xA = getXIRRForFund(a.scheme); const xB = getXIRRForFund(b.scheme); const valA = xA !== null ? xA : -999; const valB = xB !== null ? xB : -999; return valA - valB; }); currentSortColumn='xirr'; currentSortDirection='asc'; break;
                 default: sorted.sort((a,b) => (a.folio||'').localeCompare(b.folio||''));
@@ -2534,226 +2534,8 @@ const stpAllocations = [
         function applySearch(data) {
             const term = document.getElementById('searchBox').value.toLowerCase();
             if (!term) return data;
-           return data.filter(d => d.scheme.toLowerCase().includes(term) || (d.folio && d.folio.toLowerCase().includes(term)) || (d.amc && d.amc.toLowerCase().includes(term)) || (d.fundType && d.fundType.toLowerCase().includes(term)));
+            return data.filter(d => d.scheme.toLowerCase().includes(term) || (d.folio && d.folio.toLowerCase().includes(term)) || (d.linkedAccount && d.linkedAccount.toLowerCase().includes(term)) || (d.amc && d.amc.toLowerCase().includes(term)) || (d.fundType && d.fundType.toLowerCase().includes(term)));
         }
-
-function updateCharts(data) {
-    if (data.length === 0) return;
-    
-    // ---- CHART 1: Category Combined ----
-    const ctxCombined = document.getElementById('categoryCombinedChart').getContext('2d');
-    if (chart1) chart1.destroy();
-    const catTotals = {};
-    const catReturns = {};
-    data.forEach(d => {
-        catTotals[d.category] = (catTotals[d.category] || 0) + d.invested;
-        if (!catReturns[d.category]) catReturns[d.category] = { total: 0, count: 0 };
-        catReturns[d.category].total += d.returnsPct;
-        catReturns[d.category].count++;
-    });
-    const catLabels = Object.keys(catTotals);
-    const catInvested = Object.values(catTotals);
-    const catAvgReturns = catLabels.map(c => catReturns[c] ? catReturns[c].total / catReturns[c].count : 0);
-    const totalCat = catInvested.reduce((a,b) => a+b, 0);
-    chart1 = new Chart(ctxCombined, {
-        type: 'bar',
-        data: {
-            labels: catLabels,
-            datasets: [
-                { label: 'Investment (₹)', data: catInvested, backgroundColor: 'rgba(46, 204, 113, 0.7)', borderColor: '#2ecc71', borderWidth: 2, borderRadius: 4, order: 1, yAxisID: 'y' },
-                { label: 'Avg Return %', data: catAvgReturns, type: 'line', borderColor: '#e74c3c', backgroundColor: 'rgba(231, 76, 60, 0.1)', pointBackgroundColor: '#e74c3c', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 5, tension: 0.3, fill: true, order: 0, yAxisID: 'y1' }
-            ]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: true,
-            plugins: {
-                legend: { position: 'top', labels: { font: { size: 9 }, boxWidth: 12, padding: 8 } },
-                datalabels: {
-                    color: '#fff', backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 4, padding: 3,
-                    font: { size: 8, weight: 'bold' },
-                    formatter: (v, ctx) => { if (ctx.datasetIndex === 0) return `${((v/totalCat)*100).toFixed(1)}%`; return `${v.toFixed(1)}%`; },
-                    anchor: 'end', align: 'top', offset: 2
-                }
-            },
-            scales: {
-                y: { beginAtZero: true, position: 'left', ticks: { callback: (v) => `₹${(v/1000).toFixed(0)}K`, font: { size: 8 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
-                y1: { beginAtZero: true, position: 'right', ticks: { callback: (v) => v + '%', font: { size: 8 } }, grid: { drawOnChartArea: false } },
-                x: { grid: { display: false } }
-            }
-        }
-    });
-
-    // ---- CHART 2: Fund Type Allocation Matrix (Table) ----
-    const canvas = document.getElementById('fundTypeWeightChart');
-    const parent = canvas.parentNode;
-    
-    const ftTotals = {};
-    data.forEach(d => { 
-        const ft = d.fundType || 'Other'; 
-        ftTotals[ft] = (ftTotals[ft] || 0) + d.invested; 
-    });
-    const totalFt = Object.values(ftTotals).reduce((a,b) => a+b, 0);
-    const targetWeights = { 'Large Cap':25, 'Flexi Cap':20, 'Mid Cap':12, 'Large & Mid Cap':8, 'Index':10, 'Hybrid / Multi-Asset':10, 'International':5, 'Debt':10, 'Liquid / Cash':10, 'Other':0 };
-    const ftLabels = Object.keys(ftTotals).sort();
-    const actualPercentages = ftLabels.map(ft => totalFt > 0 ? (ftTotals[ft] / totalFt * 100) : 0);
-    const targetPercentages = ftLabels.map(ft => targetWeights[ft] || 0);
-    const variancePercentages = ftLabels.map((ft, i) => targetPercentages[i] - actualPercentages[i]);
-    const colors = ['#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#34495e', '#2c3e50', '#7f8c8d'];
-    
-    const tableContainer = document.createElement('div');
-    tableContainer.style.width = '100%';
-    tableContainer.style.height = '100%';
-    tableContainer.style.overflow = 'auto';
-    tableContainer.style.maxHeight = '300px';
-    
-    let tableHtml = `<table style="width:100%; border-collapse: collapse; font-size: 12px; font-family: 'Inter', sans-serif;">
-        <thead><tr style="background: linear-gradient(135deg, #2c3555 0%, #1a1f36 100%); color: white; position: sticky; top: 0;">
-            <th style="padding: 8px 10px; text-align: left; border-radius: 6px 0 0 0;">Fund Type</th>
-            <th style="padding: 8px 10px; text-align: right;">Target %</th>
-            <th style="padding: 8px 10px; text-align: right;">Actual %</th>
-            <th style="padding: 8px 10px; text-align: right; border-radius: 0 6px 0 0;">Variance %</th>
-        </tr></thead><tbody>`;
-    
-    const sortedIndices = ftLabels.map((_, i) => i).sort((a, b) => Math.abs(variancePercentages[b]) - Math.abs(variancePercentages[a]));
-    let totalActual = 0, totalTarget = 0;
-    sortedIndices.forEach(idx => {
-        const ft = ftLabels[idx];
-        const actual = actualPercentages[idx];
-        const target = targetPercentages[idx];
-        const variance = variancePercentages[idx];
-        totalActual += actual;
-        totalTarget += target;
-        const varianceColor = Math.abs(variance) < 1 ? '#27ae60' : (variance > 0 ? '#e74c3c' : '#2ecc71');
-        const varianceSign = variance > 0 ? '+' : '';
-        const barColor = colors[idx % colors.length];
-        tableHtml += `<tr style="border-bottom: 1px solid #eef1f6;" onmouseover="this.style.background='#eef1fb'" onmouseout="this.style.background='transparent'">
-            <td style="padding: 6px 10px;"><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${barColor}; margin-right:8px; vertical-align:middle;"></span>${ft}</td>
-            <td style="padding: 6px 10px; text-align: right; font-weight: 600;">${target.toFixed(1)}%</td>
-            <td style="padding: 6px 10px; text-align: right; font-weight: 600;">${actual.toFixed(1)}%</td>
-            <td style="padding: 6px 10px; text-align: right; font-weight: 700; color: ${varianceColor};">${varianceSign}${variance.toFixed(1)}% <span style="font-size:10px;">${Math.abs(variance) < 1 ? '✅' : (variance > 0 ? '⬆️' : '⬇️')}</span></td>
-        </tr>`;
-    });
-    tableHtml += `<tr style="border-top: 2px solid #2c3555; font-weight: 700; background: #f8f9fa;">
-        <td style="padding: 8px 10px;">TOTAL</td>
-        <td style="padding: 8px 10px; text-align: right;">${totalTarget.toFixed(1)}%</td>
-        <td style="padding: 8px 10px; text-align: right;">${totalActual.toFixed(1)}%</td>
-        <td style="padding: 8px 10px; text-align: right; color: ${(totalTarget - totalActual) < 1 ? '#27ae60' : '#e74c3c'}">${(totalTarget - totalActual).toFixed(1)}%</td>
-    </tr></tbody></table>
-    <div style="font-size: 10px; color: #888; margin-top: 8px; text-align: center; padding: 4px;">⚡ Variance = Target % − Actual % &nbsp;|&nbsp; <span style="color: #27ae60;">✅ On track</span> &nbsp;|&nbsp; <span style="color: #e74c3c;">⬆️ Overweight</span> &nbsp;|&nbsp; <span style="color: #2ecc71;">⬇️ Underweight</span></div>`;
-    tableContainer.innerHTML = tableHtml;
-    parent.replaceChild(tableContainer, canvas);
-
-    // ---- CHART 3: Top 5 Performers ----
-    const ctxTop = document.getElementById('topPerformersChart').getContext('2d');
-    if (chart3) chart3.destroy();
-    const top5 = [...data].sort((a,b) => b.returnsPct - a.returnsPct).slice(0,5);
-    chart3 = new Chart(ctxTop, {
-        type: 'bar',
-        data: {
-            labels: top5.map(d => d.scheme.length > 15 ? d.scheme.substring(0,12)+'...' : d.scheme),
-            datasets: [{ label: 'Returns %', data: top5.map(d => d.returnsPct), backgroundColor: top5.map(d => d.returnsPct >= 20 ? '#2ecc71' : d.returnsPct >= 10 ? '#3498db' : '#f39c12'), borderRadius: 6, borderWidth: 1 }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: true,
-            plugins: {
-                legend: { display: false },
-                datalabels: {
-                    color: '#fff', backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 4, padding: 3,
-                    font: { size: 8, weight: 'bold' }, formatter: (v) => v.toFixed(1) + '%',
-                    anchor: 'end', align: 'top'
-                }
-            },
-            scales: {
-                y: { beginAtZero: true, ticks: { callback: (v) => v + '%', font: { size: 8 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
-                x: { grid: { display: false }, ticks: { font: { size: 8 } } }
-            }
-        }
-    });
-
-    // ---- CHART 4: Returns by Type ----
-    const ctxRetType = document.getElementById('returnsByTypeChart').getContext('2d');
-    if (chart4) chart4.destroy();
-    const typeRet = {};
-    data.forEach(d => { if (!typeRet[d.type]) typeRet[d.type] = { total:0, count:0 }; typeRet[d.type].total += d.returnsPct; typeRet[d.type].count++; });
-    chart4 = new Chart(ctxRetType, {
-        type: 'bar',
-        data: {
-            labels: Object.keys(typeRet),
-            datasets: [{ label: 'Avg Returns %', data: Object.values(typeRet).map(t => t.total / t.count), backgroundColor: ['#3498db','#e74c3c','#2ecc71'], borderRadius: 6, borderWidth: 1 }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: true,
-            plugins: {
-                legend: { display: false },
-                datalabels: {
-                    color: '#fff', backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 4, padding: 3,
-                    font: { size: 8, weight: 'bold' }, formatter: (v) => v.toFixed(1) + '%',
-                    anchor: 'end', align: 'top'
-                }
-            },
-            scales: {
-                y: { beginAtZero: true, ticks: { callback: (v) => v + '%', font: { size: 8 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
-                x: { grid: { display: false }, ticks: { font: { size: 8 } } }
-            }
-        }
-    });
-
-    // ---- CHART 5: Investment vs Current ----
-    const ctxComp = document.getElementById('comparisonChart').getContext('2d');
-    if (chart5) chart5.destroy();
-    chart5 = new Chart(ctxComp, {
-        type: 'line',
-        data: {
-            labels: data.map(d => d.scheme.length > 12 ? d.scheme.substring(0,9)+'...' : d.scheme),
-            datasets: [
-                { label: 'Invested', data: data.map(d => d.invested), borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,0.1)', tension: 0.4, fill: true, pointRadius: 2 },
-                { label: 'Current', data: data.map(d => d.currentValue), borderColor: '#2ecc71', backgroundColor: 'rgba(46,204,113,0.1)', tension: 0.4, fill: true, pointRadius: 2 }
-            ]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: true,
-            plugins: {
-                legend: { position: 'top', labels: { font: { size: 8 }, boxWidth: 12, padding: 6 } },
-                datalabels: {
-                    color: '#fff', backgroundColor: (ctx) => ctx.dataset.label === 'Invested' ? 'rgba(231,76,60,0.7)' : 'rgba(46,204,113,0.7)',
-                    borderRadius: 3, padding: 2, font: { size: 6 },
-                    formatter: (v) => `₹${(v/1000).toFixed(0)}K`,
-                    anchor: 'end', align: 'top'
-                }
-            },
-            scales: {
-                y: { ticks: { callback: (v) => `₹${(v/1000).toFixed(0)}K`, font: { size: 8 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
-                x: { grid: { display: false }, ticks: { font: { size: 7 } } }
-            }
-        }
-    });
-
-    // ---- CHART 6: Fund Type Allocation (Doughnut) ----
-    const ctxFtAlloc = document.getElementById('fundTypeAllocationChart').getContext('2d');
-    if (chart6) chart6.destroy();
-    const ftAllocData = {};
-    data.forEach(d => { const ft = d.fundType || 'Other'; ftAllocData[ft] = (ftAllocData[ft] || 0) + d.invested; });
-    const ftAllocLabels = Object.keys(ftAllocData);
-    const ftAllocValues = Object.values(ftAllocData);
-    const totalAlloc = ftAllocValues.reduce((a,b) => a+b, 0);
-    chart6 = new Chart(ctxFtAlloc, {
-        type: 'doughnut',
-        data: {
-            labels: ftAllocLabels,
-            datasets: [{ data: ftAllocValues, backgroundColor: ftAllocLabels.map((_,i) => colors[i % colors.length] + 'cc'), borderColor: ftAllocLabels.map((_,i) => colors[i % colors.length]), borderWidth: 2 }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: true,
-            plugins: {
-                legend: { position: 'bottom', labels: { font: { size: 8 }, boxWidth: 10, padding: 6 } },
-                datalabels: {
-                    color: '#fff', backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 6, padding: 4,
-                    font: { size: 8, weight: 'bold' }, formatter: (v) => `${((v/totalAlloc)*100).toFixed(1)}%`
-                }
-            }
-        }
-    });
-}
         function updateStats(data) {
             const totalInv = data.reduce((s,d) => s + d.invested, 0);
             const totalCurr = data.reduce((s,d) => s + d.currentValue, 0);
@@ -2772,7 +2554,201 @@ function updateCharts(data) {
                 <div class="stat-card"><h3>Total Funds</h3><div class="value">${data.length}</div></div>
             `;
         }
-      
+        let chart1, chart2, chart3, chart4, chart5, chart6;
+        function updateCharts(data) {
+            if (data.length === 0) return;
+            // chart1: category combined
+            const ctxCombined = document.getElementById('categoryCombinedChart').getContext('2d');
+            if (chart1) chart1.destroy();
+            const catTotals = {};
+            const catReturns = {};
+            data.forEach(d => {
+                catTotals[d.category] = (catTotals[d.category] || 0) + d.invested;
+                if (!catReturns[d.category]) catReturns[d.category] = { total: 0, count: 0 };
+                catReturns[d.category].total += d.returnsPct;
+                catReturns[d.category].count++;
+            });
+            const catLabels = Object.keys(catTotals);
+            const catInvested = Object.values(catTotals);
+            const catAvgReturns = catLabels.map(c => catReturns[c] ? catReturns[c].total / catReturns[c].count : 0);
+            const totalCat = catInvested.reduce((a,b) => a+b, 0);
+            chart1 = new Chart(ctxCombined, {
+                type: 'bar',
+                data: {
+                    labels: catLabels,
+                    datasets: [
+                        { label: 'Investment (₹)', data: catInvested, backgroundColor: 'rgba(46, 204, 113, 0.7)', borderColor: '#2ecc71', borderWidth: 2, borderRadius: 4, order: 1, yAxisID: 'y' },
+                        { label: 'Avg Return %', data: catAvgReturns, type: 'line', borderColor: '#e74c3c', backgroundColor: 'rgba(231, 76, 60, 0.1)', pointBackgroundColor: '#e74c3c', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 5, tension: 0.3, fill: true, order: 0, yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: true,
+                    plugins: {
+                        legend: { position: 'top', labels: { font: { size: 9 }, boxWidth: 12, padding: 8 } },
+                        datalabels: {
+                            color: '#fff', backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 4, padding: 3,
+                            font: { size: 8, weight: 'bold' },
+                            formatter: (v, ctx) => { if (ctx.datasetIndex === 0) return `${((v/totalCat)*100).toFixed(1)}%`; return `${v.toFixed(1)}%`; },
+                            anchor: 'end', align: 'top', offset: 2
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, position: 'left', ticks: { callback: (v) => `₹${(v/1000).toFixed(0)}K`, font: { size: 8 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                        y1: { beginAtZero: true, position: 'right', ticks: { callback: (v) => v + '%', font: { size: 8 } }, grid: { drawOnChartArea: false } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // chart2: fund type weight vs target
+            const ctxFundWeight = document.getElementById('fundTypeWeightChart').getContext('2d');
+            if (chart2) chart2.destroy();
+            const ftTotals = {};
+            data.forEach(d => { const ft = d.fundType || 'Other'; ftTotals[ft] = (ftTotals[ft] || 0) + d.invested; });
+            const targetWeights = { 'Large Cap':25, 'Flexi Cap':20, 'Mid Cap':12, 'Large & Mid Cap':8, 'Index':10, 'Hybrid / Multi-Asset':10, 'International':5, 'Debt':10, 'Liquid / Cash':10, 'Other':0 };
+            const ftLabels = Object.keys(ftTotals);
+            const totalFt = Object.values(ftTotals).reduce((a,b) => a+b, 0);
+            const ftPercentages = ftLabels.map(ft => totalFt > 0 ? (ftTotals[ft] / totalFt * 100) : 0);
+            const targetPercentages = ftLabels.map(ft => targetWeights[ft] || 0);
+            const colors = ['#3498db','#2ecc71','#e74c3c','#f39c12','#9b59b6','#1abc9c','#e67e22','#34495e','#2c3e50','#7f8c8d'];
+            chart2 = new Chart(ctxFundWeight, {
+                type: 'bar',
+                data: {
+                    labels: ftLabels,
+                    datasets: [
+                        { label: 'Current T. Wt. %', data: ftPercentages, backgroundColor: ftLabels.map((_,i) => colors[i % colors.length] + 'cc'), borderColor: ftLabels.map((_,i) => colors[i % colors.length]), borderWidth: 2, borderRadius: 6, order: 1, yAxisID: 'y' },
+                        { label: 'Target T. Wt. %', data: targetPercentages, type: 'line', borderColor: '#ff6b6b', backgroundColor: 'rgba(255,107,107,0.1)', pointBackgroundColor: '#ff6b6b', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 5, tension: 0.2, fill: false, order: 0, borderWidth: 3, yAxisID: 'y' }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: true,
+                    plugins: {
+                        legend: { position: 'top', labels: { font: { size: 10 }, boxWidth: 14, padding: 10 } },
+                        datalabels: {
+                            color: '#fff', backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 4, padding: 3,
+                            font: { size: 8, weight: 'bold' },
+                            formatter: (v, ctx) => { if (ctx.datasetIndex === 0) return v.toFixed(1) + '%'; return v.toFixed(1) + '%'; },
+                            anchor: 'end', align: 'top'
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, max: Math.max(40, ...ftPercentages, ...targetPercentages) * 1.2, ticks: { callback: (v) => v + '%', font: { size: 9 } }, grid: { color: 'rgba(0,0,0,0.06)' } },
+                        x: { grid: { display: false }, ticks: { font: { size: 9 }, maxRotation: 30, minRotation: 0 } }
+                    }
+                }
+            });
+
+            // chart3: top performers
+            const ctxTop = document.getElementById('topPerformersChart').getContext('2d');
+            if (chart3) chart3.destroy();
+            const top5 = [...data].sort((a,b) => b.returnsPct - a.returnsPct).slice(0,5);
+            chart3 = new Chart(ctxTop, {
+                type: 'bar',
+                data: {
+                    labels: top5.map(d => d.scheme.length > 15 ? d.scheme.substring(0,12)+'...' : d.scheme),
+                    datasets: [{ label: 'Returns %', data: top5.map(d => d.returnsPct), backgroundColor: top5.map(d => d.returnsPct >= 20 ? '#2ecc71' : d.returnsPct >= 10 ? '#3498db' : '#f39c12'), borderRadius: 6, borderWidth: 1, borderColor: 'rgba(0,0,0,0.1)' }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            color: '#fff', backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 4, padding: 3,
+                            font: { size: 8, weight: 'bold' }, formatter: (v) => v.toFixed(1) + '%',
+                            anchor: 'end', align: 'top'
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { callback: (v) => v + '%', font: { size: 8 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                        x: { grid: { display: false }, ticks: { font: { size: 8 } } }
+                    }
+                }
+            });
+
+            // chart4: returns by type
+            const ctxRetType = document.getElementById('returnsByTypeChart').getContext('2d');
+            if (chart4) chart4.destroy();
+            const typeRet = {};
+            data.forEach(d => { if (!typeRet[d.type]) typeRet[d.type] = { total:0, count:0 }; typeRet[d.type].total += d.returnsPct; typeRet[d.type].count++; });
+            chart4 = new Chart(ctxRetType, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(typeRet),
+                    datasets: [{ label: 'Avg Returns %', data: Object.values(typeRet).map(t => t.total / t.count), backgroundColor: ['#3498db','#e74c3c','#2ecc71'], borderRadius: 6, borderWidth: 1, borderColor: 'rgba(0,0,0,0.1)' }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            color: '#fff', backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 4, padding: 3,
+                            font: { size: 8, weight: 'bold' }, formatter: (v) => v.toFixed(1) + '%',
+                            anchor: 'end', align: 'top'
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { callback: (v) => v + '%', font: { size: 8 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                        x: { grid: { display: false }, ticks: { font: { size: 8 } } }
+                    }
+                }
+            });
+
+            // chart5: investment vs current
+            const ctxComp = document.getElementById('comparisonChart').getContext('2d');
+            if (chart5) chart5.destroy();
+            chart5 = new Chart(ctxComp, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.scheme.length > 12 ? d.scheme.substring(0,9)+'...' : d.scheme),
+                    datasets: [
+                        { label: 'Invested', data: data.map(d => d.invested), borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,0.1)', tension: 0.4, fill: true, pointRadius: 2, pointBackgroundColor: '#e74c3c' },
+                        { label: 'Current', data: data.map(d => d.currentValue), borderColor: '#2ecc71', backgroundColor: 'rgba(46,204,113,0.1)', tension: 0.4, fill: true, pointRadius: 2, pointBackgroundColor: '#2ecc71' }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: true,
+                    plugins: {
+                        legend: { position: 'top', labels: { font: { size: 8 }, boxWidth: 12, padding: 6 } },
+                        datalabels: {
+                            color: '#fff', backgroundColor: (ctx) => ctx.dataset.label === 'Invested' ? 'rgba(231,76,60,0.7)' : 'rgba(46,204,113,0.7)',
+                            borderRadius: 3, padding: 2, font: { size: 6 },
+                            formatter: (v) => `₹${(v/1000).toFixed(0)}K`,
+                            anchor: 'end', align: 'top'
+                        }
+                    },
+                    scales: {
+                        y: { ticks: { callback: (v) => `₹${(v/1000).toFixed(0)}K`, font: { size: 8 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                        x: { grid: { display: false }, ticks: { font: { size: 7 } } }
+                    }
+                }
+            });
+
+            // chart6: fund type allocation (doughnut)
+            const ctxFtAlloc = document.getElementById('fundTypeAllocationChart').getContext('2d');
+            if (chart6) chart6.destroy();
+            const ftAllocData = {};
+            data.forEach(d => { const ft = d.fundType || 'Other'; ftAllocData[ft] = (ftAllocData[ft] || 0) + d.invested; });
+            const ftAllocLabels = Object.keys(ftAllocData);
+            const ftAllocValues = Object.values(ftAllocData);
+            const totalAlloc = ftAllocValues.reduce((a,b) => a+b, 0);
+            chart6 = new Chart(ctxFtAlloc, {
+                type: 'doughnut',
+                data: {
+                    labels: ftAllocLabels,
+                    datasets: [{ data: ftAllocValues, backgroundColor: ftAllocLabels.map((_,i) => colors[i % colors.length] + 'cc'), borderColor: ftAllocLabels.map((_,i) => colors[i % colors.length]), borderWidth: 2 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: true,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { size: 8 }, boxWidth: 10, padding: 6 } },
+                        datalabels: {
+                            color: '#fff', backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 6, padding: 4,
+                            font: { size: 8, weight: 'bold' }, formatter: (v) => `${((v/totalAlloc)*100).toFixed(1)}%`
+                        }
+                    }
+                }
+            });
+        }
         function updateTable(data) {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
