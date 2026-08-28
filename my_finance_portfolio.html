@@ -2799,122 +2799,12 @@ function updateCharts(data) {
                 <div class="stat-card"><h3>Total Funds</h3><div class="value">${data.length}</div></div>
             `;
         }
-        let chart1, chart2, chart3, chart4, chart5, chart6;
+      
     
 	
 
 
-            // chart3: top performers
-            const ctxTop = document.getElementById('topPerformersChart').getContext('2d');
-            if (chart3) chart3.destroy();
-            const top5 = [...data].sort((a,b) => b.returnsPct - a.returnsPct).slice(0,5);
-            chart3 = new Chart(ctxTop, {
-                type: 'bar',
-                data: {
-                    labels: top5.map(d => d.scheme.length > 15 ? d.scheme.substring(0,12)+'...' : d.scheme),
-                    datasets: [{ label: 'Returns %', data: top5.map(d => d.returnsPct), backgroundColor: top5.map(d => d.returnsPct >= 20 ? '#2ecc71' : d.returnsPct >= 10 ? '#3498db' : '#f39c12'), borderRadius: 6, borderWidth: 1, borderColor: 'rgba(0,0,0,0.1)' }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: true,
-                    plugins: {
-                        legend: { display: false },
-                        datalabels: {
-                            color: '#fff', backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 4, padding: 3,
-                            font: { size: 8, weight: 'bold' }, formatter: (v) => v.toFixed(1) + '%',
-                            anchor: 'end', align: 'top'
-                        }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, ticks: { callback: (v) => v + '%', font: { size: 8 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
-                        x: { grid: { display: false }, ticks: { font: { size: 8 } } }
-                    }
-                }
-            });
-
-            // chart4: returns by type
-            const ctxRetType = document.getElementById('returnsByTypeChart').getContext('2d');
-            if (chart4) chart4.destroy();
-            const typeRet = {};
-            data.forEach(d => { if (!typeRet[d.type]) typeRet[d.type] = { total:0, count:0 }; typeRet[d.type].total += d.returnsPct; typeRet[d.type].count++; });
-            chart4 = new Chart(ctxRetType, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(typeRet),
-                    datasets: [{ label: 'Avg Returns %', data: Object.values(typeRet).map(t => t.total / t.count), backgroundColor: ['#3498db','#e74c3c','#2ecc71'], borderRadius: 6, borderWidth: 1, borderColor: 'rgba(0,0,0,0.1)' }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: true,
-                    plugins: {
-                        legend: { display: false },
-                        datalabels: {
-                            color: '#fff', backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 4, padding: 3,
-                            font: { size: 8, weight: 'bold' }, formatter: (v) => v.toFixed(1) + '%',
-                            anchor: 'end', align: 'top'
-                        }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, ticks: { callback: (v) => v + '%', font: { size: 8 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
-                        x: { grid: { display: false }, ticks: { font: { size: 8 } } }
-                    }
-                }
-            });
-
-            // chart5: investment vs current
-            const ctxComp = document.getElementById('comparisonChart').getContext('2d');
-            if (chart5) chart5.destroy();
-            chart5 = new Chart(ctxComp, {
-                type: 'line',
-                data: {
-                    labels: data.map(d => d.scheme.length > 12 ? d.scheme.substring(0,9)+'...' : d.scheme),
-                    datasets: [
-                        { label: 'Invested', data: data.map(d => d.invested), borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,0.1)', tension: 0.4, fill: true, pointRadius: 2, pointBackgroundColor: '#e74c3c' },
-                        { label: 'Current', data: data.map(d => d.currentValue), borderColor: '#2ecc71', backgroundColor: 'rgba(46,204,113,0.1)', tension: 0.4, fill: true, pointRadius: 2, pointBackgroundColor: '#2ecc71' }
-                    ]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: true,
-                    plugins: {
-                        legend: { position: 'top', labels: { font: { size: 8 }, boxWidth: 12, padding: 6 } },
-                        datalabels: {
-                            color: '#fff', backgroundColor: (ctx) => ctx.dataset.label === 'Invested' ? 'rgba(231,76,60,0.7)' : 'rgba(46,204,113,0.7)',
-                            borderRadius: 3, padding: 2, font: { size: 6 },
-                            formatter: (v) => `₹${(v/1000).toFixed(0)}K`,
-                            anchor: 'end', align: 'top'
-                        }
-                    },
-                    scales: {
-                        y: { ticks: { callback: (v) => `₹${(v/1000).toFixed(0)}K`, font: { size: 8 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
-                        x: { grid: { display: false }, ticks: { font: { size: 7 } } }
-                    }
-                }
-            });
-
-            // chart6: fund type allocation (doughnut)
-            const ctxFtAlloc = document.getElementById('fundTypeAllocationChart').getContext('2d');
-            if (chart6) chart6.destroy();
-            const ftAllocData = {};
-            data.forEach(d => { const ft = d.fundType || 'Other'; ftAllocData[ft] = (ftAllocData[ft] || 0) + d.invested; });
-            const ftAllocLabels = Object.keys(ftAllocData);
-            const ftAllocValues = Object.values(ftAllocData);
-            const totalAlloc = ftAllocValues.reduce((a,b) => a+b, 0);
-            chart6 = new Chart(ctxFtAlloc, {
-                type: 'doughnut',
-                data: {
-                    labels: ftAllocLabels,
-                    datasets: [{ data: ftAllocValues, backgroundColor: ftAllocLabels.map((_,i) => colors[i % colors.length] + 'cc'), borderColor: ftAllocLabels.map((_,i) => colors[i % colors.length]), borderWidth: 2 }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: true,
-                    plugins: {
-                        legend: { position: 'bottom', labels: { font: { size: 8 }, boxWidth: 10, padding: 6 } },
-                        datalabels: {
-                            color: '#fff', backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 6, padding: 4,
-                            font: { size: 8, weight: 'bold' }, formatter: (v) => `${((v/totalAlloc)*100).toFixed(1)}%`
-                        }
-                    }
-                }
-            });
-        }
+ 
         function updateTable(data) {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
