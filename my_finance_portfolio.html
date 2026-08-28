@@ -2190,7 +2190,7 @@ const stpAllocations = [
             if (allSelected || selected.length === 0) return null;
             return selected;
         }
-        function updateFilters() { updateAMCFilter(); updateBankFilter(); updateFundTypeFilter(); }
+        function updateFilters() { updateAMCFilter(); updateFundTypeFilter(); }
         function updateFundTypeFilter() {
             const ftFilter = document.getElementById('fundTypeFilter');
             const types = new Set();
@@ -2244,7 +2244,7 @@ const stpAllocations = [
         function sortByColumn(column) {
             if (currentSortColumn === column) currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
             else { currentSortColumn = column; currentSortDirection = 'asc'; }
-            const sortMap = { 'folio':'folio','scheme':'scheme','amc':'amc','fundType':'fundType','tWeight':'tWeight','weightage':'weightage','invested': currentSortDirection === 'asc' ? 'investedAsc' : 'invested','current':'current','returns':'returns','returnsPct': currentSortDirection === 'asc' ? 'returnsAsc' : 'returns','units':'units','nav':'nav','linkedAccount':'linkedAccount','xirr':'xirr' };
+           const sortMap = { 'folio':'folio','scheme':'scheme','amc':'amc','fundType':'fundType','tWeight':'tWeight','weightage':'weightage','invested': currentSortDirection === 'asc' ? 'investedAsc' : 'invested','current':'current','returns':'returns','returnsPct': currentSortDirection === 'asc' ? 'returnsAsc' : 'returns','units':'units','nav':'nav','xirr':'xirr' };
             document.getElementById('sortBy').value = sortMap[column] || 'folio';
             updateDashboard();
         }
@@ -2501,7 +2501,7 @@ const stpAllocations = [
                 case 'invested': sorted.sort((a,b) => b.invested - a.invested); currentSortColumn='invested'; currentSortDirection='desc'; break;
                 case 'investedAsc': sorted.sort((a,b) => a.invested - b.invested); currentSortColumn='invested'; currentSortDirection='asc'; break;
                 case 'current': sorted.sort((a,b) => b.currentValue - a.currentValue); currentSortColumn='current'; currentSortDirection='desc'; break;
-                case 'linkedAccount': sorted.sort((a,b) => (a.linkedAccount||'').localeCompare(b.linkedAccount||'')); currentSortColumn='linkedAccount'; currentSortDirection='asc'; break;
+   
                 case 'nav': sorted.sort((a,b) => (a.nav||0) - (b.nav||0)); currentSortColumn='nav'; currentSortDirection='asc'; break;
                 case 'xirr': sorted.sort((a,b) => { const xA = getXIRRForFund(a.scheme); const xB = getXIRRForFund(b.scheme); const valA = xA !== null ? xA : -999; const valB = xB !== null ? xB : -999; return valA - valB; }); currentSortColumn='xirr'; currentSortDirection='asc'; break;
                 default: sorted.sort((a,b) => (a.folio||'').localeCompare(b.folio||''));
@@ -2534,7 +2534,7 @@ const stpAllocations = [
         function applySearch(data) {
             const term = document.getElementById('searchBox').value.toLowerCase();
             if (!term) return data;
-            return data.filter(d => d.scheme.toLowerCase().includes(term) || (d.folio && d.folio.toLowerCase().includes(term)) || (d.linkedAccount && d.linkedAccount.toLowerCase().includes(term)) || (d.amc && d.amc.toLowerCase().includes(term)) || (d.fundType && d.fundType.toLowerCase().includes(term)));
+           return data.filter(d => d.scheme.toLowerCase().includes(term) || (d.folio && d.folio.toLowerCase().includes(term)) || (d.amc && d.amc.toLowerCase().includes(term)) || (d.fundType && d.fundType.toLowerCase().includes(term)));
         }
         function updateStats(data) {
             const totalInv = data.reduce((s,d) => s + d.invested, 0);
