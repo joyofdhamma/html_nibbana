@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Joy Media Player</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+  body {
+    background-color: #000;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    overflow-x: hidden;
+  }
+
+  /* --- Top Tabs --- */
+  #tabBar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #111;
+    border-bottom: 1px solid #333;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 12px 0;
+    text-align: center;
+    font-size: 1.6em;
+    cursor: pointer;
+    background: #111;
+    color: #888;
+    border: none;
+    outline: none;
+    transition: 0.3s;
+  }
+
+  .tab.active {
+    background: #222;
+    color: #0f0;
+  }
+
+  /* --- Container --- */
+  .tabContent {
+    display: none;
+    padding-top: 60px;
+  }
+
+  .tabContent.active {
+    display: block;
+  }
+
+  /* --- MP3 Player styles --- */
+  #mp3Player {
+    text-align: center;
+    padding: 20px;
+  }
+
+  input,
+  select {
+    font-size: 1em;
+    padding: 8px;
+    margin: 8px;
+    background: #222;
+    color: #fff;
+    border: 1px solid #555;
+    border-radius: 5px;
+  }
+
+  button {
+    font-size: 1em;
+    padding: 8px 16px;
+    margin: 10px;
+    background: #0f0;
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  label {
+    display: block;
+    margin-top: 12px;
+    font-weight: bold;
+  }
+
+  #sliders input {
+    width: 90%;
+  }
+
+  /* Playlist styles - NEW but preserving all original visuals */
+  .playlist-section {
+    margin: 20px auto;
+    width: 95%;
+    max-width: 600px;
+    background: #1a1a1a;
+    border-radius: 12px;
+    padding: 12px;
+    border: 1px solid #333;
+  }
+
+  .playlist-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .folder-input-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+
+  .folder-input-wrapper input {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    cursor: pointer;
+  }
+
+  .folder-btn {
+    background: #2a6f3f;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 0.9em;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .playlist-info {
+    font-size: 0.85em;
+    color: #aaa;
+    background: #222;
+    padding: 6px 12px;
+    border-radius: 20px;
+  }
+
+  .playlist-queue {
+    max-height: 180px;
+    overflow-y: auto;
+    background: #0f0f0f;
+    border-radius: 8px;
+    margin-top: 10px;
+    text-align: left;
+  }
+
+  .playlist-item {
+    padding: 8px 12px;
+    border-bottom: 1px solid #333;
+    font-size: 0.85em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  .playlist-item:hover {
+    background: #2a2a2a;
+  }
+
+  .playlist-item.active-track {
+    background: #2a6f3f;
+    color: white;
+    font-weight: bold;
+  }
+
+  .playlist-item .track-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+  }
+
+  .playlist-item .track-index {
+    margin-right: 10px;
+    color: #88ff88;
+    font-weight: normal;
+  }
+
+  .now-playing-badge {
+    font-size: 0.8em;
+    background: #0f0;
+    color: #000;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-left: 8px;
+  }
+
+  /* Video player styles unchanged */
+  #videoContainer {
+    position: relative;
+    width: 100%;
+    height: 90vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #000;
+  }
+
+  video {
+    width: 100%;
+    height: 100%;
+    background: #000;
+  }
+
+  #topBar {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    width: 100%;
+    padding: 8px;
+    background: #111;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 999;
+  }
+
+  #settingsPanel {
+    position: fixed;
+    top: 110px;
+    left: 10px;
+    background: #111;
+    padding: 15px;
+    border: 1px solid #444;
+    border-radius: 5px;
+    display: none;
+    max-height: 70vh;
+    overflow-y: auto;
+    z-index: 999;
+  }
+
+  .file-group {
+    margin-bottom: 10px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Tabs -->
+<div id="tabBar">
+  <button class="tab active" onclick="openTab('mp3')">🎧</button>
+  <button class="tab" onclick="openTab('video')">🎬</button>
+</div>
+
+<!-- MP3 Player -->
+<div id="mp3" class="tabContent active">
+  <div id="mp3Player">
+    <h2>🎧 Joy Audio Player</h2>
+    <input type="file" id="audioFile" accept="audio/*"><br>
+    
+    <!-- NEW: Folder selection & playlist area - seamlessly integrated without removing any existing features -->
+    <div class="playlist-section">
+      <div class="playlist-header">
+        <div class="folder-input-wrapper">
+          <button class="folder-btn" id="folderSelectBtn">📁 Select Folder (MP3 Playlist)</button>
+          <input type="file" id="folderInput" webkitdirectory directory multiple accept="audio/mpeg,audio/mp3,audio/*">
+        </div>
+        <div class="playlist-info" id="playlistStats">No folder selected</div>
+        <button id="clearPlaylistBtn" style="background:#444; color:white; padding:6px 12px;">🗑 Clear</button>
+      </div>
+      <div id="playlistQueue" class="playlist-queue">
+        <div style="padding:12px; text-align:center; color:#666;">Select a folder with MP3 files</div>
+      </div>
+    </div>
+
+    <audio id="audio" controls></audio><br>
+
+    <div id="sliders">
+      <label>Playback Speed</label>
+      <input type="range" min="0.5" max="2.0" step="0.1" id="speedSlider" value="1.0">
+
+      <label>Bass</label>
+      <input type="range" min="-40" max="40" value="0" id="bass">
+
+      <label>Mid</label>
+      <input type="range" min="-40" max="40" value="0" id="mid">
+
+      <label>Treble</label>
+      <input type="range" min="-40" max="40" value="0" id="treble">
+
+      <label>Volume</label>
+      <input type="range" min="0" max="1" step="0.01" id="volumeSlider" value=".1">
+
+      <label>Stereo Pan</label>
+      <input type="range" min="-1" max="1" step="0.01" id="panSlider" value="0">
+
+      <label>Reverb Wet/Dry Mix</label>
+      <input type="range" min="0" max="1" step="0.01" id="reverbSlider" value="0.5">
+
+      <label>Progress</label>
+      <input type="range" min="0" max="100" value="0" id="progressBar">
+    </div>
+
+    <label>Loop from (sec)</label>
+    <input type="number" id="loopStart" value="0">
+    <label>to (sec)</label>
+    <input type="number" id="loopEnd" value="0">
+    <button onclick="toggleLoop()">🔁 A→B Loop</button>
+    <button onclick="toggleRepeat()">🔂 Repeat Entire Track</button>
+  </div>
+</div>
+
+<!-- Video Player -->
+<div id="video" class="tabContent">
+  <div id="topBar">
+    <button onclick="toggleSettings()">⚙️</button>
+    <div>
+      <button onclick="startPlayback()">▶️</button>
+      <button onclick="enterFullscreen()">🖵</button>
+    </div>
+  </div>
+
+  <div id="settingsPanel">
+    <h3>Video Selection</h3>
+    <div id="selectors"></div>
+  </div>
+
+  <div id="videoContainer">
+    <video id="videoPlayer" controls></video>
+  </div>
+</div>
+
+<script>
+  // --- Tab Switch ---
+  function openTab(tabName) {
+    document.querySelectorAll(".tabContent").forEach(div => div.classList.remove("active"));
+    document.querySelectorAll(".tab").forEach(btn => btn.classList.remove("active"));
+    document.getElementById(tabName).classList.add("active");
+    event.currentTarget.classList.add("active");
+  }
+
+  /* ---------------- AUDIO PLAYER JS (with full playlist support) ---------------- */
+  const audio = document.getElementById("audio");
+  const audioFile = document.getElementById("audioFile");
+  const speedSlider = document.getElementById("speedSlider");
+  const volumeSlider = document.getElementById("volumeSlider");
+  const progressBar = document.getElementById("progressBar");
+  const loopStart = document.getElementById("loopStart");
+  const loopEnd = document.getElementById("loopEnd");
+  const bassSlider = document.getElementById("bass");
+  const midSlider = document.getElementById("mid");
+  const trebleSlider = document.getElementById("treble");
+  const panSlider = document.getElementById("panSlider");
+  const reverbSlider = document.getElementById("reverbSlider");
+
+  let loopEnabled = false;
+  let repeatEnabled = false;
+  let audioCtx, sourceNode, bassEQ, midEQ, trebleEQ, gainNode, compressor, panner, convolver, dryGain, wetGain;
+
+  // ==================== NEW PLAYLIST VARIABLES ====================
+  let playlist = [];           // Array of {name, url, file}
+  let currentTrackIndex = -1;
+  let isPlayingFromPlaylist = false;
+  let originalOnEndedHandler = null;
+  let currentAudioSrc = null;  // to revoke object URLs when needed
+
+  // DOM elements for playlist
+  const folderInput = document.getElementById("folderInput");
+  const playlistQueueDiv = document.getElementById("playlistQueue");
+  const playlistStats = document.getElementById("playlistStats");
+  const clearPlaylistBtn = document.getElementById("clearPlaylistBtn");
+
+  // Helper: update playlist UI
+  function renderPlaylist() {
+    if (!playlistQueueDiv) return;
+    if (playlist.length === 0) {
+      playlistQueueDiv.innerHTML = '<div style="padding:12px; text-align:center; color:#666;">📂 No MP3 files. Select a folder above.</div>';
+      playlistStats.innerText = "No tracks";
+      return;
+    }
+    
+    let html = '';
+    playlist.forEach((track, idx) => {
+      const isActive = (isPlayingFromPlaylist && currentTrackIndex === idx);
+      const activeClass = isActive ? 'active-track' : '';
+      const nowPlayingMarker = isActive ? '<span class="now-playing-badge">▶️</span>' : '';
+      html += `
+        <div class="playlist-item ${activeClass}" data-index="${idx}">
+          <span class="track-index">${idx+1}.</span>
+          <span class="track-name" title="${escapeHtml(track.name)}">${escapeHtml(track.name)}</span>
+          ${nowPlayingMarker}
+        </div>
+      `;
+    });
+    playlistQueueDiv.innerHTML = html;
+    playlistStats.innerText = `${playlist.length} MP3 file(s)`;
+    
+    // Add click event listeners to playlist items
+    document.querySelectorAll('.playlist-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        const index = parseInt(item.dataset.index);
+        if (!isNaN(index) && index >= 0 && index < playlist.length) {
+          playTrackFromPlaylist(index);
+        }
+      });
+    });
+  }
+  
+  // Helper to escape HTML
+  function escapeHtml(str) {
+    return str.replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    });
+  }
+  
+  // Load folder and extract MP3 files
+  function loadFolderFiles(files) {
+    const mp3Files = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.type === 'audio/mpeg' || file.type === 'audio/mp3' || file.name.toLowerCase().endsWith('.mp3')) {
+        mp3Files.push(file);
+      }
+    }
+    
+    if (mp3Files.length === 0) {
+      alert("No MP3 files found in selected folder.");
+      return false;
+    }
+    
+    // Sort by name for better organization
+    mp3Files.sort((a, b) => a.name.localeCompare(b.name));
+    
+    // Revoke previous playlist URLs to avoid memory leaks
+    playlist.forEach(track => {
+      if (track.url) URL.revokeObjectURL(track.url);
+    });
+    
+    playlist = [];
+    mp3Files.forEach(file => {
+      const url = URL.createObjectURL(file);
+      playlist.push({
+        name: file.name,
+        url: url,
+        file: file
+      });
+    });
+    
+    return true;
+  }
+  
+  // Play a specific track from playlist
+  function playTrackFromPlaylist(index) {
+    if (index < 0 || index >= playlist.length) return false;
+    
+    // Stop current playback and cleanup
+    if (isPlayingFromPlaylist) {
+      audio.pause();
+      if (currentAudioSrc) {
+        // Don't revoke immediately - let audio finish unloading
+      }
+    }
+    
+    currentTrackIndex = index;
+    const track = playlist[currentTrackIndex];
+    
+    // Setup audio context if needed
+    if (!audioCtx) {
+      setupAudioContext();
+    } else if (audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(e => console.log("AudioContext resume:", e));
+    }
+    
+    // Set new source
+    audio.src = track.url;
+    currentAudioSrc = track.url;
+    audio.load();
+    
+    // Apply current settings
+    if (gainNode) gainNode.gain.value = parseFloat(volumeSlider.value);
+    if (bassEQ) bassEQ.gain.value = parseFloat(bassSlider.value);
+    if (midEQ) midEQ.gain.value = parseFloat(midSlider.value);
+    if (trebleEQ) trebleEQ.gain.value = parseFloat(trebleSlider.value);
+    if (panner) panner.pan.value = parseFloat(panSlider.value);
+    if (wetGain && dryGain) {
+      wetGain.gain.value = parseFloat(reverbSlider.value);
+      dryGain.gain.value = 1 - parseFloat(reverbSlider.value);
+    }
+    audio.playbackRate = parseFloat(speedSlider.value);
+    
+    // Play
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(error => {
+        console.warn("Playback error:", error);
+        // Auto-advance if cannot play (maybe corrupted file)
+        if (playlist.length > 0 && currentTrackIndex + 1 < playlist.length) {
+          playTrackFromPlaylist(currentTrackIndex + 1);
+        }
+      });
+    }
+    
+    isPlayingFromPlaylist = true;
+    renderPlaylist();
+    
+    // Scroll to active item
+    setTimeout(() => {
+      const activeItem = document.querySelector('.playlist-item.active-track');
+      if (activeItem) activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
+    
+    return true;
+  }
+  
+  // Play next track in playlist (auto-advance)
+  function playNextTrack() {
+    if (!isPlayingFromPlaylist && playlist.length === 0) return;
+    
+    // If repeat entire track is enabled, just replay same track
+    if (repeatEnabled && isPlayingFromPlaylist && currentTrackIndex >= 0) {
+      const track = playlist[currentTrackIndex];
+      audio.src = track.url;
+      audio.load();
+      audio.play().catch(e => console.warn(e));
+      return;
+    }
+    
+    // Move to next
+    let nextIndex = currentTrackIndex + 1;
+    if (nextIndex >= playlist.length) {
+      // End of playlist: loop back to start if we want seamless playlist repeat?
+      // But we respect repeatEnabled? Actually repeatEnabled = repeat single track.
+      // For playlist, we can just stop at end or replay from start? Let's replay from start if there are tracks.
+      if (playlist.length > 0 && !repeatEnabled) {
+        nextIndex = 0;  // Loop playlist automatically (common behavior)
+      } else {
+        // No more tracks
+        isPlayingFromPlaylist = false;
+        currentTrackIndex = -1;
+        renderPlaylist();
+        return;
+      }
+    }
+    
+    if (nextIndex < playlist.length) {
+      playTrackFromPlaylist(nextIndex);
+    } else {
+      isPlayingFromPlaylist = false;
+      currentTrackIndex = -1;
+      renderPlaylist();
+    }
+  }
+  
+  // Clear entire playlist
+  function clearPlaylist() {
+    // Revoke all object URLs
+    playlist.forEach(track => {
+      if (track.url) URL.revokeObjectURL(track.url);
+    });
+    playlist = [];
+    currentTrackIndex = -1;
+    isPlayingFromPlaylist = false;
+    renderPlaylist();
+    
+    // Stop audio if currently playing from playlist
+    if (audio && !audio.paused) {
+      audio.pause();
+      audio.src = "";
+    }
+    currentAudioSrc = null;
+    if (audioFile.value) {
+      // If there's a single file loaded, keep it? But clear playlist doesn't affect single file mode.
+    }
+  }
+  
+  // Override audio onended to support playlist auto-next
+  function setupPlaylistAutoAdvance() {
+    if (originalOnEndedHandler) {
+      audio.removeEventListener('ended', originalOnEndedHandler);
+    }
+    const endedHandler = () => {
+      if (isPlayingFromPlaylist && playlist.length > 0) {
+        // Check if A-B loop is active? If loop enabled, we don't auto-advance on AB loop? Actually A-B loop already handled in ontimeupdate
+        if (loopEnabled && parseFloat(loopEnd.value) > 0 && audio.currentTime >= parseFloat(loopEnd.value)) {
+          // AB loop manages itself, but onended might also trigger. Avoid double call
+          if (audio.currentTime >= parseFloat(loopEnd.value) - 0.1) {
+            audio.currentTime = parseFloat(loopStart.value);
+            audio.play();
+            return;
+          }
+        }
+        playNextTrack();
+      }
+    };
+    audio.addEventListener('ended', endedHandler);
+    originalOnEndedHandler = endedHandler;
+  }
+  
+  // Modify existing ontimeupdate to support AB loop properly with playlist
+  const originalOnTimeUpdate = audio.ontimeupdate;
+  audio.ontimeupdate = () => {
+    if (loopEnabled && loopEnd.value > 0 && audio.currentTime >= parseFloat(loopEnd.value)) {
+      audio.currentTime = parseFloat(loopStart.value);
+      // prevent infinite loop if start=end
+      if (parseFloat(loopStart.value) === parseFloat(loopEnd.value)) return;
+      audio.play();
+    }
+    progressBar.value = (audio.currentTime / audio.duration) * 100 || 0;
+  };
+  
+  // Folder selection handler
+  folderInput.addEventListener("change", (event) => {
+    const files = Array.from(event.target.files);
+    if (files.length === 0) return;
+    
+    const success = loadFolderFiles(files);
+    if (success && playlist.length > 0) {
+      renderPlaylist();
+      // Auto-start playing first track if nothing is currently playing from regular file picker?
+      if ((!audio.src || audio.paused) && !isPlayingFromPlaylist) {
+        playTrackFromPlaylist(0);
+      } else if (isPlayingFromPlaylist) {
+        // replace playlist and continue maybe? Ask user? We just update and reset current index.
+        currentTrackIndex = -1;
+        isPlayingFromPlaylist = false;
+        playTrackFromPlaylist(0);
+      }
+    } else if (!success) {
+      alert("No MP3 files detected. Please select a folder containing .mp3 files.");
+    }
+    // Reset folder input so same folder can be selected again
+    event.target.value = '';
+  });
+  
+  // Clear playlist button
+  clearPlaylistBtn.addEventListener("click", () => {
+    clearPlaylist();
+  });
+  
+  // Also keep the original single-file input functional, but if user picks a single file, we should pause playlist mode
+  audioFile.addEventListener("change", () => {
+    const file = audioFile.files[0];
+    if (file) {
+      // Disable playlist mode when manually picking a single file
+      if (isPlayingFromPlaylist) {
+        // but don't clear playlist, just pause playlist mode for now
+        isPlayingFromPlaylist = false;
+        renderPlaylist();
+      }
+      if (!audioCtx) setupAudioContext();
+      if (currentAudioSrc && currentAudioSrc !== audio.src) {
+        // revoke old if needed
+      }
+      audio.src = URL.createObjectURL(file);
+      audio.load();
+      audio.play().catch(e => console.warn(e));
+    }
+  });
+  
+  // Setup audio context function (same as original but ensure we reconnect after playlist)
+  function setupAudioContext() {
+    if (audioCtx && audioCtx.state !== 'closed') return;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    sourceNode = audioCtx.createMediaElementSource(audio);
+    bassEQ = audioCtx.createBiquadFilter(); bassEQ.type = "lowshelf"; bassEQ.frequency.value = 150;
+    midEQ = audioCtx.createBiquadFilter(); midEQ.type = "peaking"; midEQ.frequency.value = 1000; midEQ.Q.value = 1;
+    trebleEQ = audioCtx.createBiquadFilter(); trebleEQ.type = "highshelf"; trebleEQ.frequency.value = 4000;
+    compressor = audioCtx.createDynamicsCompressor();
+    panner = audioCtx.createStereoPanner();
+    convolver = audioCtx.createConvolver();
+    const irDuration = 2, irSampleRate = audioCtx.sampleRate, length = irSampleRate * irDuration;
+    const impulse = audioCtx.createBuffer(2, length, irSampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      let d = impulse.getChannelData(ch);
+      for (let i = 0; i < length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2);
+    }
+    convolver.buffer = impulse;
+    gainNode = audioCtx.createGain(); dryGain = audioCtx.createGain(); wetGain = audioCtx.createGain();
+
+    sourceNode.connect(bassEQ).connect(midEQ).connect(trebleEQ).connect(compressor).connect(panner);
+    panner.connect(dryGain); dryGain.connect(gainNode);
+    panner.connect(convolver); convolver.connect(wetGain); wetGain.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    dryGain.gain.value = 1 - parseFloat(reverbSlider.value);
+    wetGain.gain.value = parseFloat(reverbSlider.value);
+    gainNode.gain.value = parseFloat(volumeSlider.value);
+    
+    // initialize values
+    bassEQ.gain.value = parseFloat(bassSlider.value);
+    midEQ.gain.value = parseFloat(midSlider.value);
+    trebleEQ.gain.value = parseFloat(trebleSlider.value);
+    panner.pan.value = parseFloat(panSlider.value);
+  }
+  
+  // Original sliders & functions remain untouched
+  speedSlider.oninput = () => audio.playbackRate = parseFloat(speedSlider.value);
+  volumeSlider.oninput = () => { if (gainNode) gainNode.gain.value = parseFloat(volumeSlider.value); };
+  bassSlider.oninput = e => { if (bassEQ) bassEQ.gain.value = e.target.value; };
+  midSlider.oninput = e => { if (midEQ) midEQ.gain.value = e.target.value; };
+  trebleSlider.oninput = e => { if (trebleEQ) trebleEQ.gain.value = e.target.value; };
+  panSlider.oninput = e => { if (panner) panner.pan.value = parseFloat(e.target.value); };
+  reverbSlider.oninput = e => { if (wetGain && dryGain) { wetGain.gain.value = e.target.value; dryGain.gain.value = 1 - e.target.value; } };
+
+  function toggleLoop() {
+    loopEnabled = !loopEnabled;
+    alert(loopEnabled ? `Loop from ${loopStart.value}s to ${loopEnd.value}s` : "Loop off");
+  }
+
+  function toggleRepeat() {
+    repeatEnabled = !repeatEnabled;
+    audio.loop = repeatEnabled;
+    alert(repeatEnabled ? "Repeat On (single track)" : "Repeat Off");
+  }
+
+  progressBar.oninput = () => {
+    if (!isNaN(audio.duration))
+      audio.currentTime = (progressBar.value / 100) * audio.duration;
+  };
+  
+  // Initialize auto-advance handler
+  setupPlaylistAutoAdvance();
+  
+  /* ---------------- VIDEO PLAYER JS (Unchanged) ---------------- */
+  const MAX_VIDEOS = 10;
+  const selectorsDiv = document.getElementById("selectors");
+  const videoPlayer = document.getElementById("videoPlayer");
+  let videoList = [];
+
+  for (let i = 1; i <= MAX_VIDEOS; i++) {
+    const group = document.createElement("div");
+    group.classList.add("file-group");
+    group.innerHTML = `
+      <label>Video ${i}</label><br>
+      <input type="file" id="file${i}" accept="video/mp4"><br>
+      <input type="number" id="repeat${i}" min="1" value="1" placeholder="Repeat count">
+    `;
+    selectorsDiv.appendChild(group);
+  }
+
+  function toggleSettings() {
+    const panel = document.getElementById("settingsPanel");
+    panel.style.display = panel.style.display === "none" ? "block" : "none";
+  }
+
+  function startPlayback() {
+    videoList = [];
+    for (let i = 1; i <= MAX_VIDEOS; i++) {
+      const fileInput = document.getElementById(`file${i}`);
+      const repeatInput = document.getElementById(`repeat${i}`);
+      const file = fileInput.files[0];
+      const repeat = parseInt(repeatInput.value) || 1;
+      if (file) for (let r = 0; r < repeat; r++) videoList.push(URL.createObjectURL(file));
+    }
+    if (videoList.length === 0) return alert("No videos selected.");
+    playNextVideo(0);
+  }
+
+  function playNextVideo(index) {
+    if (index >= videoList.length) return;
+    videoPlayer.src = videoList[index];
+    videoPlayer.load(); videoPlayer.play();
+    videoPlayer.onended = () => playNextVideo(index + 1);
+  }
+
+  function enterFullscreen() {
+    const vid = videoPlayer;
+    if (vid.requestFullscreen) vid.requestFullscreen();
+    else if (vid.webkitRequestFullscreen) vid.webkitRequestFullscreen();
+    else if (vid.msRequestFullscreen) vid.msRequestFullscreen();
+  }
+</script>
+</body>
+</html>

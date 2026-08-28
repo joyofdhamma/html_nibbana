@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classic Yearly Planner</title>
+    <style>
+        /* Classic, minimal styling */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Georgia', serif;
+        }
+
+        body {
+            background-color: #f8f5e6;
+            color: #2c2416;
+            line-height: 1.5;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Print styling */
+        @media print {
+            body {
+                background-color: white;
+                padding: 5mm;
+                max-width: 100%;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+            
+            .page-break {
+                page-break-after: always;
+                break-after: page;
+            }
+            
+            .planner-container, .resolutions-section {
+                box-shadow: none !important;
+                border: 1px solid #ccc !important;
+                margin-bottom: 15px !important;
+            }
+            
+            button, input, .interactive {
+                display: none !important;
+            }
+        }
+
+        /* Header with classic look */
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px double #2c2416;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            font-weight: normal;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            color: #2c2416;
+        }
+
+        .header h2 {
+            font-size: 18px;
+            font-weight: normal;
+            font-style: italic;
+            color: #5a4a30;
+        }
+
+        /* Controls */
+        .controls {
+            background-color: #fff;
+            border: 1px solid #d4c9b8;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .year-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .year-selector label {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .year-selector select {
+            padding: 8px 15px;
+            border: 1px solid #8b7d66;
+            background-color: white;
+            font-size: 16px;
+            min-width: 120px;
+            font-family: inherit;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 8px 20px;
+            border: 1px solid #8b7d66;
+            background-color: #f0ebe0;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        button:hover {
+            background-color: #e5dfd1;
+        }
+
+        .print-btn {
+            background-color: #2c2416;
+            color: white;
+            border-color: #2c2416;
+        }
+
+        .print-btn:hover {
+            background-color: #3d3423;
+        }
+
+        .clear-btn {
+            background-color: #b35c44;
+            color: white;
+            border-color: #8a4230;
+        }
+
+        .clear-btn:hover {
+            background-color: #9e4d37;
+        }
+
+        /* Main content - two column layout */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+
+        /* Calendar section */
+        .calendar-section {
+            background-color: white;
+            border: 1px solid #d4c9b8;
+            padding: 25px;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .calendar-title {
+            font-size: 24px;
+            font-weight: normal;
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #d4c9b8;
+            color: #2c2416;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Year calendar grid */
+        .year-calendar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        @media (max-width: 1100px) {
+            .year-calendar {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 700px) {
+            .year-calendar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 500px) {
+            .year-calendar {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Month boxes */
+        .month-box {
+            border: 1px solid #d4c9b8;
+            background-color: #fff;
+        }
+
+        .month-header {
+            background-color: #f0ebe0;
+            padding: 8px 5px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 16px;
+            border-bottom: 1px solid #d4c9b8;
+            color: #2c2416;
+        }
+
+        .month-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background-color: #d4c9b8;
+            border: 1px solid #d4c9b8;
+        }
+
+        .day-header, .day-cell {
+            padding: 6px 2px;
+            text-align: center;
+            font-size: 12px;
+            background-color: white;
+            min-height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .day-header {
+            background-color: #f5f1e8;
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        .day-cell.weekend {
+            background-color: #f9f6ef;
+            color: #8b7d66;
+        }
+
+        .day-cell.today {
+            background-color: #2c2416;
+            color: white;
+            font-weight: bold;
+        }
+
+        .day-number {
+            font-size: 11px;
+        }
+
+        /* Resolutions section */
+        .resolutions-section {
+            background-color: white;
+            border: 1px solid #d4c9b8;
+            padding: 25px;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .resolutions-title {
+            font-size: 24px;
+            font-weight: normal;
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #d4c9b8;
+            color: #2c2416;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .resolutions-container {
+            min-height: 500px;
+        }
+
+        .resolution-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #e5dfd1;
+        }
+
+        .resolution-checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #8b7d66;
+            background-color: white;
+            margin-right: 15px;
+            margin-top: 3px;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .resolution-checkbox.checked {
+            background-color: #2c2416;
+            position: relative;
+        }
+
+        .resolution-checkbox.checked::after {
+            content: "✓";
+            color: white;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 14px;
+        }
+
+        .resolution-text {
+            flex: 1;
+            min-height: 24px;
+            border: none;
+            font-size: 15px;
+            background-color: transparent;
+            outline: none;
+            resize: none;
+            overflow: hidden;
+            font-family: inherit;
+            line-height: 1.5;
+            padding: 2px;
+            color: #2c2416;
+        }
+
+        .resolution-text:focus {
+            background-color: #f9f6ef;
+        }
+
+        .resolution-text::placeholder {
+            color: #a89c87;
+            font-style: italic;
+        }
+
+        .resolution-actions {
+            text-align: center;
+            margin-top: 25px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #5a4a30;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .weekend-sample {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            background-color: #f9f6ef;
+            border: 1px solid #d4c9b8;
+        }
+
+        .today-sample {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            background-color: #2c2416;
+            border: 1px solid #2c2416;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #d4c9b8;
+            font-size: 13px;
+            color: #8b7d66;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>YEARLY PLANNER</h1>
+        <h2>Calendar & Resolutions for <span id="current-year">2026</span></h2>
+    </div>
+
+    <div class="controls no-print">
+        <div class="year-selector">
+            <label for="year-select">Select Year:</label>
+            <select id="year-select">
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
+                <option value="2027" selected>2027</option>
+                <option value="2028">2028</option>
+                <option value="2029">2029</option>
+                <option value="2030">2030</option>
+            </select>
+        </div>
+        <div class="action-buttons">
+            <button id="save-btn">Save Planner</button>
+            <button id="print-btn" class="print-btn">Print Planner</button>
+            <button id="add-resolution-btn">+ Add Resolution</button>
+            <button id="clear-resolutions-btn" class="clear-btn">Clear Resolutions</button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <!-- Calendar Section -->
+        <div class="calendar-section">
+            <div class="calendar-title" id="year-title">2024 CALENDAR</div>
+            <div id="year-calendar" class="year-calendar">
+                <!-- Calendar will be generated here -->
+            </div>
+            <div class="legend">
+                <div class="legend-item">
+                    <span class="weekend-sample"></span>
+                    <span>Weekends (Fri/Sat)</span>
+                </div>
+                <div class="legend-item">
+                    <span class="today-sample"></span>
+                    <span>Today</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resolutions Section -->
+        <div class="resolutions-section">
+            <div class="resolutions-title">YEARLY RESOLUTIONS</div>
+            <div class="resolutions-container" id="resolutions-container">
+                <!-- Default resolutions -->
+                <div class="resolution-item">
+                    <div class="resolution-checkbox"></div>
+                    <textarea class="resolution-text" placeholder="Enter your first resolution...">Improve health and fitness routine</textarea>
+                </div>
+                <div class="resolution-item">
+                    <div class="resolution-checkbox"></div>
+                    <textarea class="resolution-text" placeholder="Enter another resolution...">Read more books - target 12 this year</textarea>
+                </div>
+                <div class="resolution-item">
+                    <div class="resolution-checkbox"></div>
+                    <textarea class="resolution-text" placeholder="Enter another resolution...">Learn a new skill or develop a hobby</textarea>
+                </div>
+                <div class="resolution-item">
+                    <div class="resolution-checkbox"></div>
+                    <textarea class="resolution-text" placeholder="Enter another resolution...">Save and invest more money</textarea>
+                </div>
+                <div class="resolution-item">
+                    <div class="resolution-checkbox"></div>
+                    <textarea class="resolution-text" placeholder="Enter another resolution...">Travel to new places</textarea>
+                </div>
+                <div class="resolution-item">
+                    <div class="resolution-checkbox"></div>
+                    <textarea class="resolution-text" placeholder="Enter another resolution...">Spend more quality time with family</textarea>
+                </div>
+                <div class="resolution-item">
+                    <div class="resolution-checkbox"></div>
+                    <textarea class="resolution-text" placeholder="Enter another resolution...">Improve work-life balance</textarea>
+                </div>
+                <div class="resolution-item">
+                    <div class="resolution-checkbox"></div>
+                    <textarea class="resolution-text" placeholder="Enter another resolution..."></textarea>
+                </div>
+            </div>
+            <div class="resolution-actions no-print">
+                <button id="add-resolution-btn-bottom">+ Add Another Resolution</button>
+                <button id="clear-resolutions-btn-bottom" class="clear-btn">Clear Resolutions</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div>Classic Yearly Planner | Calendar & Resolutions Only</div>
+        <div>Print for offline use or save digitally</div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const yearSelect = document.getElementById('year-select');
+        const printBtn = document.getElementById('print-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const addResolutionBtn = document.getElementById('add-resolution-btn');
+        const addResolutionBtnBottom = document.getElementById('add-resolution-btn-bottom');
+        const clearResolutionsBtn = document.getElementById('clear-resolutions-btn');
+        const clearResolutionsBtnBottom = document.getElementById('clear-resolutions-btn-bottom');
+        const yearTitle = document.getElementById('year-title');
+        const currentYearSpan = document.getElementById('current-year');
+        const yearCalendar = document.getElementById('year-calendar');
+        const resolutionsContainer = document.getElementById('resolutions-container');
+        
+        // Initialize the planner
+        function initPlanner() {
+            const currentYear = new Date().getFullYear().toString();
+            
+            // Set current year if available in options
+            const yearOption = Array.from(yearSelect.options).find(option => option.value === currentYear);
+            if (yearOption) {
+                yearSelect.value = currentYear;
+            }
+            
+            generateCalendar(yearSelect.value);
+            loadSavedData();
+            
+            // Event Listeners
+            yearSelect.addEventListener('change', function() {
+                const selectedYear = this.value;
+                generateCalendar(selectedYear);
+                yearTitle.textContent = `${selectedYear} CALENDAR`;
+                currentYearSpan.textContent = selectedYear;
+                saveData();
+            });
+            
+            printBtn.addEventListener('click', function() {
+                window.print();
+            });
+            
+            saveBtn.addEventListener('click', saveData);
+            
+            addResolutionBtn.addEventListener('click', addResolution);
+            addResolutionBtnBottom.addEventListener('click', addResolution);
+
+            // Clear resolutions (both buttons)
+            clearResolutionsBtn.addEventListener('click', clearAllResolutions);
+            clearResolutionsBtnBottom.addEventListener('click', clearAllResolutions);
+            
+            // Toggle checkbox when clicked
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('resolution-checkbox')) {
+                    e.target.classList.toggle('checked');
+                    saveData();
+                }
+            });
+            
+            // Auto-save when typing in resolutions
+            document.addEventListener('input', function(e) {
+                if (e.target.classList.contains('resolution-text')) {
+                    autoResizeTextarea(e.target);
+                    saveData();
+                }
+            });
+            
+            // Initial auto-resize for all textareas
+            document.querySelectorAll('.resolution-text').forEach(textarea => {
+                autoResizeTextarea(textarea);
+            });
+        }
+
+        // Clear all resolutions (keep one empty item)
+        function clearAllResolutions() {
+            // Remove all resolution items
+            resolutionsContainer.innerHTML = '';
+            // Add one empty resolution as a starting point
+            addResolution();
+            // Save the cleared state
+            saveData();
+        }
+        
+        // Generate the yearly calendar
+        function generateCalendar(year) {
+            yearCalendar.innerHTML = '';
+            
+            const months = [
+                "January", "February", "March", "April", 
+                "May", "June", "July", "August", 
+                "September", "October", "November", "December"
+            ];
+            
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            const currentMonth = today.getMonth();
+            const currentDay = today.getDate();
+            
+            months.forEach((monthName, monthIndex) => {
+                // Create month container
+                const monthBox = document.createElement('div');
+                monthBox.className = 'month-box';
+                
+                // Month header
+                const monthHeader = document.createElement('div');
+                monthHeader.className = 'month-header';
+                monthHeader.textContent = monthName;
+                monthBox.appendChild(monthHeader);
+                
+                // Month grid
+                const monthGrid = document.createElement('div');
+                monthGrid.className = 'month-grid';
+                
+                // Day headers (Sun to Sat)
+                const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                dayHeaders.forEach(day => {
+                    const dayHeader = document.createElement('div');
+                    dayHeader.className = 'day-header';
+                    dayHeader.textContent = day;
+                    monthGrid.appendChild(dayHeader);
+                });
+                
+                // Get first day of month and days in month
+                const firstDay = new Date(year, monthIndex, 1).getDay();
+                const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+                
+                // Add empty cells for days before the first day
+                for (let i = 0; i < firstDay; i++) {
+                    const emptyCell = document.createElement('div');
+                    emptyCell.className = 'day-cell';
+                    monthGrid.appendChild(emptyCell);
+                }
+                
+                // Add day cells
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dayCell = document.createElement('div');
+                    dayCell.className = 'day-cell';
+                    
+                    // Check if it's a weekend (Friday or Saturday)
+                    const dayOfWeek = new Date(year, monthIndex, day).getDay();
+                    if (dayOfWeek === 5 || dayOfWeek === 6) { // 5 = Friday, 6 = Saturday
+                        dayCell.classList.add('weekend');
+                    }
+                    
+                    // Check if it's today
+                    if (year == currentYear && monthIndex === currentMonth && day === currentDay) {
+                        dayCell.classList.add('today');
+                    }
+                    
+                    const dayNumber = document.createElement('span');
+                    dayNumber.className = 'day-number';
+                    dayNumber.textContent = day;
+                    dayCell.appendChild(dayNumber);
+                    
+                    monthGrid.appendChild(dayCell);
+                }
+                
+                monthBox.appendChild(monthGrid);
+                yearCalendar.appendChild(monthBox);
+            });
+        }
+        
+        // Add a new resolution
+        function addResolution() {
+            const resolutionItem = document.createElement('div');
+            resolutionItem.className = 'resolution-item';
+            
+            const checkbox = document.createElement('div');
+            checkbox.className = 'resolution-checkbox';
+            
+            const textarea = document.createElement('textarea');
+            textarea.className = 'resolution-text';
+            textarea.placeholder = 'Enter a new resolution...';
+            
+            resolutionItem.appendChild(checkbox);
+            resolutionItem.appendChild(textarea);
+            resolutionsContainer.appendChild(resolutionItem);
+            
+            // Focus on the new textarea
+            textarea.focus();
+            
+            saveData();
+        }
+        
+        // Auto-resize textarea based on content
+        function autoResizeTextarea(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = (textarea.scrollHeight) + 'px';
+        }
+        
+        // Save data to localStorage
+        function saveData() {
+            const data = {
+                year: yearSelect.value,
+                resolutions: []
+            };
+            
+            // Save all resolutions
+            const resolutionItems = document.querySelectorAll('.resolution-item');
+            resolutionItems.forEach(item => {
+                const checkbox = item.querySelector('.resolution-checkbox');
+                const textarea = item.querySelector('.resolution-text');
+                
+                // Only save if there's content
+                if (textarea.value.trim() !== '') {
+                    data.resolutions.push({
+                        text: textarea.value,
+                        checked: checkbox.classList.contains('checked')
+                    });
+                }
+            });
+            
+            localStorage.setItem('yearlyPlannerData', JSON.stringify(data));
+            
+            // Show save confirmation
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = 'Saved!';
+            setTimeout(() => {
+                saveBtn.textContent = originalText;
+            }, 1500);
+        }
+        
+        // Load saved data from localStorage
+        function loadSavedData() {
+            const savedData = localStorage.getItem('yearlyPlannerData');
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    
+                    // Set year
+                    if (data.year && Array.from(yearSelect.options).some(option => option.value === data.year)) {
+                        yearSelect.value = data.year;
+                        yearTitle.textContent = `${data.year} CALENDAR`;
+                        currentYearSpan.textContent = data.year;
+                        generateCalendar(data.year);
+                    }
+                    
+                    // Load resolutions if they exist
+                    if (data.resolutions && data.resolutions.length > 0) {
+                        resolutionsContainer.innerHTML = '';
+                        
+                        data.resolutions.forEach(resolution => {
+                            const resolutionItem = document.createElement('div');
+                            resolutionItem.className = 'resolution-item';
+                            
+                            const checkbox = document.createElement('div');
+                            checkbox.className = 'resolution-checkbox';
+                            if (resolution.checked) {
+                                checkbox.classList.add('checked');
+                            }
+                            
+                            const textarea = document.createElement('textarea');
+                            textarea.className = 'resolution-text';
+                            textarea.value = resolution.text;
+                            
+                            resolutionItem.appendChild(checkbox);
+                            resolutionItem.appendChild(textarea);
+                            resolutionsContainer.appendChild(resolutionItem);
+                            
+                            // Auto-resize after adding
+                            setTimeout(() => autoResizeTextarea(textarea), 10);
+                        });
+                        
+                        // Add one empty resolution for new entries
+                        addResolution();
+                    }
+                } catch (error) {
+                    console.error('Error loading saved data:', error);
+                }
+            }
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initPlanner);
+    </script>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Color Palette Manager</title>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    background: #f7f7f7;
+  }
+
+  h2 {
+    text-align: center;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: white;
+  }
+
+  th, td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+  }
+
+  input[type="text"] {
+    width: 95%;
+    padding: 6px;
+  }
+
+  .color-box {
+    width: 60px;
+    height: 30px;
+    border: 1px solid #aaa;
+    margin: auto;
+  }
+
+  button {
+    padding: 10px 15px;
+    margin: 10px 5px;
+    border: none;
+    background: #1976d2;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #0d47a1;
+  }
+
+  .delete-btn {
+    background: #d32f2f;
+  }
+  .delete-btn:hover {
+    background: #9a0007;
+  }
+</style>
+</head>
+
+<body>
+<h2>🎨 My Power BI Color Palette Library</h2>
+
+<button onclick="addRow()">+ Add Row</button>
+<button onclick="saveJSON()">💾 Save as JSON</button>
+<button onclick="document.getElementById('fileInput').click()">📁 Import JSON</button>
+<input type="file" id="fileInput" accept=".json" style="display:none" onchange="importJSON(event)">
+
+<table id="colorTable">
+  <tr>
+    <th>Hex Color Code</th>
+    <th>Preview</th>
+    <th>Remarks</th>
+    <th>Action</th>
+  </tr>
+</table>
+
+<script>
+function addRow(hex = "", remark = "") {
+  let table = document.getElementById("colorTable");
+  let row = table.insertRow(-1);
+
+  // HEX Code
+  let hexCell = row.insertCell(0);
+  hexCell.innerHTML = `<input type='text' value='${hex}' oninput='updateColorPreview(this)' placeholder='#c5c0c0'>`;
+
+  // Preview
+  let previewCell = row.insertCell(1);
+  previewCell.innerHTML = `<div class='color-box' style='background:${hex}'></div>`;
+
+  // Remarks
+  let remarkCell = row.insertCell(2);
+  remarkCell.innerHTML = `<input type='text' value='${remark}' placeholder='Remarks...'>`;
+
+  // Delete
+  let deleteCell = row.insertCell(3);
+  deleteCell.innerHTML = `<button class='delete-btn' onclick='deleteRow(this)'>-</button>`;
+}
+
+function deleteRow(btn) {
+  let row = btn.parentNode.parentNode;
+  row.remove();
+}
+
+function updateColorPreview(input) {
+  let row = input.parentNode.parentNode;
+  let colorBox = row.cells[1].querySelector(".color-box");
+  colorBox.style.background = input.value;
+}
+
+function saveJSON() {
+  let table = document.getElementById("colorTable");
+  let data = [];
+
+  for (let i = 1; i < table.rows.length; i++) {
+    let hex = table.rows[i].cells[0].querySelector("input").value;
+    let remark = table.rows[i].cells[2].querySelector("input").value;
+
+    data.push({ hex, remark });
+  }
+
+  let blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  let link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "color_palette.json";
+  link.click();
+}
+
+function importJSON(event) {
+  let file = event.target.files[0];
+  let reader = new FileReader();
+
+  reader.onload = function(e) {
+    let jsonData = JSON.parse(e.target.result);
+    clearTable();
+
+    jsonData.forEach(item => addRow(item.hex, item.remark));
+  };
+
+  reader.readAsText(file);
+}
+
+function clearTable() {
+  let table = document.getElementById("colorTable");
+  while (table.rows.length > 1) {
+    table.deleteRow(1);
+  }
+}
+</script>
+
+</body>
+</html>

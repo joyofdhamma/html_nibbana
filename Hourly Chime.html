@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Hourly Buddy</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0b0b0b">
+<style>
+  :root{--bg:#0b0b0b;--card:#111;--accent:#22c55e;--muted:#9aa0a6}
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:var(--bg);color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  .app{max-width:760px;margin:24px auto;padding:18px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  h1{font-size:20px;margin:0}
+  .muted{color:var(--muted);font-size:13px}
+  .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);margin-top:16px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  button{background:var(--accent);color:#000;border:none;padding:10px 14px;border-radius:10px;font-weight:600;cursor:pointer}
+  button.secondary{background:#333;color:#fff}
+  .top-right-icons{display:flex;gap:8px;align-items:center}
+  .icon-btn{background:transparent;border:none;font-size:22px;cursor:pointer;color:#fff;padding:8px;border-radius:8px}
+  .icon-btn:hover{background:rgba(255,255,255,0.03)}
+  .status{margin-top:12px;font-size:14px}
+  label{display:block;margin-top:8px;font-size:13px;color:var(--muted)}
+  input[type="checkbox"]{transform:scale(1.1);margin-right:8px}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:2000}
+  .modal .sheet{background:#111;padding:16px;border-radius:12px;width:92%;max-width:420px;border:1px solid #222}
+  .row{display:flex;gap:8px;align-items:center}
+  input[type="file"]{display:block}
+  .small{font-size:12px;color:var(--muted)}
+  .hint{font-size:13px;color:var(--muted);margin-top:8px}
+  footer{margin-top:18px;font-size:12px;color:var(--muted)}
+  @media(min-width:760px){ .app{margin-top:40px} }
+</style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Hourly Buddy</h1>
+        <div class="muted">Announces the time every hour — English (Great Britain)</div>
+      </div>
+
+      <div class="top-right-icons">
+        <!-- Music icon opens settings modal -->
+        <button id="musicBtn" class="icon-btn" title="Background music & settings">🎵</button>
+        <!-- Announcement toggle / enable button (user interaction) -->
+        <button id="enableBtn" class="icon-btn" title="Enable announcements">🔔</button>
+      </div>
+    </header>
+
+    <div class="card">
+      <div><strong>Next scheduled announcement:</strong></div>
+      <div id="nextAnnouncement" style="margin-top:8px;font-size:18px">Calculating…</div>
+      <div class="status" id="announceStatus">Announcements will begin from the next full hour.</div>
+
+      <div class="controls">
+        <button id="toggleAnnouncements" class="secondary">Enable announcements</button>
+        <button id="speakNow" class="secondary">Speak current time now</button>
+        <label class="small" style="display:flex;align-items:center"><input type="checkbox" id="wakeLockCheckbox"> Keep screen awake (if supported)</label>
+      </div>
+
+      <div class="hint">Note: Keep the app open for hourly announcements. Some browsers suspend background activity when the screen is off or app is in background.</div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div><strong>Settings</strong></div>
+      <label>Language (TTS)</label>
+      <select id="langSelect">
+        <option value="en-GB">English (Great Britain)</option>
+        <option value="en-US">English (US)</option>
+        <option value="en-AU">English (Australia)</option>
+      </select>
+
+      <label>Announcement style</label>
+      <select id="styleSelect">
+        <option value="A">It is 3 PM.</option>
+        <option value="B">Hello! The time is now 3 PM.</option>
+        <option value="C">The time is 15:00 hours.</option>
+      </select>
+
+      <div style="margin-top:10px" class="row">
+        <label class="small" style="margin:0">Volume</label>
+        <input id="ttsVolume" type="range" min="0" max="1" step="0.05" value="1" style="flex:1">
+      </div>
+    </div>
+
+    <footer>
+      <div>App name: <strong>Hourly Buddy</strong> — Add to Home Screen for best experience.</div>
+    </footer>
+  </div>
+
+  <!-- Music modal -->
+  <div id="musicModal" class="modal" aria-hidden="true">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="musicTitle">
+      <h3 id="musicTitle">Background music</h3>
+      <div class="row">
+        <label for="musicFile" class="small" style="flex:1">Choose MP3</label>
+        <input id="musicFile" accept="audio/*" type="file" />
+      </div>
+
+      <div style="margin-top:10px" class="row">
+        <button id="playMusic" class="secondary">Play</button>
+        <button id="pauseMusic" class="secondary">Pause</button>
+        <button id="stopMusic" class="secondary">Stop</button>
+      </div>
+
+      <div style="margin-top:8px" class="row">
+        <label class="small">Volume</label>
+        <input id="musicVolume" type="range" min="0" max="1" step="0.01" value="0.5" style="flex:1" />
+      </div>
+
+      <div style="margin-top:10px" class="row">
+        <label class="small"><input id="musicMute" type="checkbox"> Mute by default</label>
+      </div>
+
+      <div style="margin-top:14px" class="row">
+        <button id="closeMusic" class="btn">Close</button>
+      </div>
+      <div class="small hint" style="margin-top:8px">Uploaded file cannot persist across reloads due to browser security. The app remembers volume & mute choice.</div>
+    </div>
+  </div>
+
+  <!-- audio element (muted by default) -->
+  <audio id="bgAudio" loop muted></audio>
+
+<script>
+/*
+ Hourly Buddy
+ - Announce every hour (default starting next round hour)
+ - TTS default en-GB
+ - Music modal (choose mp3, play/pause/stop, mute default)
+ - Persist settings (language, style, ttsVolume, musicVolume, musicMuted, announcementsEnabled)
+*/
+
+// Elements
+const musicBtn = document.getElementById('musicBtn');
+const musicModal = document.getElementById('musicModal');
+const musicFile = document.getElementById('musicFile');
+const playMusicBtn = document.getElementById('playMusic');
+const pauseMusicBtn = document.getElementById('pauseMusic');
+const stopMusicBtn = document.getElementById('stopMusic');
+const musicVolume = document.getElementById('musicVolume');
+const musicMute = document.getElementById('musicMute');
+const closeMusic = document.getElementById('closeMusic');
+const bgAudio = document.getElementById('bgAudio');
+
+const toggleAnnouncementsBtn = document.getElementById('toggleAnnouncements');
+const enableBtn = document.getElementById('enableBtn');
+const speakNowBtn = document.getElementById('speakNow');
+const nextAnnouncementDisplay = document.getElementById('nextAnnouncement');
+const announceStatus = document.getElementById('announceStatus');
+const langSelect = document.getElementById('langSelect');
+const styleSelect = document.getElementById('styleSelect');
+const ttsVolume = document.getElementById('ttsVolume');
+const wakeLockCheckbox = document.getElementById('wakeLockCheckbox');
+
+let announcementTimerId = null;
+let hourlyIntervalId = null;
+let announcementsEnabled = false;
+let ttsLang = localStorage.getItem('hb_lang') || 'en-GB';
+let ttsStyle = localStorage.getItem('hb_style') || 'A';
+let ttsVol = parseFloat(localStorage.getItem('hb_ttsVol') || '1');
+let musicVol = parseFloat(localStorage.getItem('hb_musicVol') || '0.5');
+let musicIsMuted = (localStorage.getItem('hb_musicMuted') === 'true') || false;
+let selectedVoice = null;
+let availableVoices = [];
+
+// Wake lock object
+let wakeLock = null;
+
+// initialize UI from storage
+langSelect.value = ttsLang;
+styleSelect.value = ttsStyle;
+ttsVolume.value = ttsVol;
+musicVolume.value = musicVol;
+musicMute.checked = musicIsMuted;
+
+// load voices
+function populateVoices() {
+  availableVoices = speechSynthesis.getVoices() || [];
+  // pick default voice that matches selected language (en-GB preferred)
+  selectedVoice = availableVoices.find(v => v.lang && v.lang.startsWith(ttsLang)) || availableVoices.find(v => v.lang && v.lang.startsWith('en')) || null;
+}
+populateVoices();
+if (typeof speechSynthesis !== 'undefined') {
+  speechSynthesis.onvoiceschanged = populateVoices;
+}
+
+// Helper: format hour nicely for style A (e.g., 3 PM)
+function formatHourStyleA(date) {
+  let hours = date.getHours();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  return `${hours} ${ampm}`;
+}
+
+// Helper: format precise 24h "15:00" for style C
+function formatHourStyleC(date) {
+  const hh = date.getHours().toString().padStart(2,'0');
+  const mm = date.getMinutes().toString().padStart(2,'0');
+  return `${hh}:${mm}`;
+}
+
+// Compose spoken sentence based on selected style (A/B/C)
+function composeAnnouncement(date) {
+  switch (styleSelect.value) {
+    case 'A': return `It is ${formatHourStyleA(date)}.`;
+    case 'B': return `Hello! The time is now ${formatHourStyleA(date)}.`;
+    case 'C': return `The time is ${formatHourStyleC(date)} hours.`;
+    default: return `It is ${formatHourStyleA(date)}.`;
+  }
+}
+
+// Speak using SpeechSynthesis with selected voice & language
+function speakText(text) {
+  if (!('speechSynthesis' in window)) {
+    console.warn('Speech Synthesis not supported');
+    return;
+  }
+  if (!('hb_announcements_enabled' in localStorage) || localStorage.getItem('hb_announcements_enabled') !== 'true') return;
+
+  // create utterance
+  const ut = new SpeechSynthesisUtterance(text);
+  ut.lang = langSelect.value || 'en-GB';
+  ut.volume = parseFloat(ttsVolume.value || '1');
+  ut.rate = 1;
+  // choose voice if available
+  const voice = availableVoices.find(v => v.lang && v.lang.startsWith(ut.lang)) || availableVoices[0];
+  if (voice) ut.voice = voice;
+  try {
+    speechSynthesis.cancel();
+    speechSynthesis.speak(ut);
+  } catch (e) { console.warn('TTS error', e); }
+}
+
+// Calculate ms until next rounded hour (top of next hour)
+function msUntilNextHour() {
+  const now = new Date();
+  const next = new Date(now.getTime());
+  next.setMinutes(0,0,0);
+  // If we're exactly at the hour, schedule for next hour per your choice (start from next round hour)
+  next.setHours(now.getHours() + 1);
+  return next - now;
+}
+
+// Schedule the announcements to start at the next hour and then every hour
+function scheduleHourlyAnnouncements() {
+  clearAnnouncements();
+  const ms = msUntilNextHour();
+  const when = new Date(Date.now() + ms);
+  nextAnnouncementDisplay.textContent = `At ${when.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
+  announceStatus.textContent = 'Announcements scheduled — will start at the top of the next hour.';
+  // set timeout to first announcement
+  announcementTimerId = setTimeout(() => {
+    // speak right at hour
+    speakText(composeAnnouncement(new Date()));
+    // then set hourly interval
+    hourlyIntervalId = setInterval(() => {
+      speakText(composeAnnouncement(new Date()));
+    }, 60 * 60 * 1000); // every hour
+    // update display for next announcement
+    updateNextAnnouncementDisplay();
+  }, ms);
+}
+
+// Update the "next" time shown
+function updateNextAnnouncementDisplay() {
+  if (announcementTimerId || hourlyIntervalId) {
+    const now = new Date();
+    let next;
+    if (hourlyIntervalId) {
+      next = new Date(now.getTime() + (60*60*1000));
+    } else {
+      next = new Date(now.getTime() + msUntilNextHour());
+    }
+    nextAnnouncementDisplay.textContent = `At ${next.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
+  } else {
+    nextAnnouncementDisplay.textContent = 'Not scheduled';
+  }
+}
+
+// Clear scheduled timers
+function clearAnnouncements() {
+  if (announcementTimerId) { clearTimeout(announcementTimerId); announcementTimerId = null; }
+  if (hourlyIntervalId) { clearInterval(hourlyIntervalId); hourlyIntervalId = null; }
+  nextAnnouncementDisplay.textContent = 'Not scheduled';
+  announceStatus.textContent = 'Announcements disabled';
+}
+
+// Toggle announcements on/off
+function toggleAnnouncementsEnable() {
+  announcementsEnabled = !announcementsEnabled;
+  localStorage.setItem('hb_announcements_enabled', announcementsEnabled ? 'true' : 'false');
+  toggleAnnouncementsBtn.textContent = announcementsEnabled ? 'Disable announcements' : 'Enable announcements';
+  enableBtn.textContent = announcementsEnabled ? '🔔' : '🔕';
+  if (announcementsEnabled) {
+    scheduleHourlyAnnouncements();
+  } else {
+    clearAnnouncements();
+  }
+}
+
+// Immediately speak current time (manual)
+function speakCurrentTimeNow() {
+  const now = new Date();
+  speakText(composeAnnouncement(now));
+}
+
+// MUSIC modal logic
+musicBtn.addEventListener('click', () => {
+  musicModal.style.display = 'flex';
+  musicModal.setAttribute('aria-hidden','false');
+});
+closeMusic.addEventListener('click', () => {
+  musicModal.style.display = 'none';
+  musicModal.setAttribute('aria-hidden','true');
+});
+
+// load chosen file into audio element (object URL)
+musicFile.addEventListener('change', (ev) => {
+  const f = ev.target.files && ev.target.files[0];
+  if (f) {
+    try {
+      const url = URL.createObjectURL(f);
+      bgAudio.src = url;
+      bgAudio.loop = true;
+      bgAudio.volume = parseFloat(musicVolume.value || '0.5');
+      bgAudio.muted = musicMute.checked;
+      // persist volume & mute
+      localStorage.setItem('hb_musicVol', musicVolume.value);
+      localStorage.setItem('hb_musicMuted', musicMute.checked ? 'true' : 'false');
+    } catch (e) {
+      console.warn('Could not load audio file', e);
+    }
+  }
+});
+
+playMusicBtn.addEventListener('click', async () => {
+  try {
+    bgAudio.volume = parseFloat(musicVolume.value || '0.5');
+    bgAudio.muted = musicMute.checked;
+    await bgAudio.play();
+  } catch (e) {
+    console.warn('Play failed (user interaction required?)', e);
+  }
+});
+pauseMusicBtn.addEventListener('click', () => {
+  bgAudio.pause();
+});
+stopMusicBtn.addEventListener('click', () => {
+  bgAudio.pause();
+  bgAudio.currentTime = 0;
+});
+musicVolume.addEventListener('input', () => {
+  bgAudio.volume = parseFloat(musicVolume.value);
+  localStorage.setItem('hb_musicVol', musicVolume.value);
+});
+musicMute.addEventListener('change', () => {
+  bgAudio.muted = musicMute.checked;
+  localStorage.setItem('hb_musicMuted', musicMute.checked ? 'true' : 'false');
+});
+
+// Button handlers
+toggleAnnouncementsBtn.addEventListener('click', () => {
+  toggleAnnouncementsEnable();
+});
+speakNowBtn.addEventListener('click', () => {
+  speakCurrentTimeNow();
+});
+
+// enableBtn is a quick user-interaction button to allow audio/TTS (browsers require interaction)
+enableBtn.addEventListener('click', async () => {
+  // store that user allowed
+  localStorage.setItem('hb_user_interacted', 'true');
+  // play silent audio to unlock audio in some browsers
+  try {
+    // create a short silent utterance to "unlock" speech
+    const ut = new SpeechSynthesisUtterance('');
+    ut.volume = 0;
+    speechSynthesis.speak(ut);
+  } catch (e) {
+    console.warn('Unlock TTS attempt failed', e);
+  }
+  // attempt to play bgAudio if loaded & not muted by user
+  try {
+    if (bgAudio.src && !musicMute.checked) {
+      await bgAudio.play();
+    }
+  } catch (e) {
+    console.warn('bgAudio play failed:', e);
+  }
+  // toggle announcements if stored as enabled
+  if (localStorage.getItem('hb_announcements_enabled') === 'true') {
+    announcementsEnabled = true;
+    toggleAnnouncementsEnable(); // will schedule
+  }
+});
+
+// Persist tts settings
+langSelect.addEventListener('change', () => {
+  localStorage.setItem('hb_lang', langSelect.value);
+  populateVoices();
+});
+styleSelect.addEventListener('change', () => {
+  localStorage.setItem('hb_style', styleSelect.value);
+});
+ttsVolume.addEventListener('input', () => {
+  localStorage.setItem('hb_ttsVol', ttsVolume.value);
+});
+
+// Wake lock control
+wakeLockCheckbox.addEventListener('change', async () => {
+  if (wakeLockCheckbox.checked) {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => {
+          console.log('Wake Lock released');
+          wakeLock = null;
+          wakeLockCheckbox.checked = false;
+        });
+      } else {
+        alert('Wake lock not supported on this browser');
+        wakeLockCheckbox.checked = false;
+      }
+    } catch (err) {
+      console.warn('Wake lock request failed:', err);
+      wakeLockCheckbox.checked = false;
+    }
+  } else {
+    if (wakeLock) {
+      wakeLock.release().then(() => (wakeLock = null));
+    }
+  }
+});
+
+// initial state restoration
+function restoreState() {
+  // announcements enabled?
+  if (localStorage.getItem('hb_announcements_enabled') === 'true') {
+    announcementsEnabled = true;
+    toggleAnnouncementsBtn.textContent = 'Disable announcements';
+    enableBtn.textContent = '🔔';
+    // but per your choice (start from next hour), we schedule from next hour only when the user explicitly enables or we detect prior enable and the user interacts
+    // we'll not schedule automatically until the user interacts (click enableBtn) due to autoplay restrictions
+    announceStatus.textContent = 'Announcements are enabled (will start at next full hour after user interaction).';
+    updateNextAnnouncementDisplay();
+  } else {
+    toggleAnnouncementsBtn.textContent = 'Enable announcements';
+    enableBtn.textContent = '🔕';
+  }
+  // tts settings
+  langSelect.value = localStorage.getItem('hb_lang') || 'en-GB';
+  styleSelect.value = localStorage.getItem('hb_style') || 'A';
+  ttsVolume.value = localStorage.getItem('hb_ttsVol') || '1';
+
+  // music settings
+  musicVolume.value = localStorage.getItem('hb_musicVol') || '0.5';
+  musicMute.checked = (localStorage.getItem('hb_musicMuted') === 'true') || false;
+  bgAudio.volume = parseFloat(musicVolume.value);
+  bgAudio.muted = musicMute.checked;
+}
+restoreState();
+
+// make modal dismissible by clicking outside
+musicModal.addEventListener('click', (e) => {
+  if (e.target === musicModal) {
+    musicModal.style.display = 'none';
+  }
+});
+
+// compute and show next announcement periodically
+setInterval(updateNextAnnouncementDisplay, 1000 * 15); // update every 15s
+
+// Add to home screen hint (basic)
+if (window.matchMedia('(display-mode: standalone)').matches) {
+  // running as PWA
+} else {
+  // not PWA; user can add to home
+}
+
+// small helper to trigger initial voice population
+if (typeof speechSynthesis !== 'undefined') {
+  populateVoices();
+  // ensure voices list updates
+  speechSynthesis.onvoiceschanged = populateVoices;
+}
+
+// On load: if announcements were enabled but the user has not interacted this session, we show instructions to press the bell (enableBtn)
+window.addEventListener('load', () => {
+  // If the user previously enabled announcements and also clicked enableBtn in this session, start scheduling
+  if (localStorage.getItem('hb_announcements_enabled') === 'true' && localStorage.getItem('hb_user_interacted') === 'true') {
+    // schedule now; announcements start next full hour (per your pick)
+    scheduleHourlyAnnouncements();
+    announcementsEnabled = true;
+    toggleAnnouncementsBtn.textContent = 'Disable announcements';
+    enableBtn.textContent = '🔔';
+  }
+});
+</script>
+</body>
+</html>

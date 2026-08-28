@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Secure Bookmarks</title>
+<style>
+    body { font-family: Arial, sans-serif; background: #111; color: #eee; margin: 0; padding: 0; }
+    .hidden { display: none; }
+    .container { padding: 10px; }
+    table { border-collapse: collapse; width: 100%; background: black}
+    th, td { border: 1px solid #ccc; padding: 5px; text-align: center; }
+    input[type="text"] { width: 95%; padding: 4px; }
+    button { padding: 5px 10px; margin: 5px; }
+    #login { text-align: center; padding-top: 50px; }
+    #pinInput { font-size: 18px; padding: 5px; width: 120px; text-align: center; }
+    .add-row-btn { background: #4CAF50; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 20px; cursor: pointer; margin: 10px; }
+    .action-buttons { margin-top: 20px; }
+    .action-buttons button { background: #333; color: white; border: 1px solid #555; }
+    .action-buttons button:hover { background: #444; }
+    .import-section { margin-top: 15px; padding: 10px; border: 1px solid #444; border-radius: 5px; }
+</style>
+</head>
+<body>
+
+<div id="login">
+    <h2>Enter PIN</h2>
+    <input type="password" id="pinInput" maxlength="6" placeholder="******">
+    <br><br>
+    <button onclick="checkPIN()">Unlock</button>
+    <p id="error" style="color: red;"></p>
+</div>
+
+<div id="main" class="hidden container">
+    <h2>My Bookmarks</h2>
+    <table id="bookmarkTable">
+        <thead>
+            <tr>
+                <th>Links</th>
+                <th>About</th>
+                <th>Notes</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="bookmarkTableBody">
+            <!-- Rows will be added dynamically -->
+        </tbody>
+    </table>
+    
+    <button class="add-row-btn" onclick="addNewRow()" title="Add new bookmark">+</button>
+    <br>
+    
+    <button onclick="saveData()">Save</button>
+    
+    <div class="action-buttons">
+        <button onclick="exportData()">Export to JSON</button>
+        <button onclick="showImportSection()">Import from JSON</button>
+        
+        <div id="importSection" class="import-section hidden">
+            <h3>Import Bookmarks</h3>
+            <input type="file" id="importFile" accept=".json">
+            <button onclick="importFromFile()">Import from File</button>
+            <br><br>
+            <input type="text" id="googleDriveLink" placeholder="Google Drive Shareable Link">
+            <button onclick="importFromGoogleDrive()">Import from Google Drive</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const PIN_CODE = "6320"; // Change to your secret PIN
+let rowCount = 0;
+
+function checkPIN() {
+    let enteredPIN = document.getElementById("pinInput").value;
+    if (enteredPIN === PIN_CODE) {
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("main").classList.remove("hidden");
+        initializeTable();
+        loadData();
+    } else {
+        document.getElementById("error").textContent = "Wrong PIN!";
+    }
+}
+
+function initializeTable() {
+    const tableBody = document.getElementById("bookmarkTableBody");
+    tableBody.innerHTML = '';
+    
+    // Create initial 10 rows
+    for (let i = 0; i < 10; i++) {
+        addRow();
+    }
+}
+
+function addRow() {
+    const tableBody = document.getElementById("bookmarkTableBody");
+    const row = document.createElement("tr");
+    row.id = `row${rowCount}`;
+    
+    row.innerHTML = `
+        <td><input type="text" id="link${rowCount}"></td>
+        <td><input type="text" id="about${rowCount}" onclick="openLink(${rowCount})"></td>
+        <td><input type="text" id="note${rowCount}"></td>
+        <td><button onclick="removeRow(${rowCount})" style="background: #f44336; color: white; border: none;">×</button></td>
+    `;
+    
+    tableBody.appendChild(row);
+    rowCount++;
+}
+
+function addNewRow() {
+    addRow();
+}
+
+function removeRow(index) {
+    const row = document.getElementById(`row${index}`);
+    if (row) {
+        row.remove();
+    }
+}
+
+function saveData() {
+    let bookmarks = [];
+    const rows = document.querySelectorAll("#bookmarkTableBody tr");
+    
+    rows.forEach(row => {
+        const id = row.id.replace('row', '');
+        bookmarks.push({
+            link: document.getElementById(`link${id}`).value,
+            about: document.getElementById(`about${id}`).value,
+            note: document.getElementById(`note${id}`).value
+        });
+    });
+    
+    localStorage.setItem("myBookmarks", JSON.stringify(bookmarks));
+    alert("Bookmarks saved!");
+}
+
+function loadData() {
+    let saved = localStorage.getItem("myBookmarks");
+    if (saved) {
+        let bookmarks = JSON.parse(saved);
+        
+        // Clear existing rows and recreate based on saved data
+        const tableBody = document.getElementById("bookmarkTableBody");
+        tableBody.innerHTML = '';
+        rowCount = 0;
+        
+        bookmarks.forEach((bm, i) => {
+            addRow();
+            document.getElementById(`link${i}`).value = bm.link || "";
+            document.getElementById(`about${i}`).value = bm.about || "";
+            document.getElementById(`note${i}`).value = bm.note || "";
+        });
+    }
+}
+
+function openLink(i) {
+    let url = document.getElementById(`link${i}`).value;
+    if (url) {
+        if (!url.startsWith("http")) {
+            url = "https://" + url;
+        }
+        window.open(url, "_blank");
+    }
+}
+
+function exportData() {
+    let bookmarks = [];
+    const rows = document.querySelectorAll("#bookmarkTableBody tr");
+    
+    rows.forEach(row => {
+        const id = row.id.replace('row', '');
+        bookmarks.push({
+            link: document.getElementById(`link${id}`).value,
+            about: document.getElementById(`about${id}`).value,
+            note: document.getElementById(`note${id}`).value
+        });
+    });
+    
+    const dataStr = JSON.stringify(bookmarks, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = 'bookmarks.json';
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+}
+
+function showImportSection() {
+    const importSection = document.getElementById("importSection");
+    importSection.classList.toggle("hidden");
+}
+
+function importFromFile() {
+    const fileInput = document.getElementById("importFile");
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert("Please select a file to import");
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const bookmarks = JSON.parse(e.target.result);
+            importBookmarks(bookmarks);
+        } catch (error) {
+            alert("Error parsing JSON file: " + error.message);
+        }
+    };
+    reader.readAsText(file);
+}
+
+function importFromGoogleDrive() {
+    const driveLink = document.getElementById("googleDriveLink").value;
+    
+    if (!driveLink) {
+        alert("Please enter a Google Drive link");
+        return;
+    }
+    
+    // Extract file ID from Google Drive shareable link
+    let fileId = '';
+    if (driveLink.includes('/d/')) {
+        fileId = driveLink.split('/d/')[1].split('/')[0];
+    } else if (driveLink.includes('id=')) {
+        fileId = driveLink.split('id=')[1].split('&')[0];
+    } else {
+        alert("Invalid Google Drive link format");
+        return;
+    }
+    
+    // Construct direct download link
+    const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+    
+    // Fetch the file
+    fetch(downloadUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(bookmarks => {
+            importBookmarks(bookmarks);
+        })
+        .catch(error => {
+            alert("Error importing from Google Drive: " + error.message);
+        });
+}
+
+function importBookmarks(bookmarks) {
+    if (!Array.isArray(bookmarks)) {
+        alert("Invalid bookmarks format. Expected an array.");
+        return;
+    }
+    
+    // Clear existing rows and recreate based on imported data
+    const tableBody = document.getElementById("bookmarkTableBody");
+    tableBody.innerHTML = '';
+    rowCount = 0;
+    
+    bookmarks.forEach((bm, i) => {
+        addRow();
+        document.getElementById(`link${i}`).value = bm.link || "";
+        document.getElementById(`about${i}`).value = bm.about || "";
+        document.getElementById(`note${i}`).value = bm.note || "";
+    });
+    
+    alert(`Successfully imported ${bookmarks.length} bookmarks`);
+    document.getElementById("importSection").classList.add("hidden");
+}
+
+// Initialize the app
+document.getElementById("pinInput").addEventListener("keypress", function(event) {
+    if (event.key === "Enter") {
+        checkPIN();
+    }
+});
+</script>
+
+</body>
+</html>

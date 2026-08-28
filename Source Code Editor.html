@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Code Editor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .editor-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .toolbar {
+            background-color: #252526;
+            padding: 8px;
+            display: flex;
+            gap: 10px;
+            border-bottom: 1px solid #333;
+        }
+        button {
+            background-color: #3e3e42;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #007acc;
+        }
+        select {
+            background-color: #3e3e42;
+            color: white;
+            border: none;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        #container {
+            width: 100%;
+            height: calc(100% - 80px);
+        }
+        .status-bar {
+            background-color: #007acc;
+            color: white;
+            padding: 5px 10px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .file-input {
+            display: none;
+        }
+        .theme-selector {
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-container">
+        <div class="toolbar">
+            <button id="new-btn">New</button>
+            <button id="open-btn">Open</button>
+            <button id="save-btn">Save</button>
+
+            <select id="language-select">
+                <option value="plaintext">Plain Text</option>
+                <option value="javascript">JavaScript</option>
+                <option value="typescript">TypeScript</option>
+                <option value="html">HTML</option>
+                <option value="css">CSS</option>
+                <option value="python">Python</option>
+                <option value="java">Java</option>
+                <option value="c">C</option>
+                <option value="cpp">C++</option>
+                <option value="php">PHP</option>
+                <option value="sql">SQL</option>
+                <option value="dax">DAX</option>
+                <option value="excel">Excel Formula</option>
+                <option value="epub">epub</option>
+            </select>
+
+            <div class="theme-selector">
+                <select id="theme-select">
+                    <option value="vs-dark">Dark</option>
+                    <option value="vs">Light</option>
+                    <option value="hc-black">High Contrast</option>
+                </select>
+            </div>
+
+            <input type="file" id="file-input" class="file-input"
+                accept=".txt,.dat,.js,.ts,.html,.css,.py,.java,.c,.cpp,.php,.sql,.dax,.xlsx,.xls,.epub">
+        </div>
+
+        <div id="container"></div>
+
+        <div class="status-bar" id="status-bar">
+            <span id="cursor-position">Line: 1, Column: 1</span>
+            <span id="language-info">Language: Plain Text</span>
+        </div>
+    </div>
+
+    <!-- Load Monaco Editor -->
+    <script>
+        var require = { paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }};
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/editor/editor.main.nls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/editor/editor.main.js"></script>
+
+    <script>
+        require(['vs/editor/editor.main'], function () {
+
+            /* --------------------------------------------------
+               DAX LANGUAGE SUPPORT
+            -------------------------------------------------- */
+            monaco.languages.register({ id: 'dax' });
+            monaco.languages.setMonarchTokensProvider('dax', {
+                defaultToken: '',
+                tokenPostfix: '.dax',
+                keywords: [
+                    'VAR','RETURN','IF','ELSE','SWITCH','TRUE','FALSE','AND','OR','NOT',
+                    'IN','EARLIER','EARLIEST','DATE','TIME','DATETIME','YEAR','MONTH','DAY',
+                    'CALCULATE','FILTER','ALL','ALLEXCEPT','VALUES','DISTINCT','SUM',
+                    'AVERAGE','MIN','MAX','COUNT','COUNTA','COUNTROWS','DIVIDE','RELATED'
+                ],
+                operators: ['=','<>','>','<','>=','<=','+','-','*','/','^','&&','||'],
+                symbols: /[=><!~?:&|+\-*\/\^%]+/,
+                tokenizer: {
+                    root: [
+                        [/[a-zA-Z_$][\w$]*/, {
+                            cases: { '@keywords': 'keyword', '@default': 'identifier' }
+                        }],
+                        { include: '@whitespace' },
+                        [/[{}()\[\]]/, '@brackets'],
+                        [/@symbols/, {
+                            cases: { '@operators': 'operator', '@default': '' }
+                        }],
+                        [/\d*\.\d+([eE][\-+]?\d+)?/, 'number.float'],
+                        [/\d+/, 'number'],
+                        [/"([^"\\]|\\.)*$/, 'string.invalid'],
+                        [/"/, 'string', '@string_double']
+                    ],
+                    whitespace: [
+                        [/[ \t\r\n]+/, 'white'],
+                        [/\/\*/, 'comment', '@comment'],
+                        [/\/\/.*$/, 'comment']
+                    ],
+                    comment: [
+                        [/[^\/*]+/, 'comment'],
+                        ["\\*/", 'comment', '@pop'],
+                        [/[\/*]/, 'comment']
+                    ],
+                    string_double: [
+                        [/[^\\"]+/, 'string'],
+                        [/"/, 'string', '@pop']
+                    ]
+                }
+            });
+
+            /* --------------------------------------------------
+               EXCEL LANGUAGE SUPPORT
+            -------------------------------------------------- */
+            monaco.languages.register({ id: 'excel' });
+            monaco.languages.setMonarchTokensProvider('excel', {
+                tokenizer: {
+                    root: [
+                        [/[A-Z]+[0-9]+/, 'variable'],
+                        [/[A-Z]+\d*:[A-Z]+\d*/, 'variable'],
+                        [/[A-Z]+/, 'keyword'],
+                        [/".*?"/, 'string'],
+                        [/[0-9]+(\.[0-9]+)?/, 'number'],
+                        [/[\+\-\*\/\^\=\>\<]/, 'operator'],
+                        [/[(),]/, 'delimiter']
+                    ]
+                }
+            });
+
+            /* --------------------------------------------------
+               CREATE EDITOR
+            -------------------------------------------------- */
+            const editor = monaco.editor.create(document.getElementById('container'), {
+                value: '// Start coding here...\n',
+                language: 'plaintext',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                fontSize: 14
+            });
+
+            /* --------------------------------------------------
+               UI ELEMENTS
+            -------------------------------------------------- */
+            const languageSelect = document.getElementById('language-select');
+            const themeSelect = document.getElementById('theme-select');
+            const cursorPos = document.getElementById('cursor-position');
+            const langInfo = document.getElementById('language-info');
+            const newBtn = document.getElementById('new-btn');
+            const openBtn = document.getElementById('open-btn');
+            const saveBtn = document.getElementById('save-btn');
+            const fileInput = document.getElementById('file-input');
+
+            let currentFile = null;
+
+            editor.onDidChangeCursorPosition(function (e) {
+                cursorPos.textContent = `Line: ${e.position.lineNumber}, Column: ${e.position.column}`;
+            });
+
+            /* ------------------- language change ---------------------- */
+            languageSelect.addEventListener('change', function () {
+                const lang = languageSelect.value;
+                monaco.editor.setModelLanguage(editor.getModel(), lang);
+                langInfo.textContent = `Language: ${languageSelect.options[languageSelect.selectedIndex].text}`;
+            });
+
+            /* ------------------- theme change ------------------------- */
+            themeSelect.addEventListener('change', function () {
+                monaco.editor.setTheme(themeSelect.value);
+            });
+
+            /* ------------------- NEW FILE ------------------------------ */
+            newBtn.addEventListener('click', function () {
+                editor.setValue('// Start coding...\n');
+                currentFile = null;
+                languageSelect.value = 'plaintext';
+                monaco.editor.setModelLanguage(editor.getModel(), 'plaintext');
+                langInfo.textContent = 'Language: Plain Text';
+            });
+
+            /* ------------------- OPEN FILE ------------------------------ */
+            openBtn.addEventListener('click', () => fileInput.click());
+
+            fileInput.addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                currentFile = file;
+                const reader = new FileReader();
+
+                reader.onload = function (ev) {
+                    editor.setValue(ev.target.result);
+                    detectLanguageFromFileName(file.name);
+                };
+                reader.readAsText(file);
+            });
+
+            /* ------------------- SAVE FILE ------------------------------ */
+            saveBtn.addEventListener('click', function () {
+                const content = editor.getValue();
+                if (!content) return;
+
+                let fileName = currentFile ? currentFile.name : 'untitled.dat';
+
+                if (!currentFile) {
+                    const ext = getExtension(languageSelect.value);
+                    fileName = `untitled.${ext}`;
+                }
+
+                const blob = new Blob([content], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                a.click();
+
+                URL.revokeObjectURL(url);
+            });
+
+            /* ---------------- helper functions ------------------------ */
+            function detectLanguageFromFileName(name) {
+                const ext = name.split('.').pop().toLowerCase();
+
+                const map = {
+                    js: 'javascript',
+                    ts: 'typescript',
+                    html: 'html',
+                    css: 'css',
+                    py: 'python',
+                    java: 'java',
+                    c: 'c',
+                    cpp: 'cpp',
+                    php: 'php',
+                    sql: 'sql',
+                    dax: 'dax',
+                    dat: 'plaintext',
+                    txt: 'plaintext',
+                    xls: 'excel',
+                    xlsx: 'excel',
+                    epub: 'epub'
+                };
+
+                if (map[ext]) {
+                    languageSelect.value = map[ext];
+                    monaco.editor.setModelLanguage(editor.getModel(), map[ext]);
+                    langInfo.textContent =
+                        `Language: ${languageSelect.options[languageSelect.selectedIndex].text}`;
+                }
+            }
+
+            function getExtension(language) {
+                const extMap = {
+                    plaintext: 'txt',
+                    javascript: 'js',
+                    typescript: 'ts',
+                    html: 'html',
+                    css: 'css',
+                    python: 'py',
+                    java: 'java',
+                    c: 'c',
+                    cpp: 'cpp',
+                    php: 'php',
+                    sql: 'sql',
+                    dax: 'dax',
+                    excel: 'xlsx',
+                    epub: 'epub'
+
+                };
+                return extMap[language] || 'dat';
+            }
+        });
+    </script>
+</body>
+</html>

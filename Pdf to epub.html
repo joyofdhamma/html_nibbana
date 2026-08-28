@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>PtoE</title>
+    <!-- PDF.js for PDF rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <!-- Tesseract.js with language support -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <!-- JSZip for EPUB generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- FileSaver.js for saving EPUB -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Noto Sans', 'Noto Sans Bengali', 'Noto Sans Devanagari', sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #f5f7fc 0%, #e9eef5 100%);
+            margin: 0;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .app-container {
+            max-width: 1200px;
+            width: 100%;
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1), 0 5px 12px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        .header {
+            background: #1e2a3a;
+            color: white;
+            padding: 1.5rem 2rem;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.8rem;
+        }
+        .header p {
+            margin: 0.5rem 0 0;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+        .content {
+            padding: 2rem;
+        }
+        .upload-area {
+            border: 2px dashed #cbd5e1;
+            border-radius: 1.5rem;
+            background: #f8fafc;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 1.5rem;
+        }
+        .upload-area:hover, .drag-over {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .file-label {
+            background: #3b82f6;
+            color: white;
+            padding: 0.6rem 1.5rem;
+            border-radius: 2rem;
+            font-weight: 500;
+            display: inline-block;
+            cursor: pointer;
+            margin: 1rem 0 0.5rem;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .lang-selector {
+            background: #f1f5f9;
+            padding: 1rem;
+            border-radius: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+            justify-content: space-between;
+        }
+        .lang-group {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .lang-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-weight: 500;
+        }
+        .info-text {
+            font-size: 0.85rem;
+            color: #475569;
+            margin-top: 0.8rem;
+        }
+        .progress-section {
+            margin: 1rem 0 2rem;
+            display: none;
+        }
+        .progress-bar-bg {
+            background: #e2e8f0;
+            border-radius: 1rem;
+            height: 0.8rem;
+            overflow: hidden;
+        }
+        .progress-fill {
+            background: #3b82f6;
+            width: 0%;
+            height: 100%;
+            transition: width 0.2s ease;
+        }
+        .status {
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            color: #334155;
+            font-weight: 500;
+        }
+        .preview-area {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+        .text-panel {
+            flex: 2;
+            min-width: 280px;
+            background: #f1f5f9;
+            border-radius: 1rem;
+            padding: 1rem;
+        }
+        .text-panel h3 {
+            margin-top: 0;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .extracted-text {
+            background: white;
+            border-radius: 0.8rem;
+            padding: 1rem;
+            max-height: 450px;
+            overflow-y: auto;
+            font-family: 'Noto Sans', 'Noto Sans Bengali', 'Noto Sans Devanagari', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            border: 1px solid #e2e8f0;
+            line-height: 1.5;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+        button {
+            background: #1e293b;
+            border: none;
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 2rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        button.primary {
+            background: #0f3b5c;
+        }
+        button.epub-btn {
+            background: #8b5cf6;
+        }
+        .footer {
+            background: #f1f5f9;
+            padding: 1rem 2rem;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #475569;
+            border-top: 1px solid #e2e8f0;
+        }
+        .badge {
+            background: #e2e8f0;
+            border-radius: 2rem;
+            padding: 0.2rem 0.7rem;
+            font-size: 0.7rem;
+        }
+        @media (max-width: 700px) {
+            .content {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="header">
+        <h1>📄 P to E </h1>
+        <p></p>
+    </div>
+    <div class="content">
+        <div class="upload-area" id="dropZone">
+            <div class="upload-icon">📑</div>
+            <div>Drag & drop a scanned PDF here, or</div>
+            <label class="file-label" for="pdfInput">📂 Select PDF</label>
+            <input type="file" id="pdfInput" accept="application/pdf">
+            <div class="info-text">✅ Now supports Bengali (বাংলা) and Hindi (हिन्दी) OCR. Processing happens entirely in your browser.</div>
+        </div>
+
+        <div class="lang-selector">
+            <span>🌐 OCR Language(s):</span>
+            <div class="lang-group">
+                <label><input type="checkbox" id="langEng" checked> English</label>
+                <label><input type="checkbox" id="langBen"> বাংলা (Bengali)</label>
+                <label><input type="checkbox" id="LangHin"> हिन्दी (Hindi)</label>
+            </div>
+            <span class="badge" id="langNote">First run downloads language data (~10-30MB)</span>
+        </div>
+
+        <div class="progress-section" id="progressSection">
+            <div class="progress-bar-bg"><div class="progress-fill" id="progressFill"></div></div>
+            <div class="status" id="statusMessage">Ready</div>
+        </div>
+
+        <div class="preview-area" id="previewArea" style="display: none;">
+            <div class="text-panel">
+                <h3>📝 Extracted Text <span class="badge" id="pageCountBadge">0 pages</span></h3>
+                <div class="extracted-text" id="extractedTextContent">Your extracted text will appear here...</div>
+                <div class="action-buttons">
+                    <button id="copyTextBtn" class="primary">📋 Copy Text</button>
+                    <button id="generateEpubBtn" class="epub-btn">📖 Generate EPUB</button>
+                </div>
+            </div>
+        </div>
+        <div id="epubNotification" style="margin-top: 1rem; text-align: center; font-size: 0.85rem;"></div>
+    </div>
+    <div class="footer">
+        🔍 OCR: Tesseract.js | Languages: eng, ben, hin | EPUB includes Unicode text (Bengali/Hindi supported)
+    </div>
+</div>
+
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    
+    let fullExtractedText = "";
+    let currentFilename = "scanned_document";
+    let isProcessing = false;
+    let totalPages = 0;
+    let processed = 0;
+    
+    // DOM elements
+    const dropZone = document.getElementById('dropZone');
+    const pdfInput = document.getElementById('pdfInput');
+    const progressSection = document.getElementById('progressSection');
+    const progressFill = document.getElementById('progressFill');
+    const statusMessage = document.getElementById('statusMessage');
+    const previewArea = document.getElementById('previewArea');
+    const extractedTextDiv = document.getElementById('extractedTextContent');
+    const pageCountBadge = document.getElementById('pageCountBadge');
+    const copyBtn = document.getElementById('copyTextBtn');
+    const epubBtn = document.getElementById('generateEpubBtn');
+    const epubNotification = document.getElementById('epubNotification');
+    const langEng = document.getElementById('langEng');
+    const langBen = document.getElementById('langBen');
+    const LangHin = document.getElementById('LangHin');
+    
+    function getSelectedLanguages() {
+        let langs = [];
+        if (langEng.checked) langs.push('eng');
+        if (langBen.checked) langs.push('ben');
+        if (LangHin.checked) langs.push('hin');
+        if (langs.length === 0) langs.push('eng'); // default to english
+        return langs.join('+');
+    }
+    
+    function setProgress(percent, message) {
+        progressFill.style.width = `${percent}%`;
+        statusMessage.innerText = message;
+    }
+    
+    function resetUI() {
+        fullExtractedText = "";
+        processed = 0;
+        totalPages = 0;
+        extractedTextDiv.innerHTML = "Processing PDF, extracting text via OCR...";
+        previewArea.style.display = "none";
+        epubNotification.innerHTML = "";
+        setProgress(0, "Waiting for file...");
+    }
+    
+    async function processPDFToText(file) {
+        resetUI();
+        progressSection.style.display = "block";
+        isProcessing = true;
+        epubBtn.disabled = true;
+        copyBtn.disabled = true;
+        
+        try {
+            const langString = getSelectedLanguages();
+            statusMessage.innerText = `Loading language data: ${langString} (first time may take a moment)...`;
+            // Tiny check: Tesseract will download on first recognize. We'll just start.
+            
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            totalPages = pdf.numPages;
+            pageCountBadge.innerText = `${totalPages} pages`;
+            setProgress(0, `PDF loaded (${totalPages} pages). Starting OCR with ${langString}...`);
+            
+            let allTextAcc = [];
+            
+            for (let i = 1; i <= totalPages; i++) {
+                const page = await pdf.getPage(i);
+                const viewport = page.getViewport({ scale: 2.2 }); // good balance for accuracy
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                await page.render({ canvasContext: context, viewport: viewport }).promise;
+                
+                const imageBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                if (!imageBlob) throw new Error(`Page ${i} render failed`);
+                
+                const pagePercent = (i / totalPages) * 100;
+                setProgress(pagePercent, `Processing page ${i}/${totalPages} (OCR with ${langString})...`);
+                
+                // Perform OCR with selected languages
+                const { data: { text } } = await Tesseract.recognize(imageBlob, langString, {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            // optional quiet
+                        }
+                    }
+                });
+                
+                const cleanedText = text.trim() || `[Page ${i} - no text detected]`;
+                allTextAcc.push(`\n\n=== PAGE ${i} ===\n\n${cleanedText}`);
+                
+                // live preview update
+                let preview = allTextAcc.join('');
+                if (preview.length > 4000) preview = preview.substring(0, 4000) + "\n... (more text below)";
+                extractedTextDiv.innerHTML = preview;
+                await new Promise(r => setTimeout(r, 5));
+            }
+            
+            fullExtractedText = allTextAcc.join('');
+            extractedTextDiv.innerHTML = fullExtractedText || "(No text extracted)";
+            setProgress(100, "OCR complete! Text ready.");
+            previewArea.style.display = "flex";
+            epubBtn.disabled = false;
+            copyBtn.disabled = false;
+            currentFilename = file.name.replace(/\.pdf$/i, '') || "document";
+            isProcessing = false;
+        } catch (err) {
+            console.error(err);
+            setProgress(0, `Error: ${err.message}`);
+            extractedTextDiv.innerHTML = `❌ OCR failed: ${err.message}. Check language selection or PDF.`;
+            previewArea.style.display = "flex";
+            isProcessing = false;
+            epubBtn.disabled = true;
+        }
+    }
+    
+    // Copy text helper
+    function copyText() {
+        if (!fullExtractedText) {
+            epubNotification.innerText = "No text to copy.";
+            setTimeout(() => epubNotification.innerText = "", 2000);
+            return;
+        }
+        navigator.clipboard.writeText(fullExtractedText).then(() => {
+            epubNotification.innerText = "✅ Text copied to clipboard!";
+            setTimeout(() => epubNotification.innerText = "", 2000);
+        }).catch(() => epubNotification.innerText = "❌ Copy failed");
+    }
+    
+    // Generate EPUB (UTF-8, supports Bengali/Hindi)
+    async function generateEpub() {
+        if (!fullExtractedText || fullExtractedText.trim().length === 0) {
+            epubNotification.innerText = "⚠️ No extracted text. Process a PDF first.";
+            setTimeout(() => epubNotification.innerText = "", 3000);
+            return;
+        }
+        epubBtn.disabled = true;
+        epubBtn.innerText = "⏳ Building EPUB...";
+        epubNotification.innerHTML = "📚 Creating EPUB file...";
+        
+        try {
+            const title = currentFilename.replace(/[_\-\s]+/g, ' ') || "Scanned Document";
+            const author = "OCR Converter";
+            const epubId = "urn:uuid:" + generateUUID();
+            const date = new Date().toISOString();
+            
+            // Properly escape for XHTML but preserve Bangla/Hindi characters
+            const chapterHtml = escapeHtmlContent(fullExtractedText).replace(/\n/g, '<br/>\n');
+            
+            const xhtmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+<head>
+  <title>${escapeXml(title)}</title>
+  <link rel="stylesheet" type="text/css" href="style.css"/>
+  <meta charset="utf-8"/>
+</head>
+<body>
+  <div style="margin: 5%; word-wrap: break-word;">
+    <h1>${escapeXml(title)}</h1>
+    <div style="line-height: 1.5; font-size: 1rem; font-family: 'Noto Sans', 'Noto Sans Bengali', 'Noto Sans Devanagari', serif;">
+      ${chapterHtml}
+    </div>
+  </div>
+</body>
+</html>`;
+            
+            const styleCss = `body { margin: 0; padding: 0; } h1 { font-size: 1.8em; } p { margin: 1em 0; } div { max-width: 100%; }`;
+            
+            const containerXml = `<?xml version="1.0" encoding="UTF-8"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>`;
+            
+            const ncxContent = `<?xml version="1.0" encoding="UTF-8"?>
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1" xml:lang="en">
+  <head><meta name="dtb:uid" content="${epubId}"/><meta name="dtb:depth" content="1"/></head>
+  <docTitle><text>${escapeXml(title)}</text></docTitle>
+  <navMap>
+    <navPoint id="np1" playOrder="1"><navLabel><text>Full Text</text></navLabel><content src="text/content.xhtml"/></navPoint>
+  </navMap>
+</ncx>`;
+            
+            const opfContent = `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookId" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:identifier id="BookId">${epubId}</dc:identifier>
+    <dc:title>${escapeXml(title)}</dc:title>
+    <dc:creator>${escapeXml(author)}</dc:creator>
+    <dc:language>en</dc:language>
+    <dc:date>${date}</dc:date>
+  </metadata>
+  <manifest>
+    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
+    <item id="style" href="style.css" media-type="text/css"/>
+    <item id="content" href="text/content.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine toc="ncx"><itemref idref="content"/></spine>
+</package>`;
+            
+            const zip = new JSZip();
+            zip.folder("META-INF").file("container.xml", containerXml);
+            const oebps = zip.folder("OEBPS");
+            oebps.file("content.opf", opfContent);
+            oebps.file("toc.ncx", ncxContent);
+            oebps.file("style.css", styleCss);
+            oebps.folder("text").file("content.xhtml", xhtmlContent);
+            
+            const epubBlob = await zip.generateAsync({ type: "blob", mimeType: "application/epub+zip" });
+            const fileName = `${title.replace(/[^a-zA-Z0-9\u0980-\u09FF\u0900-\u097F]/g, '_')}.epub`;
+            saveAs(epubBlob, fileName);
+            epubNotification.innerHTML = `✅ EPUB saved as "${fileName}" with full Unicode support.`;
+            setTimeout(() => epubNotification.innerHTML = "", 5000);
+        } catch (err) {
+            epubNotification.innerHTML = `❌ EPUB error: ${err.message}`;
+        } finally {
+            epubBtn.disabled = false;
+            epubBtn.innerText = "📖 Generate EPUB";
+        }
+    }
+    
+    function escapeXml(str) {
+        if (!str) return "";
+        return str.replace(/[<>&'"]/g, function(c) {
+            if(c === '<') return '&lt;';
+            if(c === '>') return '&gt;';
+            if(c === '&') return '&amp;';
+            if(c === "'") return '&apos;';
+            if(c === '"') return '&quot;';
+            return c;
+        });
+    }
+    
+    function escapeHtmlContent(str) {
+        if (!str) return "";
+        // preserve Unicode, only escape XML special chars and convert paragraphs
+        let escaped = str.replace(/[&<>]/g, function(m) {
+            if(m === '&') return '&amp;';
+            if(m === '<') return '&lt;';
+            if(m === '>') return '&gt;';
+            return m;
+        });
+        // wrap double newlines as paragraphs
+        escaped = escaped.replace(/\n{2,}/g, '</p><p>');
+        escaped = '<p>' + escaped + '</p>';
+        escaped = escaped.replace(/\n/g, '<br/>');
+        return escaped;
+    }
+    
+    function generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+    
+    // Event listeners
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type === 'application/pdf') processPDFToText(file);
+        else alert("Please drop a PDF file.");
+    });
+    pdfInput.addEventListener('change', (e) => { if(e.target.files[0]) processPDFToText(e.target.files[0]); });
+    copyBtn.addEventListener('click', copyText);
+    epubBtn.addEventListener('click', generateEpub);
+    
+    progressSection.style.display = "none";
+    previewArea.style.display = "none";
+</script>
+</body>
+</html>

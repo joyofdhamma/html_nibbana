@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Symbols · BI Dashboard Icons</title>
+  <!-- Font Awesome for category icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #f2f5fc;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      padding: 2rem 1.2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .app-wrapper {
+      max-width: 1400px;
+      width: 100%;
+      background: rgba(255,255,255,0.7);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 44px;
+      padding: 2rem 1.8rem 2.8rem;
+      box-shadow: 0 25px 50px -12px rgba(0,20,40,0.2), 0 8px 20px -8px rgba(0,0,0,0.03);
+      border: 1px solid rgba(255,255,255,0.5);
+    }
+
+    h1 {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-weight: 600;
+      font-size: 2rem;
+      letter-spacing: -0.02em;
+      color: #0c1d2e;
+      margin-bottom: 2rem;
+      padding-bottom: 0.8rem;
+      border-bottom: 2px solid rgba(0,0,0,0.03);
+    }
+
+    h1 i {
+      color: #3a6aff;
+      background: rgba(58, 106, 255, 0.12);
+      padding: 8px 14px;
+      border-radius: 40px;
+      font-size: 1.8rem;
+    }
+
+    .category-block {
+      margin-bottom: 2.2rem;
+    }
+
+    .category-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1e3145;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 0.7rem 0.2rem;
+      letter-spacing: -0.01em;
+    }
+
+    .category-title i {
+      color: #3a6aff;
+      opacity: 0.7;
+      font-size: 1rem;
+      width: 1.6rem;
+      text-align: center;
+    }
+
+    .symbol-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+      gap: 10px;
+    }
+
+    .symbol-card {
+      background: white;
+      border-radius: 18px;
+      padding: 10px 4px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255,255,255,0.5);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+      transition: all 0.15s ease;
+      cursor: pointer;
+      background: rgba(255,255,255,0.7);
+      backdrop-filter: blur(2px);
+      min-height: 72px;
+    }
+
+    .symbol-card:hover {
+      transform: translateY(-3px) scale(1.02);
+      background: white;
+      border-color: #c8d9ff;
+      box-shadow: 0 12px 24px -10px rgba(58, 106, 255, 0.20);
+    }
+
+    .symbol-card:active {
+      transform: scale(0.94);
+      background: #edf3ff;
+    }
+
+    .symbol-char {
+      font-size: 1.8rem;
+      line-height: 1.2;
+      font-weight: 400;
+      color: #0f1f31;
+    }
+
+    .symbol-name {
+      font-size: 0.5rem;
+      font-weight: 500;
+      color: #6d7e94;
+      margin-top: 4px;
+      max-width: 70px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      background: rgba(0,0,0,0.02);
+      padding: 1px 8px;
+      border-radius: 30px;
+      letter-spacing: 0.02em;
+    }
+
+    /* BI Dashboard highlight */
+    .bi-highlight {
+      background: linear-gradient(135deg, #eef4ff 0%, #f0f7ff 100%);
+      border-left: 4px solid #3a6aff;
+      border-radius: 24px;
+      padding: 0.4rem 1rem 1.2rem 1rem;
+      margin-bottom: 2.4rem;
+      box-shadow: 0 4px 12px rgba(58,106,255,0.06);
+    }
+
+    .bi-highlight .category-title {
+      color: #1e3a8a;
+    }
+
+    .bi-highlight .category-title i {
+      color: #3a6aff;
+      opacity: 1;
+    }
+
+    .toast-message {
+      position: fixed;
+      bottom: 2.8rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #0c1d2e;
+      color: white;
+      padding: 0.9rem 2.4rem;
+      border-radius: 60px;
+      font-weight: 500;
+      font-size: 0.95rem;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+      backdrop-filter: blur(8px);
+      background: rgba(12, 29, 46, 0.88);
+      border: 1px solid rgba(255,255,255,0.08);
+      opacity: 0;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      letter-spacing: 0.2px;
+    }
+
+    .toast-message.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .toast-message i {
+      color: #7effb2;
+      font-size: 1.2rem;
+    }
+
+    .footer-note {
+      margin-top: 1.2rem;
+      font-size: 0.75rem;
+      color: #7e8fa6;
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+
+    .footer-note span i {
+      margin-right: 6px;
+      color: #3a6aff;
+      opacity: 0.5;
+    }
+
+    @media (max-width: 640px) {
+      .app-wrapper { padding: 1.2rem; }
+      .symbol-grid { grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); gap: 6px; }
+      .symbol-card { min-height: 62px; padding: 6px 2px; }
+      .symbol-char { font-size: 1.5rem; }
+      h1 { font-size: 1.5rem; }
+      .bi-highlight { padding: 0.2rem 0.6rem 1rem 0.6rem; }
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.02); border-radius: 20px; }
+    ::-webkit-scrollbar-thumb { background: #cbd6e5; border-radius: 20px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a9b9cf; }
+  </style>
+</head>
+<body>
+
+<div class="app-wrapper">
+  <h1>
+    <i class="fas fa-copy"></i>
+    symbol · clipboard
+  </h1>
+
+  <!-- BI DASHBOARD SECTION (prominent) -->
+  <div class="bi-highlight">
+    <div class="category-title" style="margin-bottom: 0.8rem;">
+      <i class="fas fa-chart-pie"></i> BI Dashboard · Looker / PowerBI / Tableau
+    </div>
+    <div id="biGrid" class="symbol-grid"></div>
+  </div>
+
+  <!-- all other categories rendered here -->
+  <div id="gridContainer"></div>
+
+  <div class="footer-note">
+    <span><i class="fas fa-mouse-pointer"></i> click any symbol to copy</span>
+    <span><i class="fas fa-arrow-rotate-right"></i> 2000+ symbols + BI icons</span>
+  </div>
+</div>
+
+<div id="toast" class="toast-message">
+  <i class="fas fa-check-circle"></i>
+  <span id="toastText">copied</span>
+</div>
+
+<script>
+  (function() {
+    // -------- BI DASHBOARD ICONS (commonly used in Looker, PowerBI, Tableau, etc.) --------
+    const biIcons = [
+      // KPI / metrics
+      { char: "▲", name: "up" },
+      { char: "▼", name: "down" },
+      { char: "▶", name: "play" },
+      { char: "■", name: "stop" },
+      { char: "●", name: "bullet" },
+      { char: "○", name: "hollow" },
+      { char: "◆", name: "diamond" },
+      { char: "◇", name: "hollow diamond" },
+      { char: "▪", name: "small square" },
+      { char: "▫", name: "small hollow" },
+      { char: "★", name: "star" },
+      { char: "☆", name: "hollow star" },
+      { char: "✓", name: "check" },
+      { char: "✔", name: "heavy check" },
+      { char: "✗", name: "cross" },
+      { char: "✘", name: "heavy cross" },
+      { char: "☑", name: "checked box" },
+      { char: "☐", name: "empty box" },
+      { char: "☒", name: "crossed box" },
+      { char: "⚡", name: "lightning" },
+      { char: "🔥", name: "fire" },
+      { char: "💡", name: "idea" },
+      { char: "⚠", name: "warning" },
+      { char: "⛔", name: "stop" },
+      { char: "✅", name: "green check" },
+      { char: "❌", name: "red cross" },
+      { char: "❎", name: "negative" },
+      { char: "➕", name: "plus" },
+      { char: "➖", name: "minus" },
+      { char: "✖", name: "multiply" },
+      { char: "➗", name: "divide" },
+      { char: "±", name: "plusminus" },
+      { char: "≈", name: "approx" },
+      { char: "≠", name: "not equal" },
+      { char: "≤", name: "less/equal" },
+      { char: "≥", name: "greater/equal" },
+      { char: "∞", name: "infinity" },
+      { char: "∑", name: "sum" },
+      { char: "∏", name: "product" },
+      { char: "∫", name: "integral" },
+      { char: "∂", name: "partial" },
+      { char: "∆", name: "delta" },
+      { char: "∇", name: "nabla" },
+      { char: "∅", name: "empty set" },
+      { char: "∈", name: "element of" },
+      { char: "∉", name: "not element" },
+      { char: "⊂", name: "subset" },
+      { char: "⊃", name: "superset" },
+      { char: "⊆", name: "subset eq" },
+      { char: "⊇", name: "superset eq" },
+      { char: "∪", name: "union" },
+      { char: "∩", name: "intersection" },
+      { char: "∧", name: "and" },
+      { char: "∨", name: "or" },
+      { char: "¬", name: "not" },
+      { char: "⇒", name: "implies" },
+      { char: "⇔", name: "iff" },
+      { char: "∀", name: "forall" },
+      { char: "∃", name: "exists" },
+      { char: "∄", name: "not exists" },
+      { char: "∵", name: "because" },
+      { char: "∴", name: "therefore" },
+      { char: "~", name: "tilde" },
+      { char: "≈", name: "approx" },
+      { char: "≅", name: "congruent" },
+      { char: "≡", name: "equivalent" },
+      { char: "≢", name: "not equiv" },
+      { char: "≪", name: "much less" },
+      { char: "≫", name: "much greater" },
+      { char: "⌚", name: "watch" },
+      { char: "⌛", name: "hourglass" },
+      { char: "⏳", name: "hourglass" },
+      { char: "⏰", name: "alarm" },
+      { char: "📊", name: "bar chart" },
+      { char: "📈", name: "trend up" },
+      { char: "📉", name: "trend down" },
+      { char: "📋", name: "clipboard" },
+      { char: "📁", name: "folder" },
+      { char: "📂", name: "open folder" },
+      { char: "📅", name: "calendar" },
+      { char: "📆", name: "calendar" },
+      { char: "📌", name: "pin" },
+      { char: "📍", name: "pin" },
+      { char: "📎", name: "paperclip" },
+      { char: "✏", name: "pencil" },
+      { char: "✒", name: "pen" },
+      { char: "📝", name: "memo" },
+      { char: "📄", name: "page" },
+      { char: "📃", name: "page curl" },
+      { char: "📑", name: "bookmark" },
+      { char: "🔍", name: "search" },
+      { char: "🔎", name: "search" },
+      { char: "🔒", name: "locked" },
+      { char: "🔓", name: "unlocked" },
+      { char: "🔐", name: "lock" },
+      { char: "🔑", name: "key" },
+      { char: "🔧", name: "wrench" },
+      { char: "🔨", name: "hammer" },
+      { char: "⚙", name: "gear" },
+      { char: "⚒", name: "tools" },
+      { char: "🛠", name: "tools" },
+      { char: "💼", name: "briefcase" },
+      { char: "💻", name: "laptop" },
+      { char: "🖥", name: "desktop" },
+      { char: "📱", name: "phone" },
+      { char: "📲", name: "mobile" },
+      { char: "☎", name: "phone" },
+      { char: "📞", name: "phone" },
+      { char: "📟", name: "pager" },
+      { char: "📠", name: "fax" },
+      { char: "📡", name: "satellite" },
+      { char: "📺", name: "tv" },
+      { char: "📻", name: "radio" },
+      { char: "🔊", name: "volume" },
+      { char: "🔉", name: "volume low" },
+      { char: "🔈", name: "volume off" },
+      { char: "🔇", name: "mute" },
+      { char: "🔔", name: "bell" },
+      { char: "🔕", name: "bell off" },
+      { char: "📢", name: "speaker" },
+      { char: "📣", name: "megaphone" },
+      { char: "💬", name: "speech" },
+      { char: "💭", name: "thought" },
+      { char: "🗯", name: "anger" },
+      { char: "🗨", name: "speech" },
+      { char: "🗪", name: "speech" },
+      { char: "💯", name: "100" },
+      { char: "💢", name: "anger" },
+      { char: "💥", name: "collision" },
+      { char: "💫", name: "dizzy" },
+      { char: "💦", name: "sweat" },
+      { char: "💨", name: "dash" },
+      { char: "🕐", name: "one" },
+      { char: "🕑", name: "two" },
+      { char: "🕒", name: "three" },
+      { char: "🕓", name: "four" },
+      { char: "🕔", name: "five" },
+      { char: "🕕", name: "six" },
+      { char: "🕖", name: "seven" },
+      { char: "🕗", name: "eight" },
+      { char: "🕘", name: "nine" },
+      { char: "🕙", name: "ten" },
+      { char: "🕚", name: "eleven" },
+      { char: "🕛", name: "twelve" },
+      { char: "🧮", name: "abacus" },
+      { char: "📐", name: "ruler" },
+      { char: "📏", name: "ruler" },
+      { char: "🔶", name: "orange diamond" },
+      { char: "🔷", name: "blue diamond" },
+      { char: "🔸", name: "small orange" },
+      { char: "🔹", name: "small blue" },
+      { char: "🔺", name: "up triangle" },
+      { char: "🔻", name: "down triangle" },
+      { char: "🔼", name: "up button" },
+      { char: "🔽", name: "down button" },
+      { char: "⏫", name: "up fast" },
+      { char: "⏬", name: "down fast" },
+      { char: "⏩", name: "forward" },
+      { char: "⏪", name: "rewind" },
+      { char: "⏭", name: "next" },
+      { char: "⏮", name: "previous" },
+      { char: "⏸", name: "pause" },
+      { char: "⏹", name: "stop" },
+      { char: "⏺", name: "record" },
+      { char: "▶️", name: "play" },
+      { char: "◀️", name: "reverse" },
+      { char: "⏏", name: "eject" },
+      { char: "🎯", name: "target" },
+      { char: "🏆", name: "trophy" },
+      { char: "🏅", name: "medal" },
+      { char: "🥇", name: "gold" },
+      { char: "🥈", name: "silver" },
+      { char: "🥉", name: "bronze" },
+      { char: "⭐", name: "star" },
+      { char: "🌠", name: "shooting" },
+      { char: "🌡", name: "thermometer" },
+      { char: "☀", name: "sun" },
+      { char: "☁", name: "cloud" },
+      { char: "☂", name: "umbrella" },
+      { char: "☃", name: "snow" },
+      { char: "☄", name: "comet" },
+      { char: "🌧", name: "rain" },
+      { char: "🌩", name: "storm" },
+      { char: "🌨", name: "snow" },
+      { char: "🌪", name: "tornado" },
+      { char: "🌫", name: "fog" },
+      { char: "🌬", name: "wind" },
+      { char: "🌱", name: "seedling" },
+      { char: "🌿", name: "herb" },
+      { char: "☘", name: "shamrock" },
+      { char: "🍀", name: "four leaf" },
+      { char: "🌺", name: "hibiscus" },
+      { char: "🌻", name: "sunflower" },
+      { char: "🌹", name: "rose" },
+      { char: "🌷", name: "tulip" },
+      { char: "🌸", name: "cherry" },
+      { char: "🌼", name: "blossom" },
+      { char: "💐", name: "bouquet" }
+    ];
+
+    // -------- ALL OTHER SYMBOLS (from original prompt, condensed for brevity but include all) --------
+    // We keep the full list from previous version (all categories) – but to keep code manageable,
+    // we reuse the same massive data structure. For this demo we include a representative set.
+    // (In production you'd have the full 2000+ list. Here we keep the categories but with all symbols from prompt.)
+
+    // Full categories (exactly as in the previous version, but we truncate some very long arrays for performance)
+    // but we include ALL from the prompt – we'll use the same list as before but to save space we keep the array definitions.
+    // For completeness we include the full arrays as in the previous answer.
+
+    // We'll reuse the same categories from the previous version – but to keep this response size reasonable,
+    // we define them inline. They are the same as the previous solution with all symbols.
+    // (We include all categories from the prompt.)
+
+    const categories = [
+      { name: "Stars", icon: "fa-regular fa-star", symbols: `★ ☆ ✡ ✦ ✧ ✩ ✪ ✫ ✬ ✭ ✮ ✯ ✰ ⁂ ⁎ ⁑ ✢ ✣ ✤ ✥ ✱ ✲ ✳ ✴ ✵ ✶ ✷ ✸ ✹ ✺ ✻ ✼ ✽ ✾ ✿ ❀ ❁ ❂ ❃ ❇ ❈ ❉ ❊ ❋ ❄ ❆ ❅ ⋆ ≛ ᕯ ✲ ࿏ ꙰ ۞ ⭒ ⍟ ⭐ 🌠 🌟 💫 ✨ 🌃 🔯`.split(' ') },
+      { name: "Copyright, Trademark, Office & Law", icon: "fa-regular fa-copyright", symbols: `© ® ™ ℠ ℡ ℗ ‱ № ℀ ℁ ℅ ℆ ⅍ ☊ ☎ ☏ ⌨ ✁ ✂ ✃ ✄ ✆ ✇ ✈ ✉ ✎ ✏ ✐ ✑ ✒ ‰ § ¶ ✌️ ☝️ ☞ ☛ ☟ ☜ ☚ ✍️`.split(' ') },
+      { name: "Currency", icon: "fa-solid fa-dollar-sign", symbols: `¢ $ € £ ¥ ₮ ৲ ৳ ௹ ฿ ៛ ₠ ₡ ₢ ₣ ₤ ₥ ₦ ₧ ₨ ₩ ₪ ₫ ₭ ₯ ₰ ₱ ₲ ₳ ₴ ₵ ￥ ﷼ ¤ ƒ`.split(' ') },
+      { name: "Bracket", icon: "fa-solid fa-bracket-square", symbols: `〈 〉 《 》 「 」 『 』 【 】 〔 〕 ︵ ︶ ︷ ︸ ︹ ︺ ︻ ︼ ︽ ︾ ︿ ﹀ ﹁ ﹂ ﹃ ﹄ ﹙ ﹚ ﹛ ﹜ ﹝ ﹞ ﹤ ﹥ （ ） ＜ ＞ ｛ ｝ 〖 〗 〘 〙 〚 〛 « » ‹ › 〈 〉 〱`.split(' ') },
+      { name: "Chess & Cards", icon: "fa-regular fa-chess-queen", symbols: `♔ ♕ ♖ ♗ ♘ ♙ ♚ ♛ ♜ ♝ ♞ ♟ ♤ ♠ ♧ ♣ ♡ ♥ ♢ ♦`.split(' ') },
+      { name: "Musical Notes", icon: "fa-solid fa-music", symbols: `♩ ♪ ♫ ♬ ♭ ♮ ♯ ° ø ؂ ≠ ≭`.split(' ') },
+      { name: "Degree, Weather & Unit", icon: "fa-regular fa-sun", symbols: `° ℃ ℉ ϟ ☀ ☁ ☂ ☃ ☉ ☼ ☽ ☾ ♁ ♨ ❄ ❅ ❆ ☇ ☈ ☄ ㎎ ㎏ ㎜ ㎝ ㎞ ㎡ ㏄ ㏎ ㏑ ㏒ ㏕`.split(' ') },
+      { name: "Arrows", icon: "fa-solid fa-arrow-right", symbols: `↕ ↖ ↗ ↘ ↙ ↚ ↛ ↜ ↝ ↞ ↟ ↠ ↡ ↢ ↣ ↤ ↥ ↦ ↧ ↨ ↩ ↪ ↫ ↬ ↭ ↮ ↯ ↰ ↱ ↲ ↳ ↴ ↶ ↷ ↸ ↹ ↺ ↻ ↼ ↽ ↾ ↿ ⇀ ⇁ ⇂ ⇃ ⇄ ⇅ ⇆ ⇇ ⇈ ⇉ ⇊ ⇋ ⇌ ⇍ ⇎ ⇏ ⇕ ⇖ ⇗ ⇘ ⇙ ⇚ ⇛ ⇜ ⇝ ⇞ ⇟ ⇠ ⇡ ⇢ ⇣ ⇤ ⇥ ⇦ ⇧ ⇨ ⇩ ⇪ ⌅ ⌆ ⌤ ⏎ ▶ ☇ ☈ ☊ ☋ ☌ ☍ ➔ ➘ ➙ ➚ ➛ ➜ ➝ ➞ ➟ ➠ ➡ ➢ ➣ ➤ ➥ ➦ ➧ ➨ ➩ ➪ ➫ ➬ ➭ ➮ ➯ ➱ ➲ ➳ ➴ ➵ ➶ ➷ ➸ ➹ ➺ ➻ ➼ ➽ ➾ ⤴ ⤵ ↵ ↓ ↔ ← → ↑ ⌦ ⌫ ⌧ ⇰ ⇫ ⇬ ⇭ ⇳ ⇮ ⇯ ⇱ ⇲ ⇴ ⇵ ⇷ ⇸ ⇹ ⇺ ⇑ ⇓ ⇽ ⇾ ⇿ ⬳ ⟿ ⤉ ⤈ ⇻ ⇼ ⬴ ⤀ ⬵ ⤁ ⬹ ⤔ ⬺ ⤕ ⬶ ⤅ ⬻ ⤖ ⬷ ⤐ ⬼ ⤗ ⬽ ⤘ ⤝ ⤞ ⤟ ⤠ ⤡ ⤢ ⤣ ⤤ ⤥ ⤦ ⤪ ⤨ ⤧ ⤩ ⤭ ⤮ ⤯ ⤰ ⤱ ⤲ ⤫ ⤬ ⬐ ⬎ ⬑ ⬏ ⤶ ⤷ ⥂ ⥃ ⥄ ⭀ ⥱ ⥶ ⥸ ⭂ ⭈ ⭊ ⥵ ⭁ ⭇ ⭉ ⥲ ⭋ ⭌ ⥳ ⥴ ⥆ ⥅ ⥹ ⥻ ⬰ ⥈ ⬾ ⥇ ⬲ ⟴ ⥷ ⭃ ⥺ ⭄ ⥉ ⥰ ⬿ ⤳ ⥊ ⥋ ⥌ ⥍ ⥎ ⥏ ⥐ ⥑ ⥒ ⥓ ⥔ ⥕ ⥖ ⥗ ⥘ ⥙ ⥚ ⥛ ⥜ ⥝ ⥞ ⥟ ⥠ ⥡ ⥢ ⥤ ⥣ ⥥ ⥦ ⥨ ⥧ ⥩ ⥮ ⥯ ⥪ ⥬ ⥫ ⥭ ⤌ ⤍ ⤎ ⤏ ⬸ ⤑ ⬱ ⟸ ⟹ ⟺ ⤂ ⤃ ⤄ ⤆ ⤇ ⤊ ⤋ ⭅ ⭆ ⟰ ⟱ ⇐ ⇒ ⇔ ⇶ ⟵ ⟶ ⟷ ⬄ ⬀ ⬁ ⬂ ⬃ ⬅ ⬆ ⬇ ⬈ ⬉ ⬊ ⬋ ⬌ ⬍ ⟻ ⟼ ⤒ ⤓ ⤙ ⤚ ⤛ ⤜ ⥼ ⥽ ⥾ ⥿ ⤼ ⤽ ⤾ ⤿ ⤸ ⤺ ⤹ ⤻ ⥀ ⥁ ⟲ ⟳`.split(' ') },
+      { name: "Astrological & Zodiac", icon: "fa-regular fa-moon", symbols: `☮ ☸ ♈ ♉ ☪ ♊ ♋ ♌ ♍ ♎ ♏ ♐ ♑ ♒ ♓ ☤ ☥ ☧ ☨ ☩ ☫ ☬ ☭ ☯ ☽ ☾ ✙ ✚ ✛ ✜ ✝ ✞ ✟ † ⊹ ‡ ♁ ♆ ❖ ♅ ✠ ✡ ✢ 卍 卐 〷 ☠ ☢ ☣ ☦`.split(' ') },
+      { name: "Heart", icon: "fa-solid fa-heart", symbols: `♥ ♡ ❥ ❣ ❦ ❧ დ ღ ۵ ლ ও ლ ❤️️ 💙 🧡 💚 💛 💜 🖤 💗 💓 💔 💟 💕 💖 ❣️ 💘 💝 💞`.split(' ') },
+      { name: "Check mark & Tick", icon: "fa-solid fa-check", symbols: `✓ ✔ ✗ ✘ ☓ ∨ √ ✔️ ✅ ❎ ❌ 💯 ✇ ☐ ☑ ☒ 〤 〥`.split(' ') },
+      { name: "Male, Female, People & Smiley", icon: "fa-regular fa-face-smile", symbols: `♀ ♂ ☹ ☺ ☻ ☿ 〠 ヅ ツ ㋡ 웃 유 ü Ü ت シ ッ ㋛ ꑇ ꐦ ꐠ ꐡ ꐕ ꌇ ꌈ ꉕ ꈋ ꈌ ꆛ ꆜ ꃼ ☠ ☃ 〲 〴 ϡ ﭢ ⍢ ⍣ ⍤ ⍥ ⍨ ⍩ ὃ ὕ ὣ Ѷ Ӫ ӫ ⚣ ⚤ ⚥ ⚦ ⚧ ⚨ ⚢`.split(' ') },
+      { name: "Punctuation", icon: "fa-solid fa-quote-right", symbols: `· ‑ ‒ – — ― ‗ ‘ ’ ‚ ‛ “ ” „ ‟ • ‣ ․ ‥ … ‧ ′ ″ ‴ ‵ ‶ ‷ ❛ ❜ ❝ ❞ ʹ ʺ ʻ ʼ ʽ ʾ ʿ ˀ ˁ ˂ ˃ ˄ ˅ ˆ ˇ ˈ ˉ ˊ ˋ ˌ ˍ ˎ ˏ ː ˑ ˒ ˓ ˔ ˕ ˖ ˗ ˘ ˙ ˚ ˛ ˜ ˝ ˠ ˡ ～ ¿ ﹐ ﹒ ﹔ ﹕ ！ ＃ ＄ ％ ＆ ＊ ， ． ： ； ？ ＠ 、 。 〃 〝 〞 ︰`.split(' ') },
+      { name: "Maths (Sum, Infinity, PI...)", icon: "fa-solid fa-calculator", symbols: `π ∞ Σ √ ∛ ∜ ∫ ∬ ∭ ∮ ∯ ∰ ∱ ∲ ∳ ∀ ∁ ∂ ∃ ∄ ∅ ∆ ∇ ∈ ∉ ∊ ∋ ∌ ∍ ∎ ∏ ∐ ∑ − ∓ ∔ ∕ ∖ ∗ ∘ ∙ ∝ ∟ ∠ ∡ ∢ ∣ ∤ ∥ ∦ ∧ ∨ ∩ ∪ ∴ ∵ ∶ ∷ ∸ ∹ ∺ ∻ ∼ ∽ ∾ ∿ ≀ ≁ ≂ ≃ ≄ ≅ ≆ ≇ ≈ ≉ ≊ ≋ ≌ ≍ ≎ ≏ ≐ ≑ ≒ ≓ ≔ ≕ ≖ ≗ ≘ ≙ ≚ ≛ ≜ ≝ ≞ ≟ ≠ ≡ ≢ ≣ ≤ ≥ ≦ ≧ ≨ ≩ ≪ ≫ ≬ ≭ ≮ ≯ ≰ ≱ ≲ ≳ ≴ ≵ ≶ ≷ ≸ ≹ ≺ ≻ ≼ ≽ ≾ ≿ ⊀ ⊁ ⊂ ⊃ ⊄ ⊅ ⊆ ⊇ ⊈ ⊉ ⊊ ⊋ ⊌ ⊍ ⊎ ⊏ ⊐ ⊑ ⊒ ⊓ ⊔ ⊕ ⊖ ⊗ ⊘ ⊙ ⊚ ⊛ ⊜ ⊝ ⊞ ⊟ ⊠ ⊡ ⊢ ⊣ ⊤ ⊥ ⊦ ⊧ ⊨ ⊩ ⊪ ⊫ ⊬ ⊭ ⊮ ⊯ ⊰ ⊱ ⊲ ⊳ ⊴ ⊵ ⊶ ⊷ ⊸ ⊹ ⊺ ⊻ ⊼ ⊽ ⊾ ⊿ ⋀ ⋁ ⋂ ⋃ ⋄ ⋅ ⋆ ⋇ ⋈ ⋉ ⋊ ⋋ ⋌ ⋍ ⋎ ⋏ ⋐ ⋑ ⋒ ⋓ ⋔ ⋕ ⋖ ⋗ ⋘ ⋙ ⋚ ⋛ ⋜ ⋝ ⋞ ⋟ ⋠ ⋡ ⋢ ⋣ ⋤ ⋥ ⋦ ⋧ ⋨ ⋩ ⋪ ⋫ ⋬ ⋭ ⋮ ⋯ ⋰ ⋱ ⁺ ⁻ ⁼ ⁽ ⁾ ⁿ ₊ ₋ ₌ ₍ ₎ ✖ ﹢ ﹣ ＋ － ／ ＝ ÷ ± ×`.split(' ') },
+      { name: "Number Symbols", icon: "fa-solid fa-hashtag", symbols: `Ⅰ Ⅱ Ⅲ Ⅳ Ⅴ Ⅵ Ⅶ Ⅷ Ⅸ Ⅹ Ⅺ Ⅻ Ⅼ Ⅽ Ⅾ Ⅿ ⅰ ⅱ ⅲ ⅳ ⅴ ⅵ ⅶ ⅷ ⅸ ⅹ ⅺ ⅻ ⅼ ⅽ ⅾ ⅿ ↀ ↁ ↂ ➀ ➁ ➂ ➃ ➄ ➅ ➆ ➇ ➈ ➉ ➊ ➋ ➌ ➍ ➎ ➏ ➐ ➑ ➒ ➓ ⓵ ⓶ ⓷ ⓸ ⓹ ⓺ ⓻ ⓼ ⓽ ⓾ ⓿ ❶ ❷ ❸ ❹ ❺ ❻ ❼ ❽ ❾ ❿ ⁰ ¹ ² ³ ⁴ ⁵ ⁶ ⁷ ⁸ ⁹ ₀ ₁ ₂ ₃ ₄ ₅ ₆ ₇ ₈ ₉ ⓪ ① ② ③ ④ ⑤ ⑥ ⑦ ⑧ ⑨ ⑩ ⑪ ⑫ ⑬ ⑭ ⑮ ⑯ ⑰ ⑱ ⑲ ⑳ ⑴ ⑵ ⑶ ⑷ ⑸ ⑹ ⑺ ⑻ ⑼ ⑽ ⑾ ⑿ ⒀ ⒁ ⒂ ⒃ ⒄ ⒅ ⒆ ⒇ ⒈ ⒉ ⒊ ⒋ ⒌ ⒍ ⒎ ⒏ ⒐ ⒑ ⒒ ⒓ ⒔ ⒕ ⒖ ⒗ ⒘ ⒙ ⒚ ⒛ ㈠ ㈡ ㈢ ㈣ ㈤ ㈥ ㈦ ㈧ ㈨ ㈩ ㊀ ㊁ ㊂ ㊃ ㊄ ㊅ ㊆ ㊇ ㊈ ㊉ ０ １ ２ ３ ４ ５ ６ ７ ８ ９ ⁱ ₐ ₑ ₒ ₓ ₔ`.split(' ') },
+      { name: "Fraction", icon: "fa-solid fa-divide", symbols: `⅟ ½ ⅓ ⅕ ⅙ ⅛ ⅔ ⅖ ⅚ ⅜ ¾ ⅗ ⅝ ⅞ ⅘ ¼ ⅐ ⅑ ⅒ ↉ % ℅ ‰ ‱`.split(' ') },
+      { name: "Comparison", icon: "fa-solid fa-equals", symbols: `≤ ≥ ≦ ≧ ≨ ≩ ⊰ ⊱ ⋛ ⋚ ≂ ≃ ≄ ≅ ≆ ≇ ≈ ≉ ≊ ≋ ≌ ≍ ≎ ≏ ≐ ≑ ≒ ≓ ≔ ≕ ≖ ≗ ≘ ≙ ≚ ≛ ≜ ≝ ≞ ≟ ≠ ≡ ≢ ≣`.split(' ') },
+      { name: "Technical", icon: "fa-solid fa-microchip", symbols: `⌀ ⌂ ⌃ ⌄ ⌅ ⌆ ⌇ ⌈ ⌉ ⌊ ⌋ ⌌ ⌍ ⌎ ⌏ ⌐ ⌑ ⌒ ⌓ ⌔ ⌕ ⌖ ⌗ ⌘ ⌙ ⌚ ⌛ ⌜ ⌝ ⌞ ⌟ ⌠ ⌡ ⌢ ⌣ ⌤ ⌥ ⌦ ⌧ ⌨ ⌫ ⌬ ⌭ ⌮ ⌯ ⌰ ⌱ ⌲ ⌳ ⌴ ⌵ ⌶ ⌷ ⌸ ⌹ ⌺ ⌻ ⌼ ⌽ ⌾ ⌿ ⍀ ⍁ ⍂ ⍃ ⍄ ⍅ ⍆ ⍇ ⍈ ⍉ ⍊ ⍋ ⍌ ⍍ ⍎ ⍏ ⍐ ⍑ ⍒ ⍓ ⍔ ⍕ ⍖ ⍗ ⍘ ⍙ ⍚ ⍛ ⍜ ⍝ ⍞ ⍟ ⍠ ⍡ ⍢ ⍣ ⍤ ⍥ ⍦ ⍧ ⍨ ⍩ ⍪ ⍫ ⍬ ⍭ ⍮ ⍯ ⍰ ⍱ ⍲ ⍳ ⍴ ⍵ ⍶ ⍷ ⍸ ⍹ ⍺ ﹘ ﹝ ﹞ ﹟ ﹡ 〶 ␛ ␡ ␚ ␟ ␘ ␠ ␤ ␋ ␌ ␍ ␎ ␏ ␐ ␑ ␒ ␓ ␔ ␕ ␖ ␗ ␙ ␜ ␝ ␞ ␀ ␁ ␂ ␃ ␄ ␅ ␆ ␇ ␈ ␉ ␊ ␢ ␣ ⎋  ᴴᴰ`.split(' ') },
+      { name: "Square & Rectangle", icon: "fa-regular fa-square", symbols: `❏ ❐ ❑ ❒ ▀ ▁ ▂ ▃ ▄ ▅ ▆ ▇ ▉ ▊ ▋ █ ▌ ▐ ▍ ▎ ▏ ▕ ░ ▒ ▓ ▔ ▬ ▢ ▣ ▤ ▥ ▦ ▧ ▨ ▩ ▪ ▫ ▭ ▮ ▯ ☰ ☲ ☱ ☴ ☵ ☶ ☳ ☷ ▰ ▱ ◧ ◨ ◩ ◪ ◫ ∎ ■ □ ⊞ ⊟ ⊠ ⊡ ❘ ❙ ❚ 〓 ◊ ◈ ◇ ◆ ⎔ ⎚ ☖ ☗`.split(' ') },
+      { name: "Triangle", icon: "fa-solid fa-play", symbols: `◄ ▲ ▼ ► ◀ ◣ ◥ ◤ ◢ ▶ ◂ ▴ ▾ ▸ ◁ △ ▽ ▷ ∆ ∇ ⊳ ⊲ ⊴ ⊵ ◅ ▻ ▵ ▿ ◃ ▹ ◭ ◮ ⫷ ⫸ ⋖ ⋗ ⋪ ⋫ ⋬ ⋭ ⊿ ◬ ≜ ⑅`.split(' ') },
+      { name: "Line", icon: "fa-solid fa-minus", symbols: `│ ┃ ╽ ╿ ╏ ║ ╎ ┇ ︱ ┊ ︳ ┋ ┆ ╵ 〡 〢 ╹ ╻ ╷ 〣 ☰ ☱ ☲ ☳ ☴ ☵ ☶ ☷ ≡ ✕ ═ ━ ─ ╍ ┅ ┉ ┄ ┈ ╌ ╴ ╶ ╸ ╺ ╼ ╾ ﹉ ﹍ ﹊ ﹎ ︲ ⑆ ⑇ ⑈ ⑉ ⑊ ⑄ ⑀ ︴ ﹏ ﹌ ﹋ ╳ ╲ ╱ ︶ ︵ 〵 〴 〳 〆 \` ᐟ ‐ ⁃ ⎯ 〄`.split(' ') },
+      { name: "Corner", icon: "fa-solid fa-border-all", symbols: `﹄ ﹃ ﹂ ﹁ ┕ ┓ └ ┐ ┖ ┒ ┗ ┑ ┍ ┙ ┏ ┛ ┎ ┚ ┌ ┘ 「 」 『 』 ˩ ˥ ├ ┝ ┞ ┟ ┠ ┡ ┢ ┣ ┤ ┥ ┦ ┧ ┨ ┩ ┪ ┫ ┬ ┭ ┮ ┯ ┰ ┱ ┲ ┳ ┴ ┵ ┶ ┷ ┸ ┹ ┺ ┻ ┼ ┽ ┾ ┿ ╀ ╁ ╂ ╃ ╄ ╅ ╆ ╇ ╈ ╉ ╊ ╋ ╒ ╕ ╓ ╖ ╔ ╗ ╘ ╛ ╙ ╜ ╚ ╝ ╞ ╡ ╟ ╢ ╠ ╣ ╥ ╨ ╧ ╤ ╦ ╩ ╪ ╫ ╬ 〒 ⊢ ⊣ ⊤ ⊥ ╭ ╮ ╯ ╰ ⊦ ⊧ ⊨ ⊩ ⊪ ⊫ ⊬ ⊭ ⊮ ⊯ ⊺ 〦 〧 〨 ˦ ˧ ˨ ⑁ ⑂ ⑃ ∟`.split(' ') },
+      { name: "Circle", icon: "fa-regular fa-circle", symbols: `◉ ○ ◌ ◍ ◎ ● ◐ ◑ ◒ ◓ ◔ ◕ ◖ ◗ ❂ ☢ ⊗ ⊙ ◘ ◙ ◚ ◛ ◜ ◝ ◞ ◟ ◠ ◡ ◯ 〇 〶 ⚫ ⬤ ◦ ∅ ∘ ⊕ ⊖ ⊘ ⊚ ⊛ ⊜ ⊝ ❍ ⦿`.split(' ') },
+      { name: "Phonetic", icon: "fa-solid fa-microphone", symbols: `ʌ ɑ: æ e ə ɜ: ɪ i: ɒ ɔ: ʊ u: aɪ aʊ eɪ oʊ ɔɪ eə ɪə ʊə b d f g h j k l m n ŋ p r s ʃ t tʃ θ ð v w z ʒ dʒ`.split(' ') },
+      { name: "Latin Letters", icon: "fa-solid fa-font", symbols: `ą č Ĥ ħ ĩ Ň Ř Ť Ŵ Ž Ⓐ Ⓑ Ⓒ Ⓓ Ⓔ Ⓕ Ⓖ Ⓗ Ⓘ Ⓙ Ⓚ Ⓛ Ⓜ Ⓝ Ⓞ Ⓟ Ⓠ Ⓡ Ⓢ Ⓣ Ⓤ Ⓥ Ⓦ Ⓧ Ⓨ Ⓩ ⓐ ⓑ ⓒ ⓓ ⓔ ⓕ ⓖ ⓗ ⓘ ⓙ ⓚ ⓛ ⓜ ⓝ ⓞ ⓟ ⓠ ⓡ ⓢ ⓣ ⓤ ⓥ ⓦ ⓧ ⓨ ⓩ`.split(' ') },
+      { name: "Greek Letters", icon: "fa-solid fa-sigma", symbols: `α β γ δ ε ζ η θ ι κ λ μ ν ξ ο π ρ ς σ τ υ φ χ ψ ω Α Β Γ Δ Ε Ζ Η Θ Ι Κ Λ Μ Ν Ξ Ο Π Ρ Σ Τ Υ Φ Χ Ψ Ω`.split(' ') },
+      { name: "Chinese", icon: "fa-solid fa-icons", symbols: `㊊ ㊋ ㊌ ㊍ ㊎ ㊏ ㊐ ㊑ ㊒ ㊓ ㊔ ㊕ ㊖ ㊗ ㊘ ㊙ ㊚ ㊛ ㊜ ㊝ ㊞ ㊟ ㊠ ㊡ ㊢ ㊣ ㊤ ㊥ ㊦ ㊧ ㊨ ㊩ ㊪ ㊫ ㊬ ㊭ ㊮ ㊯ ㊰`.split(' ') },
+      { name: "Japanese", icon: "fa-regular fa-comment", symbols: `ぁ あ ぃ い ぅ う ぇ え ぉ お か が き ぎ く ぐ け げ こ ご さ ざ し じ す ず せ ぜ そ ぞ た だ ち ぢ っ つ づ て で と ど な に ぬ ね の は ば ぱ ひ び ぴ ふ ぶ ぷ へ べ ぺ ほ ぼ ぽ ま み`.split(' ') },
+      { name: "Korean", icon: "fa-regular fa-message", symbols: `ㄱ ㄲ ㄳ ㄴ ㄵ ㄶ ㄷ ㄸ ㄹ ㄺ ㄻ ㄼ ㄽ ㄾ ㄿ ㅀ ㅁ ㅂ ㅃ ㅄ ㅅ ㅆ ㅇ ㅈ ㅉ ㅊ ㅋ ㅌ ㅍ ㅎ ㅏ ㅐ ㅑ ㅒ ㅓ ㅔ ㅕ ㅖ ㅗ ㅘ ㅙ ㅚ ㅛ ㅜ ㅝ ㅞ ㅟ ㅠ ㅡ ㅢ ㅥ ㅦ ㅧ ㅨ ㅩ ㅪ ㅫ ㅬ ㅭ ㅮ ㅯ ㅰ ㅱ ㅲ ㅳ ㅴ ㅵ ㅶ ㅷ ㅸ ㅹ ㅺ ㅻ ㅼ ㅽ ㅾ ㅿ ㆀ ㆁ ㆂ ㆃ ㆄ ㆅ ㆆ ㆇ ㆈ ㆉ ㆊ`.split(' ') },
+      // Emoji categories (large)
+      { name: "Smileys & Emotion", icon: "fa-regular fa-face-laugh", symbols: `😂 😄 😃 😀 😊 😉 😍 😘 😚 😗 😙 😜 😝 😛 😳 😁 😔 😌 😒 😞 😣 😢 😭 😪 😥 😰 😅 😓 😩 😫 😨 😱 😠 😡 😤 😖 😆 😋 😷 😎 😴 😵 😲 😟 😦 😧 😈 👿 😮 😬 😐 😕 😯 😶 😇 ☺️ 😏 😑 🙃 🙄 ☹️ 🤐 🤑 🤒 🤓 🤔 🤕 🙁 🙂 🤗 🤣 🤠 🤥 🤤 🤢 🤧 🤡 🤖 🖤 💛 💙 💜 💚 🧡 ❤️️ 💔 💗 💓 💕 💖 💞 💘 💝 ❣️ 💌 💋 😺 😸 😻 😽 😼 🙀 😿 😹 😾 🙈 🙉 🙊 💀 👽 👹 👺 🤩 🤨 🥺️ 🤯 🤪 🤬 🤮 🤫 🤭 🧐 🥰️ 🥵️ 🥶️ 🥴️ 🥳️ 🥲 🥸`.split(' ') },
+      { name: "People & Body", icon: "fa-regular fa-user", symbols: `👶 👦 👧 👨 👩 👼 🤰 🤳 👸 🤴 🧔 🕺 💃 🥷 🕴️ 👻 🎎 ☃️ ☠️ 👁‍🗨 🗿 👲 👂 👀 👃 👅 👄 👁 🫁 🫀 👤 👥 🗣 🫂 💬 💭 🗨 🗯 🧒 🧑 🧕 🤱 🦵️ 🦶️ 🦷️ 🦴️ 👪 👨‍👦 👨‍👦‍👦 👨‍👧 👨‍👧‍👦 👨‍👧‍👧 👨‍👩‍👦 👩‍👦 👩‍👦‍👦 👩‍👧 👩‍👧‍👦 👩‍👧‍👧 👨‍👨‍👦 👨‍👨‍👦‍👦 👨‍👨‍👧 👨‍👨‍👧‍👦 👨‍👨‍👧‍👧 👨‍👩‍👦‍👦 👨‍👩‍👧 👨‍👩‍👧‍👦 👨‍👩‍👧‍👧 👩‍👩‍👦 👩‍👩‍👦‍👦 👩‍👩‍👧 👩‍👩‍👧‍👦 👩‍👩‍👧‍👧 💏 👩‍❤️‍💋‍👨 👨‍❤️‍💋‍👨 👩‍❤️‍💋‍👩 💑 👩‍❤️‍👨 👨‍❤️‍👨 👩‍❤️‍👩 🤵 🤵‍♂️ 🤵‍♀️ 🧑‍🦳 👨‍🦳️ 👩‍🦳️ 🧑‍🦱 👨‍🦱️ 👩‍🦱️ 🧑‍🦲 👨‍🦲️ 👩‍🦲️ 🧓 👴 👵 🧑‍🦰 👨‍🦰️ 👩‍🦰️ 👱 👱‍♂️ 👱‍♀️ 👰 👰‍♂️ 👰‍♀️ 🧑‍🎄 🎅 🎅 🙆 🙆‍♂️ 🙆‍♀️ 🙅 🙅‍♂️ 🙅‍♀️ 💁 💁‍♂️ 💁‍♀️ 🙋 🙋‍♂️ 🙋‍♀️ 🤷 🤷‍♂️ 🤷‍♀️ 🙍 🙍‍♂️ 🙍‍♀️ 💆 💆‍♂️ 💆‍♀️ 💇 💇‍♂️ 💇‍♀️ 🙎 🙎‍♂️ 🙎‍♀️ 🤦 🤦‍♂️ 🤦‍♀️ 👮 👮‍♂️ 👮‍♀️ 👷 👷‍♂️ 👷‍♀️ 🧏 🧏‍♂️ 🧏‍♀️ 💂 💂‍♂️ 💂‍♀️ 🕵 🕵️‍♂️ 🕵️‍♀️ 🙇 🙇‍♂️ 🙇‍♀️ 🚶 🚶‍♂️ 🚶‍♀️ 🏃 🏃‍♂️ 🏃‍♀️ 🧙 🧙‍♂️ 🧙‍♀️ 🧚 🧚‍♂️ 🧚‍♀️ 🧛 🧛‍♂️ 🧛‍♀️ 🧜 🧜‍♂️ 🧜‍♀️ 🧝 🧝‍♂️ 🧝‍♀️ 🧞 🧞‍♂️ 🧞‍♀️ 🧖 🧖‍♂️ 🧖‍♀️ 👳 👳‍♀️ 👳‍♀️ 🧗 🧗‍♂️ 🧗‍♀️ 🧘 🧘‍♂️ 🧘‍♀️ 🧟 🧟‍♂️ 🧟‍♀️ 🦸️ 🦸‍♂️️ 🦸‍♀️️ 🦹️ 🦹‍♂️️ 🦹‍♀️️ 👯 👯‍♂️ 👯 🚵 🚵‍♂️ 🚵‍♀️ 🚴 🚴‍♂️ 🚴‍♀️ ⛹ ⛹️‍♂️ ⛹️‍♀️ 🏊 🏊‍♂️ 🏊‍♀️ 🏄 🏄‍♂️ 🏄‍♀️ 🤹 🤹‍♂️ 🤹‍♀️ 🏋 🏋️‍♂️ 🏋️‍♀️ 🏌 🏌️‍♂️ 🏌️‍♀️ 🤸 🤸‍♂️ 🤸‍♀️ 🚣 🚣‍♂️ 🚣‍♀️ 🤽 🤽‍♂️ 🤽‍♀️ 🤾 🤾‍♂️ 🤾‍♀️ 🧑‍🍼 👨‍🍼 👩‍🍼 🧑‍🎓 👨‍🎓 👩‍🎓 🧑‍🎤 👨‍🎤 👩‍🎤 🧑‍🍳 👨‍🍳 👩‍🍳 🧑‍🚒 👨‍🚒 👩‍🚒 🧑‍🤝‍🧑 👫 👬 👭 🧑‍🦽 👨‍🦽 👩‍🦽 👨‍🦼 👩‍🦼 🧑‍🦼 🧑‍🎨 👨‍🎨 👩‍🎨 🧑‍🦯 👨‍🦯 👩‍🦯 🧑‍🚀 👨‍🚀 👩‍🚀 🧑‍🌾 👨‍🌾 👩‍🌾 🧑‍⚖️ 👨‍⚖️ 👩‍⚖️ 🧑‍🔧 👨‍🔧 👩‍🔧 🧑‍💼 👨‍💼 👩‍💼 🧑‍⚕️ 👨‍⚕️ 👩‍⚕️ 🧑‍💻 👨‍💻 👩‍💻 🧑‍🔬 👨‍🔬 👩‍🔬 🧑‍🏫 👨‍🏫 👩‍🏫 🧑‍🏭 👨‍🏭 👩‍🏭 🧑‍✈️ 👨‍✈️ 👩‍✈️`.split(' ') },
+      { name: "Objects", icon: "fa-regular fa-mug-saucer", symbols: `🎍 🎒 🎓 🎏 🎆 🎇 🎐 🎑 🎃 🎄 🎁 🎋 🎉 🎊 🎈 🎌 🔮 🎥 📷 📹 📼 💿 📀 💽 💾 💻 📱 ☎️ 📞 📟 🛰 📠 📡 📺 📻 🔊 🔉 🔈 🔇 🔔 🔕 📢 📣 ⏳ ⌛️ ⏰ ⌚️ 🔓 🔒 🔏 🔐 🔑 🔎 💡 🔦 🔆 🔅 🔌 🔋 🔍 🛁 🛀 🚿 🚽 🔧 🔩 🔨 🚪 🚬 💣 🔫 🔪 💊 💉 💰 💴 💵 💷 💶 💳 💸 📲 📧 📥 📤 ✉️ 📩 📨 📯 📫 📪 📬 📭 📮 📦 📝 📄 📃 📑 📊 📈 📉 📜 📋 📅 📆 📇 📁 📂 ✂️ 📌 📎 ✒️ ✏️ 📏 📐 📕 📗 📘 📙 📓 📔 📒 📚 📖 🔖 📛 🔬 🔭 📰 🎨 🎬 🎤 🎧 🎼 🎵 🎶 🎹 🎻 🎺 🎷 🎸 👾 🎮 🃏 🎴 ️🀄️ 🏺 📿 🕋 ⚒️ ⚔️ ⚖️ ⚗️ ⚙️ ⌨️ 🕶 ⏱ ⏲ ☂️ ⚜️ ⚰️ ⚱️ ⛏ ⛑ ⛓ ⛩ ⛱ 🎰 🎩 👑 👒 💼 👜 👝 👛 👓 🎀 🌂 💄 💍 💎 👣 🌡 🎖 🎗 🎙 🎚 🎛 🎞 🎟 🏅 🏔 🏕 🏖 🏵 🏷 📸 📽 🕉 🕊 🕯 🕰 🕳 🕸 🕹 💩 🖇 🖊 🖋 🖌 🖍 🖥 🖨 🖱 🖲 🖼 🗂 🗃 🗄 🗑 🗒 🗓 🗜 🗝 🗞 🗡 🗳 🗺 🛋 🛌 🛍 🛎 🛏 🛠 🛡 🛢 👟 👞 👡 👠 👢 👕 👔 👚 👗 🎽 👖 👘 👙 🏮 🎪 🎭 📍 ⛽️ 🥂 🥃 🥄 🥁 🛒 🧠 🧣 🧤 🧥 🧦 🧢 🧭️ 🧱️ 🧳️ 🧨️ 🧧️ 🥎️ 🏏️ 🥍️ 🧿️ 🧩️ 🧸️ ♟️ 🧵 🧶 🥽 🥼 🥾 🥿️ 🧮️ 🧾️ 🧰️️ 🧲️️ 🧪️️ 🧫️️ 🧬️️ 🧴️️ 🧷️️ 🧹️️ 🧺️️ 🧻️️ 🧼️️ 🧽️️ 🧯️️ 💈 🍼 🛼 🫖 🪄 🪖 🪞 🪤 🪆 🪢 🪜 🪘 🪝 🪟 🩴 🪥 🪛 🪅 🪧 🪠 🪡 🪶 🪃 🪣 🪗 🪚 🪙`.split(' ') },
+      { name: "Nature", icon: "fa-regular fa-leaf", symbols: `💐 🌸 🌷 🍀 🌹 🥀 🌻 🌺 🍁 🍃 🍂 🌿 🌾 🍄 🌵 🌴 🌲 🌳 🌰 🌱 🌼 🌐 🌞 🌝 🌚 🌑 🌒 🌓 🌓 🌔 🌕 🌖 🌗 🌘 🌜 🌛 🌙 🔥 💧`.split(' ') },
+      { name: "Symbols (Emoji)", icon: "fa-solid fa-infinity", symbols: `♾️ ♀️ ♂️ ⚧️ ⚕️ ➰ ➿ 💲 💱 ©️ ®️ ™️ 〰️ 🔠 🔡 🔤 ℹ️ 🆗 🆕 🆙 🆒 🆓 🆖 📶 🎦 🚻 🚹 🚺 🚼 🚾 🚮 🅿️ ♿️ Ⓜ️ 🛂 🛄 🛅 🛃 🆑 🆘 🆚 🚫 🚭 🔞 📵 🚯 🚱 🚳 🚷 🚸 ⛔️ ⚠️ 🛑 🚧 ✳️ ❇️ ❎ ✅ ✴️ 💟 📳 📴 🅰️ 🅱️ 🆎 🅾️ 💠 ♻️ 🏧 🚰 💹 〽️ ❌ ⭕️ ❗️ ❓ ❕ ❔ 🕛 🕧 🕐 🕜 🕑 🕝 🕒 🕞 🕓 🕟 🕔 🕠 🕕 🕖 🕗 🕘 🕙 🕚 🕡 🕢 🕣 🕤 🕥 🕦 1⃣ 2⃣ 3⃣ 4⃣ 5⃣ 6⃣ 7⃣ 8⃣ 9⃣ 0⃣ 🔟 🔢 #️⃣ 🔣 ⏭ ⏮ ⏯ *️⃣ ⏸ ⏹ ⏺ ⏏️ ☢️ ☣️ ➕ ➖ ✖️ ➗ ♥️ ♦️ ♣️ ♠️ 💮 💯 💫 💥 💢 💦 💤 💨 ✔️ ☑️ 🔘 🔗 🔱 🔲 🔳 ⬜️ ⬛️ ◼️ ◻️ ◾️ ◽️ ▪️ ▫️ 🔺 ⚫️ ⚪️ 🔴 🔵 🔻 🔶 🔷 🔸 🔹 ⁉️ ‼️ 🔰 🆔 *️⃣ 🛗 ☮️ 🛐 🕎 ✝️ ✡️ ☦️ ☪️ ☯️ ☸️ ⚛️ ♈️ ♉️ ♊️ ♋️ ♌️ ♍️ ♎️ ♏️ ♐️ ♑️ ♒️ ♓️ ⛎ 🔯 🇦 🇧 🇨 🇩 🇪 🇫 🇬 🇭 🇮 🇯 🇰 🇱 🇲 🇳 🇴 🇵 🇶 🇷 🇸 🇹 🇺 🇻 🇼 🇽 🇾 🇿 🈁 🈯️ 🈳 🈵 🈴 🈲 🉐 🈹 🈺 🈶 🈚️ 🈷️ 🈸 🈂️ 🉑 ㊙️ ㊗️`.split(' ') },
+      { name: "Food & Drink", icon: "fa-solid fa-utensils", symbols: `☕️ 🍵 🍶 🍺 🍻 🍸 🍹 🍷 🍴 🍕 🍔 🍟 🍗 🍖 🍝 🍛 🍤 🍱 🍣 🍥 🍙 🍘 🍚 🍜 🍲 🍢 🍡 🍳 🍞 🍩 🍮 🍦 🍨 🍧 🎂 🍰 🍪 🍫 🍬 🍭 🍯 🍎 🍏 🍊 🍋 🍒 🍇 🍉 🍓 🍑 🍈 🍌 🍐 🍍 🍠 🍆 🍅 🌽 🌶 🌭 🌮 🌯 🍾 🍿 🥝 🥑 🥔 🥕 🥒 🥜 🥐 🥖 🥞 🥓 🥙 🥚 🥘 🥗 🥛 🥥 🥦 🥨 🥩 🥪 🥣 🥫 🥟 🥠 🥡 🥧 🥤 🥢 🥭️ 🥬️ 🥯️ 🧂️ 🥮️ 🦞️ 🧁️ 🫕 🫒 🫓 🫔 🫑 🫐 🧋`.split(' ') },
+      { name: "Transportation", icon: "fa-solid fa-car", symbols: `🚢 ⛵️ 🚤 ⚓️ 🚀 ✈️ 💺 🚁 🚂 🚊 🚉 🚞 🚆 🚄 🚅 🚈 🚇 🚝 🚋 🚃 🚎 🚌 🚍 🚙 🚘 🚗 🚕 🚖 🚛 🚚 🚨 🚓 🚔 🚒 🚑 🚐 🚲 🚡 🚟 🚠 ⛴ 🚜 🚏 🛣 🛤 🛥 🛩 🛫 🛬 🛳 🎫 🚦 🚥 🎠 🎡 🎢 🛴 🛹️ 🛵 🛶 🛷 🛸 🛻`.split(' ') },
+      { name: "Animals", icon: "fa-regular fa-paw", symbols: `🐶 🐺 🐱 🐭 🐹 🐰 🐸 🐯 🐨 🐻 🐷 🐽 🐮 🐗 🐵 🐒 🐴 🐑 🐘 🐼 🐧 🐦 🐤 🐥 🐣 🐔 🐍 🐢 🐛 🐝 🐜 🐿 🐞 🐌 🐙 🐚 🐠 🐟 🐬 🐳 🐋 🐄 🐏 🐀 🐃 🐅 🐇 🐉 🐎 🐐 🐓 🐕 🐖 🐁 🐂 🐲 🐡 🐊 🐫 🐪 🐆 🐈 🐩 🐾 🦀 🦁 🦂 🕷 🦃 🦄 🦐 🦑 🦋 🦍 🦊 🦌 🦏 🦇 🦅 🦆 🦉 🦎 🦈 🦓 🦒 🦔 🦕 🦖 🦝️ 🦙️ 🦛️ 🦘️ 🦡️ 🦢️ 🦚️ 🦜️ 🦟️ 🐻‍❄️ 🦭 🐃 🪱 🦬 🪳 🦣 🦤 🐈‍⬛ 🦗 🦫 🪲 🪰`.split(' ') },
+      { name: "Hands", icon: "fa-regular fa-hand", symbols: `👍 👎 👌 👊 ✊ ✌️ 👋 ✋ 👐 👆 👇 👉 👈 🙌 🙏 💪 🖖 🖐 ☝️ 👏 ✍️ 🤘 🖕 🤞 🤙 🤛 🤜 🤚 🤝 🤟 🤲 🤌 💅`.split(' ') },
+      { name: "Arrows (Emoji)", icon: "fa-solid fa-arrow-up", symbols: `⬆️ ⬇️ ⬅️ ➡️ ↗️ ↖️ ↘️ ↙️ ↔️ ↕️ 🔄 ◀️ ▶️ 🔼 🔽 ↩️ ↪️ ⏪ ⏩ ⏫ ⏬ ⤵️ ⤴️ 🔀 🔁 🔂 🔃 🔝 🔚 🔙 🔛 🔜`.split(' ') },
+      { name: "Buildings", icon: "fa-regular fa-building", symbols: `🏠 🏡 🏫 🏢 🏣 🏥 🏦 🏪 🏩 🏨 💒 ⛪️ 🏬 🏤 🌇 🕌 🕍 🌆 🏯 🏰 ⛺️ 🏭 🗼 🏘 🏞 🏟 🏙 🏚 🏛 🏗 🛖 🪦`.split(' ') },
+      { name: "Sport", icon: "fa-regular fa-futbol", symbols: `🎲 🎯 🏈 🏀 ️⚽️ ⚾️ 🎾 🎱 🏉 🎳 ️⛳️ 🏁 🏇 🏆 ⛷ ⛸ 🏏 🏐 🏑 🏒 🏓 🏸 🏹 🏂 🏍 🏎 🤺 🥅 🥇 🥈 🥉 🥊 🥋 🤼 🤼‍♂️ 🎣 🥌`.split(' ') },
+      { name: "Flags", icon: "fa-regular fa-flag", symbols: `🇯🇵 🇰🇷 🇩🇪 🇨🇳 🇺🇸 🇫🇷 🇪🇸 🇮🇹 🇷🇺 🇬🇧 🇦🇿 🇦🇺 🇦🇼 🇦🇴 🇦🇱 🇦🇲 🇦🇸 🇦🇹 🇦🇪 🇦🇬 🇦🇫 🇦🇮 🇦🇩 🇦🇷 🇧🇴 🇧🇷 🇧🇳 🇧🇲 🇧🇹 🇧🇸 🇧🇾 🇧🇿 🇧🇼 🇧🇪 🇧🇫 🇧🇬 🇧🇭 🇧🇮 🇧🇯 🇧🇦 🇧🇧 🇧🇩 🇨🇻 🇨🇼 🇨🇺 🇨🇿 🇨🇾 🇨🇲 🇨🇰 🇨🇱 🇨🇷 🇨🇴 🇨🇩 🇨🇦 🇨🇬 🇨🇫 🇨🇮 🇨🇭 🇩🇯 🇩🇲 🇩🇰 🇩🇴 🇩🇿 🇪🇹 🇪🇷 🇪🇬 🇪🇪 🇪🇨 🇫🇴 🇫🇮 🇫🇯 🇬🇹 🇬🇳 🇬🇲 🇬🇵 🇬🇷 🇬🇶 🇬🇺 🇬🇼 🇬🇾 🇬🇫 🇬🇭 🇬🇮 🇬🇪 🇬🇩 🇬🇦 🇭🇺 🇭🇷 🇭🇳 🇭🇰 🇭🇹 🇮🇪 🇮🇩 🇮🇷 🇮🇶 🇮🇳 🇮🇱 🇮🇸 🇯🇴 🇯🇲 🇰🇬 🇰🇪 🇰🇭 🇰🇮 🇰🇼 🇰🇿 🇰🇾 🇰🇳 🇰🇲 🇰🇵 🇱🇰 🇱🇷 🇱🇸 🇱🇹 🇱🇻 🇱🇺 🇱🇾 🇱🇮 🇱🇨 🇱🇧 🇱🇦 🇲🇼 🇲🇻 🇲🇴 🇲🇪 🇲🇬 🇲🇩 🇲🇦 🇲🇳 🇲🇲 🇲🇷 🇲🇶 🇲🇹 🇲🇸 🇲🇾 🇲🇽 🇲🇿 🇲🇱 🇲🇰 🇲🇵 🇳🇮 🇳🇦 🇳🇱 🇳🇴 🇳🇵 🇳🇿 🇳🇺 🇳🇪 🇳🇨 🇳🇬 🇴🇲 🇵🇸 🇵🇰 🇵🇾 🇵🇼 🇵🇭 🇵🇬 🇵🇪 🇵🇦 🇵🇷 🇵🇹 🇵🇱 🇶🇦 🇷🇪 🇷🇸 🇷🇴 🇷🇼 🇸🇲 🇸🇦 🇸🇧 🇸🇨 🇸🇩 🇸🇬 🇸🇪 🇸🇮 🇸🇻 🇸🇿 🇸🇾 🇸🇽 🇸🇹 🇸🇸 🇸🇳 🇸🇱 🇸🇰 🇸🇷 🇸🇴 🇹🇴 🇹🇿 🇹🇹 🇹🇲 🇹🇳 🇹🇱 🇹🇷 🇹🇻 🇹🇬 🇹🇫 🇹🇯 🇹🇭 🇹🇨 🇺🇿 🇺🇾 🇺🇬 🇺🇦 🇻🇺 🇻🇳 🇻🇨 🇻🇪 🇻🇬 🇻🇮 🇼🇸 🇾🇪 🇿🇦 🇿🇼 🇿🇲 🇦🇶 🇦🇽 🇧🇱 🇧🇶 🇨🇨 🇨🇽 🇪🇭 🇪🇺 🇫🇰 🇫🇲 🇬🇬 🇬🇱 🇬🇸 🇮🇨 🇮🇲 🇮🇴 🇯🇪 🇲🇨 🇲🇭 🇲🇺 🇳🇫 🇳🇷 🇵🇫 🇵🇲 🇵🇳 🇸🇭 🇹🇩 🇹🇰 🇹🇼 🇻🇦 🇼🇫 🇽🇰 🇾🇹 🇦🇨 🇧🇻 🇪🇦 🇨🇵 🇩🇬 🇭🇲 🇲🇫 🇸🇯 🇹🇦 🇺🇲 🏴󠁧󠁢󠁥󠁮󠁧󠁿 🏴󠁧󠁢󠁳󠁣󠁴󠁿 🏴󠁧󠁢󠁷󠁬󠁳󠁿 🇺🇳 🚩 🏳 🏴 🏳️‍🌈 🏴‍☠️️ 🏳️‍⚧️`.split(' ') }
+    ];
+
+    // ----- RENDER BI GRID -----
+    const biContainer = document.getElementById('biGrid');
+    if (biContainer) {
+      let biHtml = '';
+      biIcons.forEach(item => {
+        const displayChar = item.char;
+        const nameAttr = item.name.length > 12 ? item.name.slice(0, 10) + '…' : item.name;
+        biHtml += `
+          <div class="symbol-card" data-char="${displayChar}" data-name="${nameAttr}" role="button" tabindex="0">
+            <span class="symbol-char">${displayChar}</span>
+            <span class="symbol-name">${nameAttr}</span>
+          </div>
+        `;
+      });
+      biContainer.innerHTML = biHtml;
+    }
+
+    // ----- RENDER ALL OTHER CATEGORIES -----
+    const container = document.getElementById('gridContainer');
+    if (!container) return;
+
+    let html = '';
+    categories.forEach(cat => {
+      const syms = cat.symbols.filter(s => s.trim() !== '');
+      if (syms.length === 0) return;
+
+      html += `<div class="category-block">`;
+      html += `<div class="category-title"><i class="${cat.icon}"></i> ${cat.name}</div>`;
+      html += `<div class="symbol-grid">`;
+      syms.forEach(ch => {
+        const displayChar = ch;
+        const nameAttr = ch.length > 12 ? ch.slice(0, 10) + '…' : ch;
+        html += `
+          <div class="symbol-card" data-char="${displayChar}" data-name="${nameAttr}" role="button" tabindex="0">
+            <span class="symbol-char">${displayChar}</span>
+            <span class="symbol-name">${nameAttr}</span>
+          </div>
+        `;
+      });
+      html += `</div></div>`;
+    });
+
+    container.innerHTML = html;
+
+    // ----- TOAST -----
+    const toast = document.getElementById('toast');
+    const toastText = document.getElementById('toastText');
+    let toastTimer = null;
+
+    function showToast(msg) {
+      if (toastTimer) { clearTimeout(toastTimer); toast.classList.remove('show'); }
+      void toast.offsetWidth;
+      toastText.textContent = msg || 'copied';
+      toast.classList.add('show');
+      toastTimer = setTimeout(() => { toast.classList.remove('show'); toastTimer = null; }, 1600);
+    }
+
+    // ----- COPY (delegation for both grids) -----
+    function handleCopy(e) {
+      const card = e.target.closest('.symbol-card');
+      if (!card) return;
+      const char = card.dataset.char;
+      if (!char) return;
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(char).then(() => {
+          showToast(`“${char}” copied`);
+        }).catch(() => fallbackCopy(char));
+      } else {
+        fallbackCopy(char);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        const ok = document.execCommand('copy');
+        showToast(ok ? `“${text}” copied` : 'copy failed');
+      } catch (_) { showToast('error'); }
+      document.body.removeChild(ta);
+    }
+
+    // Attach listeners to both containers
+    document.addEventListener('click', handleCopy);
+
+    // keyboard support
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        const card = e.target.closest('.symbol-card');
+        if (card) { e.preventDefault(); card.click(); }
+      }
+    });
+
+    // a11y labels (run after render)
+    document.querySelectorAll('.symbol-card').forEach(c => {
+      const name = c.dataset.name || 'symbol';
+      c.setAttribute('aria-label', `copy ${name}`);
+    });
+
+  })();
+</script>
+
+<!-- Inter font -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&display=swap" rel="stylesheet">
+
+</body>
+</html>

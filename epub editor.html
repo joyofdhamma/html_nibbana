@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>EPUB Creator | Image Paste + Page Number Remover</title>
+  <!-- JSZip + FileSaver -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background: #eef2f7;
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 24px 20px;
+      color: #0a2540;
+    }
+    .app-container { max-width: 1500px; margin: 0 auto; }
+    .editor-wrapper {
+      background: white;
+      border-radius: 32px;
+      box-shadow: 0 20px 35px -12px rgba(0,0,0,0.1);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .toolbar {
+      background: #f9fbfd;
+      padding: 12px 20px;
+      border-bottom: 1px solid #e2edf2;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .tool-group {
+      display: flex;
+      gap: 6px;
+      background: #ffffff;
+      padding: 4px 10px;
+      border-radius: 60px;
+      border: 1px solid #dce5ec;
+    }
+    .tool-btn {
+      background: transparent;
+      border: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: 0.15s;
+      font-family: inherit;
+      color: #1e4663;
+    }
+    .tool-btn:hover { background: #e4edf5; }
+    .separator { width: 1px; height: 28px; background: #cbdde9; margin: 0 6px; }
+    .action-buttons { margin-left: auto; display: flex; gap: 12px; flex-wrap: wrap; }
+    button.primary {
+      background: #1f6e43;
+      border: none;
+      color: white;
+      padding: 8px 20px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      cursor: pointer;
+    }
+    button.primary:hover { background: #0f5a38; transform: translateY(-1px); }
+    button.secondary { background: white; border: 1px solid #cbdde9; padding: 8px 18px; cursor: pointer; }
+    button.chapter-btn { background: #6b21a5; border: none; color: white; padding: 8px 18px; border-radius: 40px; cursor: pointer; font-weight: 500; }
+    button.chapter-btn:hover { background: #581c87; }
+    button.danger-btn { background: #b91c1c; border: none; color: white; padding: 8px 18px; border-radius: 40px; cursor: pointer; font-weight: 500; }
+    button.danger-btn:hover { background: #991b1b; }
+    .editor-pane { display: flex; flex-direction: row; flex-wrap: wrap; }
+    .text-input-area { flex: 1; min-width: 280px; border-right: 1px solid #e9edf2; display: flex; flex-direction: column; }
+    .rich-preview {
+      flex: 1; min-width: 280px; background: #fefcf7; padding: 20px 24px;
+      font-family: 'Georgia', 'Times New Roman', serif; line-height: 1.55;
+      max-height: 550px; overflow-y: auto;
+    }
+    .textarea-styler {
+      width: 100%; min-height: 520px; padding: 22px;
+      font-family: 'SF Mono', 'Fira Code', monospace; font-size: 14px;
+      line-height: 1.5; border: none; resize: vertical; outline: none;
+      background: #ffffff; color: #0a2b3e;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .preview-header {
+      font-weight: 600; margin-bottom: 12px; font-size: 0.85rem;
+      color: #4b6f8c; letter-spacing: 0.5px; border-bottom: 1px dashed #d4e0e8;
+      padding-bottom: 8px; display: flex; justify-content: space-between;
+      align-items: center; flex-wrap: wrap; gap: 10px;
+    }
+    .rich-preview h1 { font-size: 2rem; font-weight: 700; margin: 1rem 0 0.6rem; color: #0f3b2c; border-left: 5px solid #1f6e43; padding-left: 18px; }
+    .rich-preview h2 { font-size: 1.6rem; font-weight: 600; margin: 1rem 0 0.5rem; color: #1e5a6f; border-bottom: 2px solid #cfe3ef; padding-bottom: 4px; }
+    .rich-preview h3 { font-size: 1.3rem; font-weight: 600; margin: 0.9rem 0 0.4rem; color: #2c6280; }
+    .rich-preview p { margin: 0.7rem 0; }
+    .rich-preview strong { font-weight: 700; color: #0a2f44; }
+    .rich-preview em { font-style: italic; }
+    .rich-preview ul, .rich-preview ol { margin: 0.5rem 0 0.8rem 1.6rem; }
+    .rich-preview blockquote { border-left: 4px solid #8eb3c2; background: #f6fafd; padding: 8px 16px; margin: 1rem 0; font-style: normal; color: #2b4f6c; }
+    .rich-preview img { max-width: 100%; height: auto; border-radius: 8px; margin: 0.5rem 0; border: 1px solid #e2e8f0; }
+    hr { margin: 1rem 0; border: 0; height: 1px; background: #d0e0ea; }
+    .status-bar {
+      background: #eef3fa; padding: 12px 24px; border-radius: 60px;
+      font-size: 0.8rem; display: flex; justify-content: space-between;
+      align-items: center; margin-top: 12px; flex-wrap: wrap; gap: 12px;
+    }
+    .badge { background: #cbd5e6; padding: 4px 12px; border-radius: 30px; font-size: 0.75rem; }
+    button.smart-fix { background: #e9ecef; border: 1px solid #bdc4cc; padding: 5px 14px; font-size: 0.75rem; cursor: pointer; }
+    .metadata-panel {
+      background: #f9fbfd; padding: 12px 20px; border-bottom: 1px solid #e2edf2;
+      display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+    }
+    .metadata-field { display: flex; align-items: center; gap: 8px; }
+    .metadata-field label { font-weight: 500; font-size: 0.8rem; color: #1e4663; }
+    .metadata-field input { padding: 6px 12px; border: 1px solid #cbdde9; border-radius: 20px; font-size: 0.8rem; width: 180px; }
+    .cover-btn { background: #e9ecef; border: 1px solid #bdc4cc; padding: 5px 12px; border-radius: 20px; cursor: pointer; font-size: 0.75rem; }
+    .cover-preview { width: 32px; height: 32px; border-radius: 6px; background: #e2e8f0; display: inline-block; vertical-align: middle; margin-left: 6px; background-size: cover; background-position: center; }
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;
+    }
+    .modal-content {
+      background: white; border-radius: 28px; max-width: 600px; width: 90%;
+      max-height: 80vh; overflow-y: auto; padding: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    }
+    .modal-content h3 { margin-top: 0; }
+    .chapter-list { margin: 20px 0; max-height: 400px; overflow-y: auto; }
+    .chapter-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 12px 16px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; }
+    .chapter-item:hover { background: #eef2ff; border-color: #c7d2fe; }
+    .chapter-title { font-weight: 600; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .chapter-preview { font-size: 0.8rem; color: #475569; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .chapter-actions { display: flex; gap: 8px; }
+    .chapter-actions button { padding: 4px 10px; font-size: 0.7rem; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; }
+    .chapter-badge { background: #6b21a5; color: white; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; }
+    .img-paste-hint { font-size: 0.7rem; color: #5b7c99; padding: 2px 12px; background: #f0f5fa; border-radius: 30px; display: inline-block; }
+    .page-remover-badge { background: #b91c1c; color: white; padding: 2px 10px; border-radius: 30px; font-size: 0.7rem; margin-left: 6px; }
+    @media (max-width: 750px) {
+      .editor-pane { flex-direction: column; }
+      .text-input-area { border-right: none; border-bottom: 1px solid #e2edf2; }
+      .toolbar { flex-direction: column; align-items: stretch; }
+      .action-buttons { margin-left: 0; justify-content: center; }
+      .metadata-panel { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <div class="editor-wrapper">
+    <div class="metadata-panel">
+      <div class="metadata-field"><label>📖 Book Title:</label><input type="text" id="bookTitle" placeholder="Enter book title" value="My eBook"></div>
+      <div class="metadata-field"><label>✍️ Author:</label><input type="text" id="bookAuthor" placeholder="Author name" value="Unknown Author"></div>
+      <div class="metadata-field">
+        <label>🖼️ Book Cover:</label>
+        <input type="file" id="coverImage" accept="image/jpeg,image/png,image/jpg,image/gif">
+        <button id="clearCoverBtn" class="cover-btn">Clear Cover</button>
+        <div id="coverPreview" class="cover-preview"></div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <div class="tool-group">
+        <button class="tool-btn" data-format="h1" title="Heading 1"><i>H1</i></button>
+        <button class="tool-btn" data-format="h2" title="Heading 2"><i>H2</i></button>
+        <button class="tool-btn" data-format="h3" title="Heading 3"><i>H3</i></button>
+        <span class="separator"></span>
+        <button class="tool-btn" data-format="bold" title="Bold"><b>B</b></button>
+        <button class="tool-btn" data-format="italic" title="Italic"><i>I</i></button>
+      </div>
+      <div class="tool-group">
+        <button class="tool-btn" data-format="ul" title="Bullet List">• List</button>
+        <button class="tool-btn" data-format="ol" title="Numbered List">1. List</button>
+        <button class="tool-btn" data-format="quote" title="Blockquote">" Quote</button>
+      </div>
+      <div class="action-buttons">
+        <button class="secondary tool-btn" id="clearAllBtn">🗑 Clear</button>
+        <button class="secondary tool-btn" id="sampleTextBtn">📖 Sample Story</button>
+        <button class="chapter-btn" id="chapterModalBtn">📑 Chapter Wise</button>
+        <button class="danger-btn" id="removePageNumbersBtn">🔢 Remove Page Numbers</button>
+        <button class="primary" id="saveEpubBtn">📚 Save as EPUB</button>
+      </div>
+    </div>
+    <div class="editor-pane">
+      <div class="text-input-area">
+        <textarea id="editorText" class="textarea-styler" placeholder="Paste any text or IMAGES (Ctrl+V) directly here.&#10;Images will appear in preview & EPUB.&#10;&#10;✨ SMART LINE FIX: Automatically merges broken lines.&#10;📑 CHAPTER WISE: Click 'Chapter Wise' to split text using H1 headings.&#10;🔢 PAGE NUMBERS: Click 'Remove Page Numbers' to clean up patterns like === PAGE 35 === or Page 1 | 2"></textarea>
+        <div style="padding: 8px 20px 12px; background: #fafcff; border-top: 1px solid #e2edf2; display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+          <button id="fixLineBreaksBtn" class="smart-fix tool-btn" style="background:#eef2ff;">🔧 Merge broken lines</button>
+          <span style="font-size: 0.7rem; color: #4b6f8c; align-self: center;">▸ Auto-merge on paste & manual fix</span>
+          <span class="img-paste-hint">🖼️ Paste images (Ctrl+V)</span>
+          <span class="page-remover-badge">🔢 Page number remover</span>
+        </div>
+      </div>
+      <div class="rich-preview" id="livePreviewArea">
+        <div class="preview-header">
+          <span>📖 EPUB Preview</span>
+          <span class="chapter-badge" id="chapterCountBadge">0 chapters</span>
+        </div>
+        <div id="previewContent" style="min-height: 200px;"><em>Paste text or images → preview updates automatically.</em></div>
+      </div>
+    </div>
+  </div>
+  <div class="status-bar">
+    <span>✨ <strong>Smart line merge</strong> | <strong>Images:</strong> paste into editor | <strong>Chapters:</strong> H1 split | <strong>Page #:</strong> click to remove</span>
+    <span id="globalStatus" class="badge">✓ Ready</span>
+  </div>
+  <div style="font-size: 0.7rem; text-align: center; margin-top: 20px; color: #5b7c99;">
+    ✅ Paste images (Ctrl+V) | H1 headings become chapters | Remove page numbers like === PAGE 35 ===, Page 1 | 2, [35], etc.
+  </div>
+</div>
+
+<div id="chapterModal" class="modal-overlay">
+  <div class="modal-content">
+    <h3>📑 Chapter Wise Organizer</h3>
+    <p style="font-size: 0.85rem; color: #475569;">Chapters are created from H1 headings (# Title). Each H1 starts a new chapter.</p>
+    <div id="chapterListContainer" class="chapter-list"><div style="text-align: center; color: #94a3b8;">Loading chapters...</div></div>
+    <div class="modal-footer">
+      <button id="closeChapterModal" class="secondary">Cancel</button>
+      <button id="applyChaptersBtn" class="primary">Apply Chapters to Document</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const editor = document.getElementById('editorText');
+    const previewDiv = document.getElementById('previewContent');
+    const saveBtn = document.getElementById('saveEpubBtn');
+    const clearBtn = document.getElementById('clearAllBtn');
+    const sampleBtn = document.getElementById('sampleTextBtn');
+    const fixLinesBtn = document.getElementById('fixLineBreaksBtn');
+    const statusSpan = document.getElementById('globalStatus');
+    const chapterModalBtn = document.getElementById('chapterModalBtn');
+    const chapterModal = document.getElementById('chapterModal');
+    const closeChapterModal = document.getElementById('closeChapterModal');
+    const applyChaptersBtn = document.getElementById('applyChaptersBtn');
+    const chapterListContainer = document.getElementById('chapterListContainer');
+    const chapterCountBadge = document.getElementById('chapterCountBadge');
+    const bookTitleInput = document.getElementById('bookTitle');
+    const bookAuthorInput = document.getElementById('bookAuthor');
+    const coverImageInput = document.getElementById('coverImage');
+    const clearCoverBtn = document.getElementById('clearCoverBtn');
+    const coverPreview = document.getElementById('coverPreview');
+    const removePageNumbersBtn = document.getElementById('removePageNumbersBtn');
+
+    let currentChapters = [];
+    let coverImageData = null;
+
+    // ---- Page Number Remover ----
+    function removePageNumbers(text) {
+      if (!text) return text;
+      let cleaned = text;
+      // Pattern 1: === PAGE 35 === or === Page 35 === or === PAGE 35 === (with spaces)
+      cleaned = cleaned.replace(/={3,}\s*PAGE\s*\d+\s*={3,}/gi, '');
+      // Pattern 2: Page 1 | 2  (common in scanned texts)
+      cleaned = cleaned.replace(/Page\s+\d+\s*[|│]\s*\d+/gi, '');
+      // Pattern 3: [35] or [Page 35] (bracketed page numbers)
+      cleaned = cleaned.replace(/\[\s*Page\s*\d+\s*\]/gi, '');
+      cleaned = cleaned.replace(/\[\s*\d+\s*\]/g, '');
+      // Pattern 4: - 35 - or - Page 35 - (dash surrounded)
+      cleaned = cleaned.replace(/-\s*Page\s*\d+\s*-/gi, '');
+      cleaned = cleaned.replace(/-\s*\d+\s*-/g, '');
+      // Pattern 5: (Page 35) or (35) parenthetical
+      cleaned = cleaned.replace(/\(\s*Page\s*\d+\s*\)/gi, '');
+      cleaned = cleaned.replace(/\(\s*\d+\s*\)/g, '');
+      // Pattern 6: standalone "Page 35" (with word boundary)
+      cleaned = cleaned.replace(/\bPage\s+\d+\b/gi, '');
+      // Pattern 7: standalone numbers at start of line that look like page numbers (1-9999)
+      // but be careful not to remove list numbers. We'll only remove if line contains only number or number with spaces.
+      const lines = cleaned.split(/\r?\n/);
+      const processedLines = lines.map(line => {
+        let trimmed = line.trim();
+        // If the line is just a number (1-9999) and nothing else, remove it
+        if (/^\s*\d{1,4}\s*$/.test(trimmed)) {
+          return '';
+        }
+        // If line starts with number followed by nothing else (like "35" with optional punctuation)
+        if (/^\s*\d{1,4}\s*[.,;:]?\s*$/.test(trimmed)) {
+          return '';
+        }
+        return line;
+      });
+      cleaned = processedLines.join('\n');
+      // Clean up multiple blank lines
+      cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+      // Trim extra spaces
+      cleaned = cleaned.replace(/ +/g, ' ').trim();
+      return cleaned;
+    }
+
+    function handleRemovePageNumbers() {
+      const original = editor.value;
+      if (!original.trim()) {
+        setStatus("❌ No text to clean", true);
+        return;
+      }
+      const cleaned = removePageNumbers(original);
+      if (original !== cleaned) {
+        editor.value = cleaned;
+        updatePreviewFromEditor();
+        updateChapterCount();
+        setStatus("✅ Removed page numbers from document");
+      } else {
+        setStatus("✨ No page number patterns found");
+      }
+    }
+
+    // ---- Image paste handling ----
+    editor.addEventListener('paste', function(e) {
+      const items = e.clipboardData && e.clipboardData.items;
+      if (!items) return;
+      let hasImage = false;
+      for (let item of items) {
+        if (item.type.startsWith('image/')) {
+          hasImage = true;
+          const blob = item.getAsFile();
+          if (blob) {
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+              const base64 = evt.target.result;
+              const imgTag = `![image](${base64})`;
+              const start = editor.selectionStart;
+              const end = editor.selectionEnd;
+              const before = editor.value.substring(0, start);
+              const after = editor.value.substring(end);
+              editor.value = before + imgTag + after;
+              editor.selectionStart = editor.selectionEnd = start + imgTag.length;
+              updatePreviewFromEditor();
+              updateChapterCount();
+              setStatus("🖼️ Image pasted into text");
+            };
+            reader.readAsDataURL(blob);
+          }
+          e.preventDefault();
+          break;
+        }
+      }
+      if (!hasImage) {
+        setTimeout(() => {
+          const raw = editor.value;
+          const merged = mergeBrokenLines(raw);
+          if (raw !== merged) {
+            editor.value = merged;
+            updatePreviewFromEditor();
+            updateChapterCount();
+            setStatus("📎 Pasted text: auto-merged broken lines");
+          } else {
+            updatePreviewFromEditor();
+          }
+        }, 10);
+      }
+    });
+
+    // ---- Merge lines ----
+    function mergeBrokenLines(text) {
+      if (!text.trim()) return text;
+      let lines = text.split(/\r?\n/);
+      let result = [];
+      let i = 0;
+      while (i < lines.length) {
+        let currentLine = lines[i];
+        let trimmed = currentLine.trim();
+        if (trimmed === "") { result.push(currentLine); i++; continue; }
+        let isSpecial = /^(#{1,3}\s|>\s|\d+\.\s|[\-\*]\s|---)/.test(trimmed);
+        let nextLine = (i + 1 < lines.length) ? lines[i + 1] : null;
+        let nextTrimmed = nextLine ? nextLine.trim() : "";
+        let nextIsSpecial = nextLine ? /^(#{1,3}\s|>\s|\d+\.\s|[\-\*]\s|---)/.test(nextTrimmed) : false;
+        let nextIsEmpty = nextLine !== null && nextTrimmed === "";
+        if (isSpecial || nextIsEmpty || nextIsSpecial || nextLine === null) {
+          result.push(currentLine);
+          i++;
+        } else {
+          let merged = currentLine + " " + nextLine;
+          result.push(merged);
+          i += 2;
+        }
+      }
+      let mergedText = result.join('\n');
+      mergedText = mergedText.replace(/ +/g, ' ').replace(/ \n/g, '\n');
+      return mergedText;
+    }
+
+    function applySmartLineMerge() {
+      const original = editor.value;
+      const fixed = mergeBrokenLines(original);
+      if (original !== fixed) {
+        editor.value = fixed;
+        updatePreviewFromEditor();
+        updateChapterCount();
+        setStatus("✅ Merged broken lines");
+      } else {
+        setStatus("✨ No broken lines found");
+      }
+    }
+
+    // ---- Formatting ----
+    function applyInlineFormat(openTag, closeTag, lineWrapped = false) {
+      const start = editor.selectionStart;
+      const end = editor.selectionEnd;
+      const selectedText = editor.value.substring(start, end);
+      if (selectedText === "" && !lineWrapped) {
+        setStatus("Select some text first", true);
+        return;
+      }
+      let newText = "";
+      if (lineWrapped) {
+        const lines = selectedText.split(/\n/);
+        let processedLines = lines.map(line => {
+          if (line.trim() === "") return line;
+          if (openTag === "# ") return "# " + line;
+          if (openTag === "## ") return "## " + line;
+          if (openTag === "### ") return "### " + line;
+          if (openTag === "> ") return "> " + line;
+          if (openTag === "- ") return "- " + line;
+          if (openTag === "1. ") return "1. " + line;
+          return line;
+        });
+        newText = processedLines.join("\n");
+      } else {
+        newText = openTag + selectedText + closeTag;
+      }
+      const before = editor.value.substring(0, start);
+      const after = editor.value.substring(end);
+      editor.value = before + newText + after;
+      let newPos = start + newText.length;
+      editor.focus();
+      editor.setSelectionRange(newPos, newPos);
+      updatePreviewFromEditor();
+      updateChapterCount();
+      setStatus(`Applied ${openTag.replace(/\*/g,'*')}`);
+    }
+    function applyHeading(level) {
+      let prefix = level === 1 ? "# " : level === 2 ? "## " : "### ";
+      applyInlineFormat(prefix, "", true);
+    }
+    function applyList(type) { applyInlineFormat(type === 'ul' ? "- " : "1. ", "", true); }
+    function applyQuote() { applyInlineFormat("> ", "", true); }
+
+    // ---- HTML conversion with image support ----
+    function editorToHtml(source) {
+      if (!source.trim()) return "<p><em>No content</em></p>";
+      let lines = source.split(/\r?\n/);
+      let result = [];
+      let inList = null;
+      let listBuffer = [];
+
+      function flushList() {
+        if (inList && listBuffer.length) {
+          result.push("<" + inList + ">");
+          result.push(...listBuffer);
+          result.push("</" + inList + ">");
+          listBuffer = [];
+          inList = null;
+        }
+      }
+
+      for (let i = 0; i < lines.length; i++) {
+        let line = lines[i];
+        let trimmed = line.trim();
+
+        const imgMatch = line.match(/!\[image\]\(data:image\/[^;]+;base64,[^)]+\)/);
+        if (imgMatch) {
+          flushList();
+          const imgTag = `<img src="${imgMatch[0].replace(/!\[image\]\(/, '').replace(/\)$/, '')}" alt="image" style="max-width:100%;"/>`;
+          result.push(imgTag);
+          continue;
+        }
+
+        if (line.match(/^#\s/)) { flushList(); let content = line.replace(/^#\s+/, ''); result.push("<h1>" + parseInline(content) + "</h1>"); continue; }
+        if (line.match(/^##\s/)) { flushList(); let content = line.replace(/^##\s+/, ''); result.push("<h2>" + parseInline(content) + "</h2>"); continue; }
+        if (line.match(/^###\s/)) { flushList(); let content = line.replace(/^###\s+/, ''); result.push("<h3>" + parseInline(content) + "</h3>"); continue; }
+        if (line.match(/^>\s/)) { flushList(); let content = line.replace(/^>\s+/, ''); result.push("<blockquote>" + parseInline(content) + "</blockquote>"); continue; }
+        let ulMatch = line.match(/^-\s+(.*)/);
+        if (ulMatch) { if (inList !== 'ul') { flushList(); inList = 'ul'; } listBuffer.push("<li>" + parseInline(ulMatch[1]) + "</li>"); continue; }
+        let olMatch = line.match(/^\d+\.\s+(.*)/);
+        if (olMatch) { if (inList !== 'ol') { flushList(); inList = 'ol'; } listBuffer.push("<li>" + parseInline(olMatch[1]) + "</li>"); continue; }
+        if (trimmed === "") { flushList(); result.push("<br/>"); continue; }
+        flushList();
+        result.push("<p>" + parseInline(line) + "</p>");
+      }
+      flushList();
+      let finalHtml = result.join('');
+      finalHtml = finalHtml.replace(/(<br\/>\s*)+/g, '<br/>');
+      return finalHtml;
+    }
+
+    function parseInline(text) {
+      let escaped = text.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m;
+      });
+      escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      escaped = escaped.replace(/__(.*?)__/g, '<strong>$1</strong>');
+      escaped = escaped.replace(/\*(.*?)\*/g, '<em>$1</em>');
+      escaped = escaped.replace(/_(.*?)_/g, '<em>$1</em>');
+      escaped = escaped.replace(/!\[image\]\(([^)]+)\)/g, '<img src="$1" alt="image" style="max-width:100%;"/>');
+      return escaped;
+    }
+
+    function updatePreviewFromEditor() {
+      const raw = editor.value;
+      if (!raw.trim()) {
+        previewDiv.innerHTML = '<div style="color: #869bac; padding: 1rem;">✨ Formatted text appears here.</div>';
+        return;
+      }
+      try {
+        const html = editorToHtml(raw);
+        previewDiv.innerHTML = html;
+        updateChapterCount();
+      } catch(e) {
+        previewDiv.innerHTML = '<p style="color:red;">Preview parsing error</p>';
+      }
+    }
+
+    // ---- Chapters ----
+    function extractChaptersFromText(text) {
+      const lines = text.split(/\r?\n/);
+      const chapters = [];
+      let currentChapter = null;
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const h1Match = line.match(/^#\s+(.+)$/);
+        if (h1Match) {
+          if (currentChapter) chapters.push(currentChapter);
+          currentChapter = { title: h1Match[1].trim(), content: [line] };
+        } else if (currentChapter) {
+          currentChapter.content.push(line);
+        }
+      }
+      if (currentChapter) chapters.push(currentChapter);
+      if (chapters.length === 0 && text.trim()) {
+        chapters.push({ title: "Full Document", content: text.split(/\r?\n/) });
+      }
+      return chapters;
+    }
+
+    function rebuildTextFromChapters(chapters) {
+      const lines = [];
+      for (let i = 0; i < chapters.length; i++) {
+        const ch = chapters[i];
+        if (i > 0 && !ch.content[0]?.match(/^#\s/)) {
+          lines.push("# " + ch.title);
+        }
+        lines.push(...ch.content);
+        if (i < chapters.length - 1 && ch.content[ch.content.length - 1] !== "") lines.push("");
+      }
+      return lines.join('\n');
+    }
+
+    function updateChapterCount() {
+      const chapters = extractChaptersFromText(editor.value);
+      const count = chapters.length;
+      chapterCountBadge.textContent = count === 1 ? count + " chapter" : count + " chapters";
+    }
+
+    // ---- Modal ----
+    function openChapterModal() {
+      const text = editor.value;
+      if (!text.trim()) { setStatus("❌ Add text first", true); return; }
+      currentChapters = extractChaptersFromText(text).map((ch, idx) => ({ id: idx, title: ch.title, contentLines: [...ch.content] }));
+      renderChapterList();
+      chapterModal.style.display = "flex";
+    }
+    function renderChapterList() {
+      if (!chapterListContainer) return;
+      if (currentChapters.length === 0) {
+        chapterListContainer.innerHTML = '<div style="text-align: center; color: #94a3b8;">No chapters found. Use H1 headings (# Title).</div>';
+        return;
+      }
+      let html = '';
+      for (let idx = 0; idx < currentChapters.length; idx++) {
+        const ch = currentChapters[idx];
+        let previewText = ch.contentLines.slice(0, 2).join(' ').substring(0, 80);
+        let escapedTitle = ch.title.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m] || m);
+        let escapedPreview = previewText.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m] || m);
+        html += `<div class="chapter-item" data-chapter-idx="${idx}">
+          <div class="chapter-title"><strong>${escapedTitle.substring(0,50)}</strong>
+          <div class="chapter-actions"><button class="edit-chapter-btn" data-idx="${idx}">✏️ Edit</button></div></div>
+          <div class="chapter-preview">${escapedPreview}...</div></div>`;
+      }
+      chapterListContainer.innerHTML = html;
+      document.querySelectorAll('.edit-chapter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const idx = parseInt(btn.getAttribute('data-idx'));
+          editChapterTitle(idx);
+        });
+      });
+    }
+    function editChapterTitle(chapterIdx) {
+      const ch = currentChapters[chapterIdx];
+      const newTitle = prompt("Edit chapter title:", ch.title);
+      if (newTitle && newTitle.trim()) {
+        ch.title = newTitle.trim();
+        if (ch.contentLines[0] && ch.contentLines[0].match(/^#\s/)) {
+          ch.contentLines[0] = "# " + ch.title;
+        } else {
+          ch.contentLines.unshift("# " + ch.title);
+        }
+        renderChapterList();
+        setStatus("Chapter title updated");
+      }
+    }
+    function applyChaptersToDocument() {
+      const newText = rebuildTextFromChapters(currentChapters);
+      editor.value = newText;
+      updatePreviewFromEditor();
+      updateChapterCount();
+      chapterModal.style.display = "none";
+      setStatus("✅ Applied " + currentChapters.length + " chapter(s)");
+    }
+    function closeModal() { chapterModal.style.display = "none"; }
+
+    // ---- EPUB generation ----
+    function generateUUID() { return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random()*16|0, v = c==='x'?r:(r&0x3|0x8); return v.toString(16); }); }
+    function escapeXml(str) { if (!str) return ""; return str.replace(/[<>&'"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;',"'":'&apos;','"':'&quot;'})[c] || c); }
+
+    async function generateEpub() {
+      let source = editor.value;
+      if (!source.trim()) { setStatus("❌ Empty content", true); return false; }
+      source = mergeBrokenLines(source);
+      if (source !== editor.value) { editor.value = source; updatePreviewFromEditor(); }
+
+      const chapters = extractChaptersFromText(source);
+      const bookTitle = bookTitleInput.value.trim() || "My eBook";
+      const bookAuthor = bookAuthorInput.value.trim() || "Unknown Author";
+      const cleanTitle = bookTitle.replace(/[^\w\s\u0980-\u09FF\u0900-\u097F]/gi, ' ').replace(/\s+/g, ' ').trim();
+      const epubId = "urn:uuid:" + generateUUID();
+      const date = new Date().toISOString();
+
+      const zip = new JSZip();
+      const containerXml = `<?xml version="1.0" encoding="UTF-8"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>`;
+      zip.folder("META-INF").file("container.xml", containerXml);
+      const oebps = zip.folder("OEBPS");
+      const styleCss = `body{margin:0;padding:0;}h1{font-size:1.8em;margin-top:1em;}h2{font-size:1.5em;margin-top:1em;border-bottom:1px solid #ccc;}h3{font-size:1.3em;margin-top:0.8em;}p{margin:0.8em 0;line-height:1.5;}blockquote{margin:1em 1.5em;padding-left:1em;border-left:4px solid #8ab3c7;}ul,ol{margin:0.5em 0 0.8em 1.6em;}strong{font-weight:bold;}em{font-style:italic;}img{max-width:100%;height:auto;margin:0.5rem 0;}`;
+      oebps.file("style.css", styleCss);
+
+      let coverImageItem = null;
+      if (coverImageData) {
+        const coverBase64 = coverImageData.split(',')[1];
+        const coverBinary = atob(coverBase64);
+        const coverArray = new Uint8Array(coverBinary.length);
+        for (let i = 0; i < coverBinary.length; i++) coverArray[i] = coverBinary.charCodeAt(i);
+        oebps.file("cover.jpg", coverArray);
+        coverImageItem = '<item id="cover-image" href="cover.jpg" media-type="image/jpeg"/>';
+      }
+
+      const textFolder = oebps.folder("text");
+      const manifestItems = [];
+      const spineItems = [];
+      const navPoints = [];
+
+      // Collect all images
+      const imageRegex = /!\[image\]\(data:image\/[^;]+;base64,[^)]+\)/g;
+      let allImages = [];
+      for (let ch of chapters) {
+        const content = ch.content.join('\n');
+        const matches = content.match(imageRegex) || [];
+        for (let m of matches) {
+          const src = m.replace(/!\[image\]\(/, '').replace(/\)$/, '');
+          allImages.push(src);
+        }
+      }
+      const uniqueImages = [...new Set(allImages)];
+      const imageMap = {};
+      for (let idx = 0; idx < uniqueImages.length; idx++) {
+        const base64 = uniqueImages[idx];
+        const ext = base64.match(/image\/([^;]+)/)?.[1] || 'jpeg';
+        const filename = `img_${idx+1}.${ext}`;
+        const raw = base64.split(',')[1];
+        const binary = atob(raw);
+        const arr = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+        oebps.file(filename, arr);
+        imageMap[base64] = filename;
+        manifestItems.push(`<item id="img_${idx+1}" href="${filename}" media-type="image/${ext}"/>`);
+      }
+
+      for (let i = 0; i < chapters.length; i++) {
+        const ch = chapters[i];
+        let chapterContentWithoutH1 = ch.content;
+        if (chapterContentWithoutH1.length > 0 && chapterContentWithoutH1[0].match(/^#\s/)) {
+          chapterContentWithoutH1 = chapterContentWithoutH1.slice(1);
+        }
+        let chapterText = chapterContentWithoutH1.join('\n');
+        let chapterHtml = editorToHtml(chapterText);
+        for (let [base64, filename] of Object.entries(imageMap)) {
+          chapterHtml = chapterHtml.replace(new RegExp(base64.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), `../${filename}`);
+        }
+
+        const chapterId = "chap" + (i+1);
+        const filename = `chapter_${i+1}.xhtml`;
+        const xhtmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+<head><title>${escapeXml(ch.title)}</title><link rel="stylesheet" type="text/css" href="../style.css"/><meta charset="utf-8"/></head>
+<body><div style="margin:5%;word-wrap:break-word;"><h1>${escapeXml(ch.title)}</h1><div style="line-height:1.5;font-size:1rem;font-family:Georgia,'Times New Roman',serif;">${chapterHtml}</div></div></body></html>`;
+        textFolder.file(filename, xhtmlContent);
+        manifestItems.push(`<item id="${chapterId}" href="text/${filename}" media-type="application/xhtml+xml"/>`);
+        spineItems.push(`<itemref idref="${chapterId}"/>`);
+        navPoints.push(`<navPoint id="np${i+1}" playOrder="${i+1}"><navLabel><text>${escapeXml(ch.title)}</text></navLabel><content src="text/${filename}"/></navPoint>`);
+      }
+
+      manifestItems.push('<item id="style" href="style.css" media-type="text/css"/>');
+      if (coverImageItem) manifestItems.push(coverImageItem);
+
+      const ncxContent = `<?xml version="1.0" encoding="UTF-8"?>
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1" xml:lang="en">
+<head><meta name="dtb:uid" content="${epubId}"/><meta name="dtb:depth" content="1"/></head>
+<docTitle><text>${escapeXml(cleanTitle)}</text></docTitle>
+<navMap>${navPoints.join('\n    ')}</navMap></ncx>`;
+      oebps.file("toc.ncx", ncxContent);
+      manifestItems.push('<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>');
+
+      let metadataCover = coverImageItem ? '<meta property="cover-image" refines="#cover-image"/>' : '';
+      const opfContent = `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookId" version="3.0">
+<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+<dc:identifier id="BookId">${epubId}</dc:identifier>
+<dc:title>${escapeXml(cleanTitle)}</dc:title>
+<dc:creator>${escapeXml(bookAuthor)}</dc:creator>
+<dc:language>en</dc:language>
+<dc:date>${date}</dc:date>
+${metadataCover}
+</metadata>
+<manifest>${manifestItems.join('\n    ')}</manifest>
+<spine toc="ncx">${spineItems.join('\n    ')}</spine>
+</package>`;
+      oebps.file("content.opf", opfContent);
+
+      try {
+        setStatus("🔄 Creating EPUB with images...");
+        const epubBlob = await zip.generateAsync({ type: "blob", mimeType: "application/epub+zip" });
+        const fileName = cleanTitle.replace(/[^a-zA-Z0-9\u0980-\u09FF\u0900-\u097F]/g, '_').substring(0,50) + ".epub";
+        saveAs(epubBlob, fileName);
+        setStatus("✅ EPUB saved: " + fileName + " (" + chapters.length + " chapters, " + uniqueImages.length + " images)");
+        return true;
+      } catch (err) {
+        console.error(err);
+        setStatus("❌ EPUB error: " + (err.message || "unknown"), true);
+        return false;
+      }
+    }
+
+    // ---- Sample ----
+    function insertSampleWithBrokenLines() {
+      editor.value = '# The Mystery of Sleep\n\n=== PAGE 1 ===\n\n## The Hidden Cycle\n\n"flesh. Sleep is\nthe time when the male or conscious mind turns from the world of sense to seek\nits own realm. The body rests, yet the spirit wanders.\n\nPage 2 | 3\n\n### The Science\n\nScientists have studied\nthis phenomenon for decades. The brain remains active while the body sleeps.\n\n[35]\n\n# Chapter Two: Dreams and Reality\n\n## The Waking Mind\n\nDreams often reflect our\ndeepest fears and desires. They can be\nvivid or vague.\n\n- Page 4 -\n\n> "Dreams are the royal road to the unconscious." - Sigmund Freud\n\n# Chapter Three: Practical Tips\n\n## Better Sleep Habits\n\n- Maintain a consistent schedule\n- Avoid screens before bedtime\n- Create a relaxing environment\n\nPaste an image below (Ctrl+V) to see it appear. Then click "Remove Page Numbers" to clean up.';
+      editor.value = mergeBrokenLines(editor.value);
+      updatePreviewFromEditor();
+      updateChapterCount();
+      bookTitleInput.value = "The Mystery of Sleep";
+      bookAuthorInput.value = "Anonymous Author";
+      setStatus("📘 Sample loaded with page numbers & 3 chapters");
+    }
+
+    function setStatus(msg, isError = false) {
+      statusSpan.textContent = msg;
+      statusSpan.style.backgroundColor = isError ? '#ffdddd' : '#e1f0e8';
+      statusSpan.style.color = isError ? '#b13e3e' : '#1a5a3a';
+      setTimeout(() => {
+        if (statusSpan.textContent === msg) {
+          statusSpan.style.backgroundColor = '#cbd5e6';
+          statusSpan.style.color = '#0a2540';
+          statusSpan.textContent = '✓ Ready';
+        }
+      }, 2800);
+    }
+
+    // ---- Event listeners ----
+    document.querySelectorAll('[data-format]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const fmt = btn.getAttribute('data-format');
+        switch(fmt) {
+          case 'h1': applyHeading(1); break;
+          case 'h2': applyHeading(2); break;
+          case 'h3': applyHeading(3); break;
+          case 'bold': applyInlineFormat("**", "**", false); break;
+          case 'italic': applyInlineFormat("*", "*", false); break;
+          case 'ul': applyList('ul'); break;
+          case 'ol': applyList('ol'); break;
+          case 'quote': applyQuote(); break;
+        }
+      });
+    });
+
+    saveBtn.addEventListener('click', async (e) => { e.preventDefault(); await generateEpub(); });
+    clearBtn.addEventListener('click', () => { editor.value = ""; updatePreviewFromEditor(); updateChapterCount(); setStatus("Cleared"); });
+    sampleBtn.addEventListener('click', insertSampleWithBrokenLines);
+    fixLinesBtn.addEventListener('click', applySmartLineMerge);
+    removePageNumbersBtn.addEventListener('click', handleRemovePageNumbers);
+    editor.addEventListener('input', function() { updatePreviewFromEditor(); updateChapterCount(); });
+    chapterModalBtn.addEventListener('click', openChapterModal);
+    closeChapterModal.addEventListener('click', closeModal);
+    applyChaptersBtn.addEventListener('click', applyChaptersToDocument);
+    window.addEventListener('click', function(e) { if (e.target === chapterModal) closeModal(); });
+
+    coverImageInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file && file.type.match('image.*')) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          coverImageData = evt.target.result;
+          coverPreview.style.backgroundImage = 'url(' + coverImageData + ')';
+          coverPreview.style.backgroundSize = 'cover';
+          setStatus("✓ Cover image loaded");
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+    clearCoverBtn.addEventListener('click', function() {
+      coverImageData = null;
+      coverImageInput.value = '';
+      coverPreview.style.backgroundImage = 'none';
+      coverPreview.style.backgroundColor = '#e2e8f0';
+      setStatus("Cover image cleared");
+    });
+
+    updatePreviewFromEditor();
+    updateChapterCount();
+    setStatus("Ready — paste images, remove page numbers with one click");
+  })();
+</script>
+</body>
+</html>

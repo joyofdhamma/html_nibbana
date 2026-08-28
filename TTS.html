@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TTS to MP3 Converter</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #121212;
+    color: #fff;
+    padding: 20px;
+    max-width: 800px;
+    margin: auto;
+}
+
+textarea {
+    width: 100%;
+    height: 150px;
+    font-size: 16px;
+    padding: 10px;
+    border-radius: 6px;
+}
+
+select, button {
+    margin-top: 10px;
+    padding: 10px;
+    font-size: 15px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+button {
+    background: #2c7be5;
+    color: white;
+    border: none;
+}
+
+button:hover {
+    background: #1a5fd0;
+}
+
+audio {
+    margin-top: 15px;
+    width: 100%;
+}
+
+.status {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #9ad;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🗣️ Text to Speech → MP3</h2>
+
+<textarea id="textInput" placeholder="Enter text to convert to speech..."></textarea>
+
+<select id="voiceSelect"></select>
+
+<br>
+
+<button onclick="speakText()">▶ Speak</button>
+<button onclick="recordSpeech()">🎙️ Convert to MP3</button>
+
+<div class="status" id="status"></div>
+
+<audio id="audioPlayer" controls></audio>
+
+<!-- FFmpeg -->
+<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.6/dist/ffmpeg.min.js"></script>
+
+<script>
+const voiceSelect = document.getElementById("voiceSelect");
+const statusDiv = document.getElementById("status");
+let voices = [];
+let mediaRecorder;
+let audioChunks = [];
+
+function loadVoices() {
+    voices = speechSynthesis.getVoices();
+    voiceSelect.innerHTML = "";
+    voices.forEach((voice, i) => {
+        const option = document.createElement("option");
+        option.value = i;
+        option.textContent = voice.name + " (" + voice.lang + ")";
+        voiceSelect.appendChild(option);
+    });
+}
+
+speechSynthesis.onvoiceschanged = loadVoices;
+
+function speakText() {
+    const text = document.getElementById("textInput").value;
+    if (!text) return;
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.voice = voices[voiceSelect.value];
+    speechSynthesis.speak(utterance);
+}
+
+async function recordSpeech() {
+    const text = document.getElementById("textInput").value;
+    if (!text) return;
+
+    statusDiv.textContent = "Generating speech...";
+
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+
+    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+
+    mediaRecorder.onstop = async () => {
+        statusDiv.textContent = "Converting to MP3...";
+        const webmBlob = new Blob(audioChunks, { type: "audio/webm" });
+
+        const { createFFmpeg, fetchFile } = FFmpeg;
+        const ffmpeg = createFFmpeg({ log: false });
+
+        await ffmpeg.load();
+        ffmpeg.FS("writeFile", "input.webm", await fetchFile(webmBlob));
+        await ffmpeg.run("-i", "input.webm", "output.mp3");
+
+        const mp3Data = ffmpeg.FS("readFile", "output.mp3");
+        const mp3Blob = new Blob([mp3Data.buffer], { type: "audio/mp3" });
+
+        const url = URL.createObjectURL(mp3Blob);
+        const audio = document.getElementById("audioPlayer");
+        audio.src = url;
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "tts.mp3";
+        a.click();
+
+        statusDiv.textContent = "✅ MP3 Ready & Downloaded";
+    };
+
+    mediaRecorder.start();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.voice = voices[voiceSelect.value];
+
+    utterance.onend = () => mediaRecorder.stop();
+
+    speechSynthesis.speak(utterance);
+}
+</script>
+
+</body>
+</html>

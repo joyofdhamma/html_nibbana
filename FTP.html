@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FTP link generator · simple</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: linear-gradient(145deg, #f6f9fc 0%, #e6f0f5 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 1.5rem;
+    }
+    .card {
+      max-width: 600px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      border-radius: 2.5rem;
+      box-shadow: 0 25px 50px -10px rgba(0, 20, 30, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+      padding: 2.5rem 2rem;
+      transition: all 0.2s ease;
+    }
+    h1 {
+      font-size: 1.9rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: #0b2b3d;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.2rem;
+    }
+    h1 small {
+      font-size: 0.9rem;
+      font-weight: 400;
+      color: #3d6a7e;
+      margin-left: auto;
+      background: #d7e6ee;
+      padding: 0.2rem 1rem;
+      border-radius: 40px;
+      letter-spacing: 0.3px;
+    }
+    .subhead {
+      color: #2d5a6e;
+      margin-bottom: 2.2rem;
+      font-size: 1rem;
+      border-left: 4px solid #3f8db0;
+      padding-left: 0.9rem;
+      background: rgba(63, 141, 176, 0.06);
+      border-radius: 0 12px 12px 0;
+      line-height: 1.4;
+    }
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .input-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .input-row label {
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: #144a5e;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .input-row label span {
+      background: #d1e2eb;
+      padding: 0.1rem 0.6rem;
+      border-radius: 30px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #0f3b4d;
+    }
+    .input-row input {
+      width: 100%;
+      padding: 0.9rem 1.2rem;
+      font-size: 1rem;
+      border: 1.5px solid #cbdce6;
+      border-radius: 60px;
+      background: white;
+      transition: 0.2s;
+      outline: none;
+      font-family: 'Inter', monospace;
+      letter-spacing: 0.2px;
+      box-shadow: 0 2px 6px rgba(0, 20, 30, 0.04);
+    }
+    .input-row input:focus {
+      border-color: #1f7b9e;
+      box-shadow: 0 4px 12px rgba(31, 123, 158, 0.15), 0 0 0 3px rgba(31, 123, 158, 0.1);
+      background: #ffffff;
+    }
+    .input-row input::placeholder {
+      color: #8aacbe;
+      font-weight: 300;
+      opacity: 0.8;
+    }
+    .inline-hint {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: #3d6f86;
+      padding: 0 0.5rem;
+      margin-top: 0.2rem;
+    }
+    .action-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1rem;
+      margin: 1.2rem 0 1.8rem;
+    }
+    .btn {
+      background: white;
+      border: none;
+      padding: 0.9rem 2rem;
+      border-radius: 60px;
+      font-weight: 600;
+      font-size: 1rem;
+      color: #0b2b3d;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      transition: 0.2s;
+      border: 1.5px solid #cbdce6;
+      background: #f2f8fc;
+      flex: 1 1 auto;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .btn-primary {
+      background: #1a6683;
+      border-color: #1a6683;
+      color: white;
+      box-shadow: 0 8px 16px -8px rgba(26, 102, 131, 0.3);
+    }
+    .btn-primary:hover {
+      background: #0f5772;
+      border-color: #0f5772;
+      transform: scale(1.01);
+      box-shadow: 0 12px 20px -10px rgba(26, 102, 131, 0.4);
+    }
+    .btn-primary:active {
+      transform: scale(0.97);
+    }
+    .btn-secondary {
+      background: #eef4f8;
+      border-color: #c7dae5;
+    }
+    .btn-secondary:hover {
+      background: #e2edf5;
+      border-color: #9fbccd;
+    }
+    .output-area {
+      background: #f2f8fc;
+      border-radius: 60px;
+      padding: 0.2rem 0.2rem 0.2rem 1.8rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.6rem;
+      border: 1.5px solid #bed6e3;
+      transition: 0.2s;
+      margin-top: 0.4rem;
+    }
+    .output-area:focus-within {
+      border-color: #1f7b9e;
+      box-shadow: 0 0 0 4px rgba(31, 123, 158, 0.08);
+    }
+    .output-area input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 0.9rem 0.2rem;
+      font-size: 0.95rem;
+      font-family: 'Inter', monospace;
+      color: #04303f;
+      outline: none;
+      min-width: 160px;
+      letter-spacing: 0.2px;
+    }
+    .output-area input::selection {
+      background: #b7d8ea;
+    }
+    .copy-btn {
+      background: #d6e6f0;
+      border: none;
+      padding: 0.7rem 1.6rem;
+      border-radius: 60px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: #04303f;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      cursor: pointer;
+      transition: 0.15s;
+      border: 1px solid #b3cedd;
+      white-space: nowrap;
+    }
+    .copy-btn:hover {
+      background: #c1dae7;
+      border-color: #8bb1c6;
+      transform: scale(0.98);
+    }
+    .copy-btn.copied {
+      background: #1f7b9e;
+      border-color: #1f7b9e;
+      color: white;
+    }
+    .footer-note {
+      margin-top: 2rem;
+      font-size: 0.8rem;
+      color: #3f7289;
+      text-align: center;
+      border-top: 1px dashed #bfd7e3;
+      padding-top: 1.5rem;
+      letter-spacing: 0.2px;
+    }
+    .footer-note i {
+      font-style: normal;
+      background: #dbeaf3;
+      padding: 0.1rem 0.6rem;
+      border-radius: 20px;
+    }
+    .example-badge {
+      background: #dbeaf3;
+      border-radius: 40px;
+      padding: 0.15rem 0.9rem;
+      font-size: 0.75rem;
+      color: #10455d;
+    }
+    @media (max-width: 480px) {
+      .card { padding: 1.8rem 1.2rem; }
+      .action-bar { flex-direction: column; }
+      .btn { width: 100%; }
+      .output-area { flex-wrap: wrap; padding: 0.8rem 1rem; }
+      .output-area input { width: 100%; padding: 0.4rem 0; }
+      .copy-btn { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card" role="main">
+    <h1>
+      ⚡ FTP link
+      <small>generator</small>
+    </h1>
+    <div class="subhead">
+      Insert server address and port — get a ready-to-use ftp:// link
+    </div>
+
+    <div class="field-group">
+      <div class="input-row">
+        <label>
+          <span>①</span> FTP address
+          <span class="example-badge">e.g. ftp.example.com</span>
+        </label>
+        <input type="text" id="ftpAddress" placeholder="ftp.yourserver.com or 192.168.1.100" value="ftp.example.com" spellcheck="false" autofocus>
+        <div class="inline-hint">
+          <span>hostname or IP</span>
+          <span>without <code>ftp://</code></span>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <label>
+          <span>②</span> Port number
+          <span class="example-badge">default 21</span>
+        </label>
+        <input type="number" id="ftpPort" placeholder="e.g. 21, 2121, 990" value="21" min="1" max="65535" step="1">
+        <div class="inline-hint">
+          <span>usually 21 (standard) or 990 (FTPS)</span>
+          <span>1 – 65535</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-bar">
+      <button class="btn btn-primary" id="generateBtn">🔗 Generate link</button>
+      <button class="btn btn-secondary" id="resetDefaults">↺ reset defaults</button>
+    </div>
+
+    <!-- generated link output -->
+    <div class="output-area" id="outputArea">
+      <input type="text" id="ftpLinkOutput" readonly value="ftp://ftp.example.com:21" spellcheck="false">
+      <button class="copy-btn" id="copyBtn">📋 Copy</button>
+    </div>
+    <div style="margin-top: 0.6rem; font-size: 0.8rem; color: #2c6a83; padding-left: 0.5rem;">
+      ⚡ click <strong>Generate</strong> or press <kbd>Enter</kbd> (inside any field)
+    </div>
+    <div class="footer-note">
+      <i>ftp://</i> link · click copy or drag to your FTP client
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      "use strict";
+
+      // DOM refs
+      const addressInput = document.getElementById('ftpAddress');
+      const portInput = document.getElementById('ftpPort');
+      const outputField = document.getElementById('ftpLinkOutput');
+      const generateBtn = document.getElementById('generateBtn');
+      const resetBtn = document.getElementById('resetDefaults');
+      const copyBtn = document.getElementById('copyBtn');
+
+      // default values (for reset)
+      const DEFAULT_ADDRESS = '10.';
+      const DEFAULT_PORT = '2221';
+
+      // ---------- helpers ----------
+      function buildFtpLink(address, port) {
+        // clean address: trim, remove accidental protocol, trailing slashes
+        let cleanAddress = address.trim();
+        // remove common prefixes if user pastes full url
+        cleanAddress = cleanAddress.replace(/^ftp:\/\/|^ftps:\/\/|^sftp:\/\//i, '');
+        // remove trailing slash if any
+        cleanAddress = cleanAddress.replace(/\/+$/, '');
+        // if address becomes empty, fallback
+        if (!cleanAddress) cleanAddress = 'host';
+
+        // port: force integer, clamp, fallback
+        let portNum = parseInt(port, 10);
+        if (isNaN(portNum) || portNum < 1) portNum = 21;
+        if (portNum > 65535) portNum = 65535;
+
+        // build clean ftp link
+        return `ftp://${cleanAddress}:${portNum}`;
+      }
+
+      // update output field with current values
+      function updateLink() {
+        const address = addressInput.value;
+        const port = portInput.value;
+        const link = buildFtpLink(address, port);
+        outputField.value = link;
+        return link;
+      }
+
+      // copy to clipboard with feedback
+      function copyLink() {
+        const link = outputField.value;
+        if (!link || link === '') {
+          // if empty, generate first
+          updateLink();
+        }
+        const finalLink = outputField.value;
+        if (!finalLink) return;
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(finalLink)
+            .then(() => {
+              setCopyFeedback(true);
+            })
+            .catch(() => {
+              fallbackCopy(finalLink);
+            });
+        } else {
+          fallbackCopy(finalLink);
+        }
+      }
+
+      function fallbackCopy(text) {
+        // select and execCommand fallback
+        outputField.select();
+        outputField.setSelectionRange(0, 9999);
+        try {
+          const success = document.execCommand('copy');
+          if (success) {
+            setCopyFeedback(true);
+          } else {
+            setCopyFeedback(false);
+          }
+        } catch (e) {
+          setCopyFeedback(false);
+        }
+        // deselect
+        window.getSelection().removeAllRanges();
+      }
+
+      let copyTimeout = null;
+      function setCopyFeedback(success) {
+        // visual feedback on copy button
+        const originalText = copyBtn.textContent;
+        if (success) {
+          copyBtn.textContent = '✅ Copied!';
+          copyBtn.classList.add('copied');
+        } else {
+          copyBtn.textContent = '❌ error';
+          copyBtn.classList.remove('copied');
+        }
+        if (copyTimeout) clearTimeout(copyTimeout);
+        copyTimeout = setTimeout(() => {
+          copyBtn.textContent = '📋 Copy';
+          copyBtn.classList.remove('copied');
+          copyTimeout = null;
+        }, 1800);
+      }
+
+      // reset to defaults (without clearing user's custom)
+      function resetDefaults() {
+        addressInput.value = DEFAULT_ADDRESS;
+        portInput.value = DEFAULT_PORT;
+        updateLink();
+        // optional: focus address
+        addressInput.focus();
+        addressInput.select();
+      }
+
+      // ---------- event wiring ----------
+      function handleGenerate() {
+        updateLink();
+        // give subtle feedback (optional)
+        generateBtn.style.transform = 'scale(0.96)';
+        setTimeout(() => { generateBtn.style.transform = ''; }, 150);
+        // copy focus to output?
+        outputField.select();
+        outputField.setSelectionRange(0, outputField.value.length);
+      }
+
+      // generate on button click
+      generateBtn.addEventListener('click', handleGenerate);
+
+      // generate on Enter key in inputs
+      function onEnter(e) {
+        if (e.key === 'Enter' || e.keyCode === 13) {
+          e.preventDefault();
+          handleGenerate();
+        }
+      }
+      addressInput.addEventListener('keydown', onEnter);
+      portInput.addEventListener('keydown', onEnter);
+
+      // reset button
+      resetBtn.addEventListener('click', resetDefaults);
+
+      // copy button
+      copyBtn.addEventListener('click', copyLink);
+
+      // also update if user leaves input (blur) but only if they changed
+      addressInput.addEventListener('blur', function() {
+        // trim extra spaces
+        if (this.value.trim() !== this.value) {
+          this.value = this.value.trim();
+        }
+        updateLink();
+      });
+      portInput.addEventListener('blur', function() {
+        // clamp port on blur
+        let val = parseInt(this.value, 10);
+        if (!isNaN(val)) {
+          if (val < 1) val = 1;
+          if (val > 65535) val = 65535;
+          this.value = val;
+        } else {
+          // if empty or invalid, set default 21
+          if (this.value.trim() === '') {
+            this.value = 21;
+          } else {
+            // if non-numeric, reset to 21
+            this.value = 21;
+          }
+        }
+        updateLink();
+      });
+
+      // initial generation + set defaults
+      (function init() {
+        // set default values
+        addressInput.value = DEFAULT_ADDRESS;
+        portInput.value = DEFAULT_PORT;
+        updateLink();
+        // select output text for quick copy
+        outputField.select();
+        outputField.setSelectionRange(0, outputField.value.length);
+        // if address is empty, focus it
+        if (!addressInput.value) addressInput.focus();
+      })();
+
+      // extra: click on output field selects all text
+      outputField.addEventListener('click', function() {
+        this.select();
+        this.setSelectionRange(0, this.value.length);
+      });
+
+      // for safety: if port input empty, set default on page interaction
+      portInput.addEventListener('input', function() {
+        // if user clears, we keep empty, but on blur we'll fix
+        // but we can also auto-update link on any input
+        updateLink();
+      });
+      addressInput.addEventListener('input', function() {
+        updateLink();
+      });
+
+      // if user pastes full ftp:// into address, strip it
+      addressInput.addEventListener('paste', function(e) {
+        // we let the paste happen, then clean after a tiny delay
+        setTimeout(() => {
+          let raw = this.value;
+          // remove common protocol prefixes
+          const cleaned = raw.replace(/^(ftp|ftps|sftp):\/\//i, '').replace(/\/+$/, '');
+          if (cleaned !== raw) {
+            this.value = cleaned;
+            updateLink();
+          }
+        }, 10);
+      });
+
+      // also handle if port gets a decimal or weird value
+      portInput.addEventListener('change', function() {
+        let val = parseInt(this.value, 10);
+        if (!isNaN(val) && val > 0 && val <= 65535) {
+          this.value = val;
+        } else if (this.value.trim() === '') {
+          this.value = 21;
+        } else {
+          // if non-numeric junk, reset to 21
+          this.value = 21;
+        }
+        updateLink();
+      });
+
+    })();
+  </script>
+</body>
+</html>

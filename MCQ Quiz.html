@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PL-900 Quiz from Word</title>
+  <p id="last-file" style="color:#90ee90; font-size:0.9em;"></p>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 10px; 
+      background:#121212; 
+      color:#f5f5f5; 
+    }
+    h2 { color: #fff; font-size: 1.2em; }
+    .quiz-box { 
+      background:#1e1e1e; 
+      margin:10px 0; 
+      padding:10px; 
+      border-radius:8px; 
+      box-shadow:0 0 6px #42e322; 
+    }
+    .option { margin: 6px 0; font-size: 0.95em; }
+    .correct { color: #00e676; font-weight: bold; }
+    .wrong { color: #ff5252; font-weight: bold; }
+    button { 
+      padding:10px 15px; 
+      margin:5px; 
+      cursor:pointer; 
+      border:none; 
+      border-radius:6px; 
+      background:#2979ff; 
+      color:white; 
+    }
+    button:disabled { background:#555; }
+    input[type="number"] { 
+      width:60px; 
+      background:#333; 
+      border:1px solid #555; 
+      color:#fff; 
+      border-radius:4px; 
+      padding:3px; 
+    }
+    pre { 
+      background:#362222; 
+      padding:8px; 
+      border-radius:6px; 
+      overflow-x:auto; 
+      color:#ddd; 
+    }
+
+    /* Floating control panel */
+    .floating-panel {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(28, 28, 28, 0.1); /* semi-transparent background */
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 10px 15px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      z-index: 1000;
+      text-align: center;
+      font-size: 0.9em;
+      backdrop-filter: blur(1px); /* optional: adds frosted glass effect */
+    }
+    .floating-panel span { margin: 0 8px; }
+    body { padding-top: 100px; } /* prevent overlap */
+    .answered {
+      opacity: 0.4;
+      pointer-events: none; /* prevent changing answer */
+    }
+    
+    /* Highlight selected radio option */
+    .option input[type="radio"]:checked + span {
+      background-color: #90ee90; /* light green */
+      color: #000;              /* optional: make text dark for contrast */
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* Help icon styles */
+    .help-icon {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #2979ff;
+      color: white;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      z-index: 1000;
+      transition: transform 0.2s;
+    }
+    
+    .help-icon:hover {
+      transform: scale(1.1);
+    }
+    
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.7);
+      z-index: 2000;
+      overflow: auto;
+    }
+    
+    .modal-content {
+      background-color: #1e1e1e;
+      margin: 5% auto;
+      padding: 20px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 700px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      color: #f5f5f5;
+    }
+    
+    .close-btn {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    
+    .close-btn:hover {
+      color: #fff;
+    }
+    
+    .modal-links a {
+      color: #2979ff;
+      text-decoration: none;
+      display: block;
+      margin-bottom: 10px;
+    }
+    
+    .modal-links a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+<h2>PL-900 Quiz Generator</h2>
+
+<input type="file" id="upload" accept=".docx"><br><br>
+<!-- Floating Top Panel -->
+<div class="floating-panel">
+  ⏱ Target/Actual Time per Q (min): 
+  <input type="number" id="target-per-question" value="1" min="1">
+  <span id="timer">Elapsed: 0:00</span> |
+  🎯 Target Score: <span id="target-score">0</span> |
+  ✅ Actual Score: <span id="actual-score">0</span> |
+  📊 % Score: <span id="percent-score">0%</span>
+  <br>
+  <button id="check-btn" style="display:none" onclick="checkAnswers()">Check</button>
+  <button id="submit-btn" style="display:none" onclick="submitQuiz()">Submit</button>
+</div>
+
+<!-- Help Icon -->
+<div class="help-icon" onclick="openModal()">🚨</div>
+
+<!-- Modal -->
+<div id="helpModal" class="modal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeModal()">&times;</span>
+    <h2>PL-900 Study Resources</h2>
+    <div class="modal-links">
+      <a href="https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/pl-900" target="_blank">How to Prepare PL 900</a>
+      <a href="https://learn.microsoft.com/en-us/credentials/certifications/power-platform-fundamentals/?practice-assessment-type=certification" target="_blank">Course PL 900</a>
+      
+      <h3>Learning Paths:</h3>
+      <a href="https://learn.microsoft.com/en-us/training/paths/describe-business-value-microsoft-power-platform/" target="_blank">1. Describe business value microsoft power platform</a>
+      <a href="https://learn.microsoft.com/en-us/training/paths/manage-microsoft-power-platform-environment/" target="_blank">2. Manage microsoft power platform environment</a>
+      <a href="https://learn.microsoft.com/en-us/training/paths/demonstrate-capabilities-microsoft-power-pages/" target="_blank">3. Demonstrate capabilities microsoft power pages</a>
+      <a href="https://learn.microsoft.com/en-us/training/paths/demonstrate-capabilities-power-apps/" target="_blank">4. Demonstrate capabilities power apps</a>
+      <a href="https://learn.microsoft.com/en-us/training/paths/demonstrate-capabilities-microsoft-power-automate//" target="_blank">5. Demonstrate capabilities microsoft power automate</a>
+    </div>
+  </div>
+</div>
+
+<div id="quiz-container"></div>
+<button id="review-btn" style="display:none" onclick="reviewMode()">Review Incorrect Answers</button>
+<div id="result"></div>
+<div id="review-container"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
+<script>
+let quizData = [];
+let startTime = null;
+let timerInterval;
+let wrongAnswers = [];
+let score = 0;
+
+// Modal functions
+function openModal() {
+  document.getElementById("helpModal").style.display = "block";
+}
+
+function closeModal() {
+  document.getElementById("helpModal").style.display = "none";
+}
+
+// Close modal when clicking outside of it
+window.onclick = function(event) {
+  const modal = document.getElementById("helpModal");
+  if (event.target == modal) {
+    closeModal();
+  }
+}
+
+window.addEventListener("load", () => {
+  const savedState = localStorage.getItem("pl900_quiz_state");
+  const lastFile = localStorage.getItem("pl900_last_file");
+if (lastFile) {
+  document.getElementById("last-file").innerText = "Last File: " + lastFile;
+}
+
+  if (savedState) {
+    const state = JSON.parse(savedState);
+    quizData = state.quizData || [];
+    score = state.score || 0;
+    wrongAnswers = state.wrongAnswers || [];
+    displayQuiz();
+    restoreAnswers(state.answers);
+    startTime = Date.now() - (state.elapsedMs || 0);
+    startTimer();
+    updateScoreDisplay();
+  }
+});
+
+function saveState() {
+  const answers = {};
+  quizData.forEach((q, index) => {
+    const selected = document.querySelector(`input[name="q${index}"]:checked`);
+    if (selected) answers[`q${index}`] = selected.value;
+  });
+  const elapsedMs = startTime ? Date.now() - startTime : 0;
+
+  const state = {
+    quizData,
+    answers,
+    score,
+    wrongAnswers,
+    elapsedMs
+  };
+  localStorage.setItem("pl900_quiz_state", JSON.stringify(state));
+}
+
+function restoreAnswers(answers) {
+  if (!answers) return;
+  score = 0; 
+  wrongAnswers = []; 
+
+  quizData.forEach((q, index) => {
+    const key = `q${index}`;
+    const savedValue = answers[key];
+    if (!savedValue) return;
+
+    // 1. Check the radio button
+    const input = document.querySelector(`input[name="${key}"][value="${savedValue}"]`);
+    if (input) input.checked = true;
+
+    // 2. Apply correct/wrong highlights
+    const label = input.parentElement;
+    if (!label.querySelector(".correct, .wrong")) {
+      if (savedValue === q.correct) {
+        label.innerHTML += " <span class='correct'>✅</span>";
+        score++;
+      } else {
+        label.innerHTML += ` <span class='wrong'>❌ (Correct: ${q.correct})</span>`;
+        wrongAnswers.push({ question: q.question, selected: savedValue, correct: q.correct });
+      }
+    }
+
+    // 3. Gray out this question box
+    const box = document.querySelectorAll(".quiz-box")[index];
+    if (box) {
+      box.classList.add("answered");
+      // Disable all radio buttons inside
+      box.querySelectorAll("input[type=radio]").forEach(r => r.disabled = true);
+    }
+  });
+
+  updateScoreDisplay();
+}
+
+document.getElementById("upload").addEventListener("change", handleFile);
+
+function handleFile(event) {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      const arrayBuffer = event.target.result;
+      mammoth.extractRawText({arrayBuffer: arrayBuffer})
+        .then(result => {
+          parseQuestions(result.value);
+          displayQuiz();
+          startTime = Date.now();
+          startTimer();
+          saveState();
+        })
+        
+
+        .catch(err => alert("Error reading file: " + err.message));
+    };
+    reader.readAsArrayBuffer(file);
+    localStorage.setItem("pl900_last_file", file.name);
+        document.getElementById("last-file").innerText = "Last File: " + file.name;
+  }
+}
+
+function parseQuestions(text) {
+  quizData = [];
+  const blocks = text.split(/\n\d+\.\s/).filter(b => b.trim() !== "");
+  blocks.forEach(block => {
+    const lines = block.trim().split("\n").map(l => l.trim()).filter(Boolean);
+    if (lines.length < 6) return;
+    const question = lines[0];
+    const options = [];
+    let correct = "";
+    lines.forEach(line => {
+      if (/^[a-d]\)/i.test(line)) options.push(line);
+      else if (/^Correct Answer:/i.test(line)) correct = line.replace(/^Correct Answer:\s*/i, "").trim();
+    });
+    quizData.push({ question, options, correct });
+  });
+
+  // set target score
+  document.getElementById("target-score").innerText = quizData.length; // NEW
+}
+
+function displayQuiz() {
+  const container = document.getElementById("quiz-container");
+  container.innerHTML = "";
+  quizData.forEach((q, index) => {
+    const div = document.createElement("div");
+    div.className = "quiz-box";
+    div.innerHTML = `<h3>Q${index+1}: ${q.question}</h3>`;
+    q.options.forEach(opt => {
+div.innerHTML += `
+  <div class="option">
+    <label><input type="radio" name="q${index}" value="${opt}"><span> ${opt}</span></label>
+  </div>`;
+    });
+    container.appendChild(div);
+  });
+  document.getElementById("submit-btn").style.display = "inline-block";
+  document.getElementById("check-btn").style.display = "inline-block";
+}
+
+function checkAnswers() {
+  quizData.forEach((q, index) => {
+    const selected = document.querySelector(`input[name="q${index}"]:checked`);
+    if (selected && !selected.parentElement.querySelector(".correct, .wrong")) {
+      if (selected.value === q.correct) {
+        selected.parentElement.innerHTML += " <span class='correct'>✅</span>";
+        score++;
+      } else {
+        selected.parentElement.innerHTML += ` <span class='wrong'>❌ (Correct: ${q.correct})</span>`;
+      }
+      updateScoreDisplay();
+    }
+  });
+  saveState();
+}
+function updateScoreDisplay() { // NEW
+  const percent = Math.round((score / quizData.length) * 100);
+  document.getElementById("actual-score").innerText = score;
+  document.getElementById("percent-score").innerText = percent + "%";
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    const elapsedMs = Date.now() - startTime;
+    const minutes = Math.floor(elapsedMs / 60000);
+    const seconds = Math.floor((elapsedMs % 60000) / 1000);
+    document.getElementById("timer").innerText = `Elapsed: ${minutes}:${seconds.toString().padStart(2,'0')}`;
+    saveState();
+  }, 1000);
+}
+
+function submitQuiz() {
+  clearInterval(timerInterval);
+  wrongAnswers = [];
+  score = 0;
+
+  quizData.forEach((q, index) => {
+    const selected = document.querySelector(`input[name="q${index}"]:checked`);
+    if (selected) {
+      if (selected.value === q.correct) {
+        score++;
+      } else {
+        wrongAnswers.push({ question: q.question, selected: selected.value, correct: q.correct });
+      }
+    } else {
+      wrongAnswers.push({ question: q.question, selected: "No answer", correct: q.correct });
+    }
+  });
+
+
+  updateScoreDisplay(); // NEW
+
+  const elapsedMs = Date.now() - startTime;
+  const minutes = Math.floor(elapsedMs / 60000);
+  const seconds = Math.floor((elapsedMs % 60000) / 1000);
+  const actualTime = `${minutes}:${seconds.toString().padStart(2,'0')}`;
+
+  const perQ = parseInt(document.getElementById("target-per-question").value, 10) || 1;
+  const targetMinutes = perQ * quizData.length;
+
+  const targetVsActual = (minutes < targetMinutes) ? 
+    `✅ Faster than target (${targetMinutes} min)` : 
+    `❌ Longer than target (${targetMinutes} min)`;
+
+  document.getElementById("result").innerHTML = `
+    <h3>Final Score: ${score}/${quizData.length}</h3>
+    <p>Actual Time: ${actualTime}</p>
+    <p>Target Time: ${targetMinutes} min (${perQ} min/question)</p>
+    <p>${targetVsActual}</p>
+  `;
+
+  document.getElementById("submit-btn").disabled = true;
+  document.getElementById("review-btn").style.display = (wrongAnswers.length > 0) ? "inline-block" : "none";
+
+  saveState();
+}
+function reviewMode() {
+  const container = document.getElementById("review-container");
+  container.innerHTML = "<h3>Review Incorrect Answers</h3>";
+  wrongAnswers.forEach((w, i) => {
+    const div = document.createElement("div");
+    div.className = "quiz-box";
+    div.innerHTML = `
+      <p><b>Q${i+1}:</b> ${w.question}</p>
+      <p class='wrong'>Your Answer: ${w.selected}</p>
+      <p class='correct'>Correct Answer: ${w.correct}</p>
+    `;
+    container.appendChild(div);
+  });
+}
+
+async function loadFromGoogleDoc() {
+  const url = document.getElementById("gdoc-link").value.trim();
+  if (!url) {
+    alert("Please paste a published Google Docs link.");
+    return;
+  }
+
+  try {
+    const response = await fetch(url);
+    const text = await response.text();
+
+    // Clean HTML → plain text
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, "text/html");
+    const plainText = doc.body.innerText;
+
+    parseQuestions(plainText);
+    displayQuiz();
+    startTime = Date.now();
+    startTimer();
+    saveState();
+
+  } catch (err) {
+    alert("Error loading Google Doc: " + err.message);
+  }
+}
+
+</script>
+<pre style="font-size:0.85em; white-space:pre-wrap;">
+
+Prompt
+Act as an expert tutor. From the following chapter/text, generate the maximum possible number of MCQs (Multiple Choice Questions) covering all important concepts.
+Each MCQ should have 1 correct answer and 3 distractors.
+Avoid unnecessary explanations or extra text.
+Ensure questions are concept-based, clear, and non-repetitive.
+Provide the correct answer clearly after each question.
+
+Example Output Format:
+1. What is the primary purpose of environments in Power Platform?  
+a) To store and manage business data, apps, and flows  
+b) To create Power BI dashboards  
+c) To train machine learning models  
+d) To design user interfaces  
+Correct Answer: a) To store and manage business data, apps, and flows  
+
+For more details, visit: <a href="https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/pl-900" target="_blank">How to Prepare PL 900</a>
+
+</pre>
+
+</body>
+</html>

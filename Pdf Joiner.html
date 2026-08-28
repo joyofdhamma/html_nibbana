@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF Merger</title>
+
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+
+<style>
+body {
+  margin: 0;
+  background: #000;
+  color: #e0e0e0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+  padding: 16px;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 12px;
+  color: #00e6c3;
+}
+
+.container {
+  max-width: 480px;
+  margin: auto;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+button {
+  flex: 1;
+  background: #111;
+  color: #ccc;
+  border: 1px solid #333;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+button:active {
+  border-color: #00e6c3;
+  color: #00e6c3;
+}
+
+.file-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.file-item {
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: grab;
+}
+
+.file-name {
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 280px;
+}
+
+.remove {
+  color: #ff6666;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.merge-btn {
+  margin-top: 14px;
+  background: #00e6c3;
+  color: #000;
+  font-weight: bold;
+}
+
+.status {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+input[type="file"] {
+  display: none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>PDF Merger</h2>
+
+  <div class="controls">
+    <button onclick="addPDF()">➕ Add PDF</button>
+    <button onclick="clearAll()">🗑 Clear</button>
+  </div>
+
+  <ul id="fileList" class="file-list"></ul>
+
+  <button class="merge-btn" onclick="mergePDFs()">Merge & Download</button>
+
+  <div class="status" id="status"></div>
+
+  <input type="file" id="fileInput" accept="application/pdf" multiple>
+</div>
+
+<script>
+const { PDFDocument } = PDFLib;
+
+const fileInput = document.getElementById("fileInput");
+const fileListEl = document.getElementById("fileList");
+const statusEl = document.getElementById("status");
+
+let files = [];
+let dragIndex = null;
+
+function addPDF() {
+  fileInput.click();
+}
+
+fileInput.onchange = () => {
+  for (const file of fileInput.files) {
+    files.push(file);
+  }
+  renderList();
+  fileInput.value = "";
+};
+
+function removeFile(index) {
+  files.splice(index, 1);
+  renderList();
+}
+
+function clearAll() {
+  if (confirm("Remove all PDFs?")) {
+    files = [];
+    renderList();
+  }
+}
+
+function renderList() {
+  fileListEl.innerHTML = "";
+  files.forEach((file, index) => {
+    const li = document.createElement("li");
+    li.className = "file-item";
+    li.draggable = true;
+
+    li.innerHTML = `
+      <span class="file-name">${index + 1}. ${file.name}</span>
+      <span class="remove" onclick="removeFile(${index})">✕</span>
+    `;
+
+    li.addEventListener("dragstart", () => dragIndex = index);
+    li.addEventListener("dragover", e => e.preventDefault());
+    li.addEventListener("drop", () => {
+      const dragged = files.splice(dragIndex, 1)[0];
+      files.splice(index, 0, dragged);
+      renderList();
+    });
+
+    fileListEl.appendChild(li);
+  });
+}
+
+async function mergePDFs() {
+  if (files.length < 2) {
+    alert("Please add at least 2 PDFs");
+    return;
+  }
+
+  try {
+    statusEl.textContent = "Merging PDFs...";
+
+    const mergedPdf = await PDFDocument.create();
+
+    for (const file of files) {
+      const bytes = await file.arrayBuffer();
+      const pdf = await PDFDocument.load(bytes);
+      const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+      pages.forEach(p => mergedPdf.addPage(p));
+    }
+
+    const mergedBytes = await mergedPdf.save();
+    const blob = new Blob([mergedBytes], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "merged.pdf";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    URL.revokeObjectURL(url);
+    statusEl.textContent = "Done ✔";
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = "Error merging PDFs ❌";
+    alert("Failed to merge PDFs. Please try again.");
+  }
+}
+</script>
+
+</body>
+</html>

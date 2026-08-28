@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Meditation Timer with Music</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body { 
+    background: linear-gradient(135deg, #0a192f 0%, #112240 100%);
+    color: #e6f1ff; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    text-align: center; 
+    margin: 0; 
+    padding: 20px; 
+    min-height: 100vh;
+  }
+  
+  h1 { 
+    font-size: 2.5em; 
+    margin-top: 20px; 
+    text-shadow: 0 0 10px rgba(100, 255, 255, 0.3);
+    letter-spacing: 1px;
+    color: #64ffda;
+  }
+  
+  #timeDisplay { 
+    font-size: 5em; 
+    margin: 30px 0; 
+    font-weight: bold;
+    text-shadow: 0 0 15px rgba(100, 255, 255, 0.4);
+    font-family: 'Courier New', monospace;
+    color: #ccd6f6;
+  }
+  
+  input[type="range"] { 
+    width: 80%; 
+    height: 15px;
+    -webkit-appearance: none;
+    background: #233554;
+    border-radius: 10px;
+    outline: none;
+  }
+  
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: #64ffda;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(100, 255, 218, 0.7);
+  }
+  
+  button { 
+    font-size: 1.5em; 
+    padding: 15px 30px; 
+    margin: 20px; 
+    border: none; 
+    border-radius: 50px; 
+    background: linear-gradient(to right, #1e60a3, #64ffda);
+    color: #0a192f; 
+    cursor: pointer; 
+    font-weight: bold;
+    box-shadow: 0 0 15px rgba(100, 255, 218, 0.3);
+    transition: all 0.3s ease;
+  }
+  
+  button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(100, 255, 218, 0.5);
+  }
+  
+  #musicIcon { 
+    position: absolute; 
+    top: 20px; 
+    right: 20px; 
+    font-size: 2.5em; 
+    cursor: pointer; 
+    transition: all 0.3s ease;
+    text-shadow: 0 0 10px rgba(100, 255, 218, 0.5);
+    color: #64ffda;
+  }
+  
+  #musicIcon:hover {
+    transform: scale(1.2);
+  }
+  
+  .modal { 
+    display: none; 
+    position: fixed; 
+    z-index: 999; 
+    left: 0; 
+    top: 0; 
+    width: 100%; 
+    height: 100%; 
+    background: rgba(10, 25, 47, 0.98); 
+    color: #a8b2d1; 
+    padding: 20px; 
+    overflow-y: auto; 
+  }
+  
+  .modal-content { 
+    background: #112240; 
+    padding: 30px; 
+    border-radius: 15px; 
+    max-width: 500px; 
+    margin: auto; 
+    border: 1px solid #64ffda;
+    box-shadow: 0 0 30px rgba(100, 255, 218, 0.2);
+  }
+  
+  .close { 
+    float: right; 
+    font-size: 1.8em; 
+    cursor: pointer; 
+    color: #64ffda;
+    text-shadow: 0 0 5px rgba(100, 255, 218, 0.5);
+  }
+  
+  label { 
+    display: block; 
+    margin-top: 20px; 
+    font-size: 1.1em;
+    text-align: left;
+    color: #ccd6f6;
+  }
+  
+  .slider-container {
+    margin: 15px 0;
+    background: rgba(17, 34, 64, 0.7);
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #1e60a3;
+  }
+  
+  .slider-value {
+    display: inline-block;
+    width: 50px;
+    text-align: center;
+    background: #0a192f;
+    padding: 5px;
+    border-radius: 5px;
+    margin-left: 10px;
+    font-weight: bold;
+    color: #64ffda;
+  }
+  
+  #selectedTime {
+    font-size: 1.5em;
+    margin: 15px 0;
+    color: #64ffda;
+    text-shadow: 0 0 5px rgba(100, 255, 218, 0.5);
+  }
+  
+  .eq-visualizer {
+    display: flex;
+    justify-content: space-between;
+    margin: 20px 0;
+    height: 100px;
+    align-items: flex-end;
+  }
+  
+  .eq-bar {
+    width: 30px;
+    background: linear-gradient(to top, #1e60a3, #64ffda);
+    border-radius: 3px 3px 0 0;
+    transition: height 0.1s ease;
+  }
+  
+  .reverb-display {
+    width: 100%;
+    height: 80px;
+    background: #0a192f;
+    border-radius: 10px;
+    margin: 20px 0;
+    overflow: hidden;
+    position: relative;
+  }
+  
+  .reverb-wave {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to top, rgba(100, 255, 218, 0.1), transparent);
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  
+  .reverb-label {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+    font-size: 0.9em;
+    color: #64ffda;
+  }
+  
+  /* New styles for TTS options */
+  .tts-container {
+    margin: 15px 0;
+    background: rgba(17, 34, 64, 0.7);
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #1e60a3;
+  }
+  
+  .tts-options {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+  }
+  
+  .tts-option {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+    margin: 0 5px;
+    background: #0a192f;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid #1e60a3;
+  }
+  
+  .tts-option:hover {
+    background: #112240;
+    transform: translateY(-2px);
+  }
+  
+  .tts-option.selected {
+    background: #64ffda;
+    color: #0a192f;
+    border-color: #64ffda;
+    box-shadow: 0 0 10px rgba(100, 255, 218, 0.5);
+  }
+  
+  .tts-option input {
+    display: none;
+  }
+  
+  .tts-option label {
+    display: block;
+    text-align: center;
+    margin: 0;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  
+  .tts-test {
+    margin-top: 15px;
+    padding: 8px 15px;
+    background: #1e60a3;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .tts-test:hover {
+    background: #64ffda;
+    color: #0a192f;
+  }
+</style>
+</head>
+<body>
+
+<h1>🧘 Meditation Timer</h1>
+<div id="musicIcon">🎵</div>
+
+<label for="timeSlider">Select Minutes</label>
+<input type="range" id="timeSlider" min="10" max="60" step="10" value="10">
+<div id="selectedTime">10 minutes</div>
+
+<button id="startBtn">Start Meditation</button>
+<div id="timeDisplay">10:00</div>
+
+<div class="eq-visualizer">
+  <div class="eq-bar" id="eq1"></div>
+  <div class="eq-bar" id="eq2"></div>
+  <div class="eq-bar" id="eq3"></div>
+  <div class="eq-bar" id="eq4"></div>
+  <div class="eq-bar" id="eq5"></div>
+</div>
+
+<!-- Music Settings Modal -->
+<div id="musicModal" class="modal">
+  <div class="modal-content">
+    <span class="close" id="closeModal">&times;</span>
+    <h2>🎶 Music Settings</h2>
+    
+    <div class="slider-container">
+      <label for="musicFile">Upload MP3:</label>
+      <input type="file" id="musicFile" accept="audio/mpeg">
+    </div>
+    
+    <!-- New TTS Time Announcement Section -->
+    <div class="tts-container">
+      <label>TTS Time Announcements:</label>
+      <div class="tts-options">
+        <div class="tts-option" id="ttsOff">
+          <input type="radio" id="ttsOffRadio" name="ttsFrequency" value="off" checked>
+          <label for="ttsOffRadio">Off</label>
+        </div>
+        <div class="tts-option" id="tts5min">
+          <input type="radio" id="tts5minRadio" name="ttsFrequency" value="5">
+          <label for="tts5minRadio">5 min</label>
+        </div>
+        <div class="tts-option" id="tts10min">
+          <input type="radio" id="tts10minRadio" name="ttsFrequency" value="10">
+          <label for="tts10minRadio">10 min</label>
+        </div>
+        <div class="tts-option" id="tts15min">
+          <input type="radio" id="tts15minRadio" name="ttsFrequency" value="15">
+          <label for="tts15minRadio">15 min</label>
+        </div>
+      </div>
+      <button class="tts-test" id="testTTS">Test TTS</button>
+    </div>
+    
+    <div class="slider-container">
+      <label for="volume">Volume: <span class="slider-value" id="volumeValue">0.8</span></label>
+      <input type="range" id="volume" min="0" max="1" step="0.01" value="0.8">
+    </div>
+    
+    <div class="slider-container">
+      <label for="speed">Speed / Tempo: <span class="slider-value" id="speedValue">1.0</span></label>
+      <input type="range" id="speed" min="0.5" max="2" step="0.1" value="1">
+    </div>
+    
+    <div class="slider-container">
+      <label for="bass">Bass: <span class="slider-value" id="bassValue">0</span></label>
+      <input type="range" id="bass" min="-30" max="30" step="1" value="0">
+    </div>
+    
+    <div class="slider-container">
+      <label for="mid">Mid: <span class="slider-value" id="midValue">0</span></label>
+      <input type="range" id="mid" min="-30" max="30" step="1" value="0">
+    </div>
+    
+    <div class="slider-container">
+      <label for="treble">Treble: <span class="slider-value" id="trebleValue">0</span></label>
+      <input type="range" id="treble" min="-30" max="30" step="1" value="0">
+    </div>
+    
+    <div class="slider-container">
+      <label for="pan">Stereo Pan: <span class="slider-value" id="panValue">0</span></label>
+      <input type="range" id="pan" min="-1" max="1" step="0.1" value="0">
+    </div>
+    
+    <div class="slider-container">
+      <label for="reverbSlider">Reverb Wet/Dry Mix: <span class="slider-value" id="reverbValue">0.3</span></label>
+      <input type="range" min="0" max="1" step="0.01" id="reverbSlider" value="0.3">
+      <div class="reverb-label">
+        <span>Dry</span>
+        <span>Wet</span>
+      </div>
+      <div class="reverb-display">
+        <div class="reverb-wave" id="reverbWave"></div>
+      </div>
+    </div>
+    
+    <div class="slider-container">
+      <label>
+        <input type="checkbox" id="repeat"> Repeat Music
+      </label>
+    </div>
+  </div>
+</div>
+
+<script>
+let countdown, totalSeconds, remainingSeconds, announcementIntervals = [];
+let isMeditating = false;
+let eqBars = [];
+let ttsFrequency = "off"; // Default TTS setting
+
+// UI elements
+const timeSlider = document.getElementById("timeSlider");
+const selectedTime = document.getElementById("selectedTime");
+const timeDisplay = document.getElementById("timeDisplay");
+const startBtn = document.getElementById("startBtn");
+const musicIcon = document.getElementById("musicIcon");
+const musicModal = document.getElementById("musicModal");
+const closeModal = document.getElementById("closeModal");
+const musicFile = document.getElementById("musicFile");
+
+// Audio controls
+const volumeControl = document.getElementById("volume");
+const volumeValue = document.getElementById("volumeValue");
+const speedControl = document.getElementById("speed");
+const speedValue = document.getElementById("speedValue");
+const bassControl = document.getElementById("bass");
+const bassValue = document.getElementById("bassValue");
+const midControl = document.getElementById("mid");
+const midValue = document.getElementById("midValue");
+const trebleControl = document.getElementById("treble");
+const trebleValue = document.getElementById("trebleValue");
+const panControl = document.getElementById("pan");
+const panValue = document.getElementById("panValue");
+const reverbSlider = document.getElementById("reverbSlider");
+const reverbValue = document.getElementById("reverbValue");
+const reverbWave = document.getElementById("reverbWave");
+const repeatCheckbox = document.getElementById("repeat");
+
+// TTS elements
+const ttsOff = document.getElementById("ttsOff");
+const tts5min = document.getElementById("tts5min");
+const tts10min = document.getElementById("tts10min");
+const tts15min = document.getElementById("tts15min");
+const testTTS = document.getElementById("testTTS");
+
+// Initialize EQ bars
+for (let i = 1; i <= 5; i++) {
+  eqBars.push(document.getElementById(`eq${i}`));
+}
+
+// Audio setup
+let audioContext = new (window.AudioContext || window.webkitAudioContext)();
+let audioElement = new Audio();
+audioElement.crossOrigin = "anonymous";
+audioElement.loop = false;
+
+let trackNode = audioContext.createMediaElementSource(audioElement);
+
+// EQ and Panner
+let gainNode = audioContext.createGain();
+let bassEQ = audioContext.createBiquadFilter();
+bassEQ.type = "lowshelf"; bassEQ.frequency.value = 200;
+
+let midEQ = audioContext.createBiquadFilter();
+midEQ.type = "peaking"; midEQ.frequency.value = 1000;
+
+let trebleEQ = audioContext.createBiquadFilter();
+trebleEQ.type = "highshelf"; trebleEQ.frequency.value = 3000;
+
+let panner = audioContext.createStereoPanner();
+
+// Reverb setup
+let convolver = audioContext.createConvolver();
+function generateImpulseResponse(seconds, decay) {
+  let rate = audioContext.sampleRate;
+  let length = rate * seconds;
+  let impulse = audioContext.createBuffer(2, length, rate);
+  for (let i = 0; i < 2; i++) {
+    let channelData = impulse.getChannelData(i);
+    for (let j = 0; j < length; j++) {
+      channelData[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / length, decay);
+    }
+  }
+  return impulse;
+}
+convolver.buffer = generateImpulseResponse(3, 2);
+
+let dryGain = audioContext.createGain();
+let wetGain = audioContext.createGain();
+
+// Audio routing
+trackNode.connect(bassEQ);
+bassEQ.connect(midEQ);
+midEQ.connect(trebleEQ);
+trebleEQ.connect(panner);
+
+// Dry path
+panner.connect(dryGain);
+dryGain.connect(gainNode);
+gainNode.connect(audioContext.destination);
+
+// Wet path
+panner.connect(convolver);
+convolver.connect(wetGain);
+wetGain.connect(gainNode);
+
+// Initialize wet/dry mix
+dryGain.gain.value = 0.7;
+wetGain.gain.value = 0.3;
+
+// Modal
+musicIcon.onclick = () => musicModal.style.display = "block";
+closeModal.onclick = () => musicModal.style.display = "none";
+window.onclick = (e) => {
+  if (e.target == musicModal) musicModal.style.display = "none";
+}
+
+// Update slider values display
+volumeControl.oninput = () => {
+  gainNode.gain.value = volumeControl.value;
+  volumeValue.textContent = parseFloat(volumeControl.value).toFixed(2);
+};
+
+speedControl.oninput = () => {
+  audioElement.playbackRate = speedControl.value;
+  speedValue.textContent = parseFloat(speedControl.value).toFixed(1);
+};
+
+bassControl.oninput = () => {
+  bassEQ.gain.value = bassControl.value;
+  bassValue.textContent = bassControl.value;
+  updateEQBars();
+};
+
+midControl.oninput = () => {
+  midEQ.gain.value = midControl.value;
+  midValue.textContent = midControl.value;
+  updateEQBars();
+};
+
+trebleControl.oninput = () => {
+  trebleEQ.gain.value = trebleControl.value;
+  trebleValue.textContent = trebleControl.value;
+  updateEQBars();
+};
+
+panControl.oninput = () => {
+  panner.pan.value = panControl.value;
+  panValue.textContent = parseFloat(panControl.value).toFixed(1);
+};
+
+repeatCheckbox.onchange = () => audioElement.loop = repeatCheckbox.checked;
+
+// Enhanced Reverb control with visual feedback
+reverbSlider.oninput = () => {
+  const wetValue = parseFloat(reverbSlider.value);
+  wetGain.gain.value = wetValue;
+  dryGain.gain.value = 1 - wetValue;
+  reverbValue.textContent = wetValue.toFixed(2);
+  
+  // Update reverb visualization
+  updateReverbVisualization(wetValue);
+};
+
+function updateReverbVisualization(wetValue) {
+  // Create a wave effect based on reverb amount
+  const intensity = wetValue * 100;
+  reverbWave.style.background = `linear-gradient(to top, 
+    rgba(100, 255, 218, ${0.1 + wetValue * 0.4}), 
+    transparent)`;
+  
+  // Add animation for the reverb wave
+  reverbWave.style.animation = `reverbWave ${1 + (1 - wetValue) * 2}s infinite ease-in-out`;
+}
+
+// Add keyframes for reverb animation
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes reverbWave {
+    0% { transform: translateX(0%); }
+    50% { transform: translateX(5%); }
+    100% { transform: translateX(0%); }
+  }
+`;
+document.head.appendChild(style);
+
+// Initialize reverb visualization
+updateReverbVisualization(parseFloat(reverbSlider.value));
+
+// EQ visualization
+function updateEQBars() {
+  const bassHeight = 30 + (parseInt(bassControl.value) / 30 * 70);
+  const midHeight = 30 + (parseInt(midControl.value) / 30 * 70);
+  const trebleHeight = 30 + (parseInt(trebleControl.value) / 30 * 70);
+  
+  eqBars[0].style.height = `${bassHeight * 0.7}px`;
+  eqBars[1].style.height = `${bassHeight * 0.9}px`;
+  eqBars[2].style.height = `${midHeight}px`;
+  eqBars[3].style.height = `${trebleHeight * 0.9}px`;
+  eqBars[4].style.height = `${trebleHeight * 0.7}px`;
+}
+
+// Initialize EQ bars
+updateEQBars();
+
+// File load
+musicFile.onchange = e => {
+  let file = e.target.files[0];
+  if (file) {
+    let url = URL.createObjectURL(file);
+    audioElement.src = url;
+    localStorage.setItem("lastMusic", url);
+  }
+};
+
+// Restore last music
+let lastMusic = localStorage.getItem("lastMusic");
+if (lastMusic) audioElement.src = lastMusic;
+
+// Time slider label
+timeSlider.oninput = () => {
+  selectedTime.textContent = timeSlider.value + " minutes";
+  if (!isMeditating) {
+    timeDisplay.textContent = formatTime(parseInt(timeSlider.value) * 60);
+  }
+};
+
+// TTS helper
+function speak(text) {
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "en-US";
+  utterance.volume = 0.8; // Slightly lower volume for announcements
+  speechSynthesis.speak(utterance);
+}
+
+// TTS option selection
+ttsOff.addEventListener("click", () => {
+  ttsFrequency = "off";
+  updateTTSSelection();
+});
+
+tts5min.addEventListener("click", () => {
+  ttsFrequency = "5";
+  updateTTSSelection();
+});
+
+tts10min.addEventListener("click", () => {
+  ttsFrequency = "10";
+  updateTTSSelection();
+});
+
+tts15min.addEventListener("click", () => {
+  ttsFrequency = "15";
+  updateTTSSelection();
+});
+
+// Update TTS selection UI
+function updateTTSSelection() {
+  // Remove selected class from all options
+  ttsOff.classList.remove("selected");
+  tts5min.classList.remove("selected");
+  tts10min.classList.remove("selected");
+  tts15min.classList.remove("selected");
+  
+  // Add selected class to the chosen option
+  if (ttsFrequency === "off") ttsOff.classList.add("selected");
+  if (ttsFrequency === "5") tts5min.classList.add("selected");
+  if (ttsFrequency === "10") tts10min.classList.add("selected");
+  if (ttsFrequency === "15") tts15min.classList.add("selected");
+  
+  // Save to localStorage
+  localStorage.setItem("ttsFrequency", ttsFrequency);
+}
+
+// Test TTS button
+testTTS.addEventListener("click", () => {
+  speak("This is a test of the text to speech time announcement");
+});
+
+// Start/Stop Meditation
+startBtn.onclick = async () => {
+  if (!isMeditating) {
+    try {
+      await audioContext.resume(); // REQUIRED for Android autoplay
+      startMeditation();
+    } catch (error) {
+      console.error("Error starting audio:", error);
+      alert("Please interact with the page first to enable audio");
+    }
+  } else {
+    stopMeditation();
+  }
+};
+
+function startMeditation() {
+  isMeditating = true;
+  startBtn.textContent = "Stop Meditation";
+  startBtn.style.background = "linear-gradient(to right, #ff6b6b, #ff9e7b)";
+  totalSeconds = parseInt(timeSlider.value) * 60;
+  remainingSeconds = totalSeconds;
+  timeDisplay.textContent = formatTime(remainingSeconds);
+
+  // Set up TTS announcements based on selected frequency
+  announcementIntervals = [];
+  
+  if (ttsFrequency !== "off") {
+    const frequency = parseInt(ttsFrequency);
+    for (let i = totalSeconds - (frequency * 60); i > 0; i -= (frequency * 60)) {
+      announcementIntervals.push(i);
+    }
+  }
+
+  audioElement.currentTime = 0;
+  audioElement.play();
+
+  countdown = setInterval(() => {
+    remainingSeconds--;
+    timeDisplay.textContent = formatTime(remainingSeconds);
+
+    // Check if it's time for a TTS announcement
+    if (announcementIntervals.includes(remainingSeconds)) {
+      let minsLeft = Math.floor(remainingSeconds / 60);
+      speak(minsLeft + " minutes remaining");
+    }
+
+    if (remainingSeconds <= 0) {
+      stopMeditation();
+      speak("Meditation completed");
+    }
+  }, 1000);
+}
+
+function stopMeditation() {
+  isMeditating = false;
+  startBtn.textContent = "Start Meditation";
+  startBtn.style.background = "linear-gradient(to right, #1e60a3, #64ffda)";
+  clearInterval(countdown);
+  audioElement.pause();
+  speechSynthesis.cancel(); // Stop any ongoing TTS
+}
+
+function formatTime(sec) {
+  let m = Math.floor(sec / 60);
+  let s = sec % 60;
+  return (m<10?"0":"")+m+":"+(s<10?"0":"")+s;
+}
+
+// Initialize display values
+volumeValue.textContent = volumeControl.value;
+speedValue.textContent = speedControl.value;
+bassValue.textContent = bassControl.value;
+midValue.textContent = midControl.value;
+trebleValue.textContent = trebleControl.value;
+panValue.textContent = panControl.value;
+reverbValue.textContent = reverbSlider.value;
+
+// Load saved TTS preference
+const savedTTS = localStorage.getItem("ttsFrequency");
+if (savedTTS) {
+  ttsFrequency = savedTTS;
+  updateTTSSelection();
+} else {
+  updateTTSSelection(); // Initialize with default
+}
+</script>
+
+</body>
+</html>

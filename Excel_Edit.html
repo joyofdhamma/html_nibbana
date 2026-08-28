@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel Pro · Multi-tab & Formatting</title>
+    <!-- SheetJS / XLSX -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js">
+    </script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* ── reset & base ── */
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+        }
+        body {
+            background: #eef2f7;
+            margin: 0;
+            min-height: 100vh;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .app-container {
+            max-width: 1500px;
+            width: 100%;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 48px -12px rgba(0, 20, 30, 0.30);
+            padding: 20px 24px 28px;
+            transition: 0.2s;
+        }
+
+        /* ── header ── */
+        header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            gap: 12px;
+        }
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logo-area i {
+            font-size: 28px;
+            color: #1e6f3f;
+            background: #e2f0e6;
+            padding: 10px;
+            border-radius: 16px;
+        }
+        .logo-area h1 {
+            font-weight: 600;
+            font-size: 22px;
+            margin: 0;
+            color: #1a2e3b;
+        }
+        .logo-area span {
+            font-weight: 400;
+            color: #3e6b4c;
+            background: #ebf5ef;
+            padding: 4px 14px;
+            border-radius: 30px;
+            font-size: 12px;
+        }
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 10px;
+        }
+        .btn {
+            background: white;
+            border: 1px solid #d0dce8;
+            padding: 7px 16px;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 13px;
+            color: #1d3b4f;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.15s;
+            background: #f9fcff;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+        }
+        .btn i {
+            font-size: 14px;
+            color: #2a5d7a;
+        }
+        .btn-primary {
+            background: #1a6e4b;
+            border-color: #1a6e4b;
+            color: white;
+        }
+        .btn-primary i {
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0f5a3b;
+            border-color: #0f5a3b;
+        }
+        .btn-success {
+            background: #2a7a5a;
+            border-color: #2a7a5a;
+            color: white;
+        }
+        .btn-success i {
+            color: white;
+        }
+        .btn-success:hover {
+            background: #1e6448;
+        }
+        .btn-outline-danger {
+            border-color: #f1d1d1;
+            color: #a13d3d;
+        }
+        .btn-outline-danger i {
+            color: #b34a4a;
+        }
+        .btn-outline-danger:hover {
+            background: #fce8e8;
+            border-color: #dba8a8;
+        }
+        .btn:hover {
+            background: #eef4f9;
+            border-color: #b8ccdd;
+        }
+        .file-upload-wrap {
+            position: relative;
+            display: inline-block;
+        }
+        .file-upload-wrap input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        .status-badge {
+            font-size: 12px;
+            background: #e7edf4;
+            padding: 4px 16px;
+            border-radius: 40px;
+            color: #1f4057;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        /* ── tabs ── */
+        .tabs-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px 12px;
+            padding: 6px 0 10px 0;
+            border-bottom: 2px solid #e2eaf2;
+            margin-bottom: 14px;
+        }
+        .tab-item {
+            padding: 6px 18px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            background: #f0f5fa;
+            color: #2a4a62;
+            border: 1px solid transparent;
+            transition: 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tab-item.active {
+            background: #1a6e4b;
+            color: white;
+            border-color: #1a6e4b;
+        }
+        .tab-item .tab-close {
+            font-size: 12px;
+            opacity: 0.6;
+            cursor: pointer;
+            margin-left: 4px;
+        }
+        .tab-item .tab-close:hover {
+            opacity: 1;
+            color: #b33;
+        }
+        .tab-item:hover:not(.active) {
+            background: #e3ecf5;
+        }
+        .tab-add-btn {
+            background: transparent;
+            border: 1px dashed #b0c6d6;
+            border-radius: 30px;
+            padding: 4px 16px;
+            font-size: 13px;
+            cursor: pointer;
+            color: #2a5d7a;
+            transition: 0.15s;
+        }
+        .tab-add-btn:hover {
+            background: #e3ecf5;
+            border-color: #7a9bb8;
+        }
+
+        /* ── formatting toolbar ── */
+        .format-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px 12px;
+            padding: 8px 12px;
+            background: #f6faff;
+            border-radius: 40px;
+            margin-bottom: 12px;
+            border: 1px solid #e2eaf2;
+        }
+        .format-bar .btn {
+            padding: 4px 12px;
+            font-size: 12px;
+        }
+        .format-bar .btn i {
+            font-size: 13px;
+        }
+        .format-bar .sep {
+            width: 1px;
+            height: 24px;
+            background: #d0dce8;
+        }
+        .format-bar .color-picker-wrap {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .format-bar input[type="color"] {
+            width: 28px;
+            height: 28px;
+            border: 1px solid #d0dce8;
+            border-radius: 30px;
+            padding: 2px;
+            cursor: pointer;
+            background: white;
+        }
+        .format-bar select {
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 30px;
+            border: 1px solid #d0dce8;
+            background: white;
+            color: #1d3b4f;
+            outline: none;
+        }
+
+        /* ── grid ── */
+        .grid-wrapper {
+            overflow-x: auto;
+            border-radius: 16px;
+            border: 1px solid #e2eaf2;
+            background: white;
+            margin-top: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+        }
+        #excelGrid {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            min-width: 700px;
+        }
+        #excelGrid th {
+            background: #eef4fa;
+            color: #1f3e54;
+            font-weight: 600;
+            padding: 8px 8px;
+            border-bottom: 2px solid #cddbe9;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            white-space: nowrap;
+        }
+        #excelGrid td {
+            padding: 7px 10px;
+            border-bottom: 1px solid #e3eaf1;
+            text-align: left;
+            min-width: 80px;
+            max-width: 260px;
+            word-break: break-word;
+            background-color: white;
+            transition: background 0.1s;
+        }
+        #excelGrid tr:hover td {
+            background-color: #f6faff;
+        }
+        #excelGrid .col-header {
+            background: #e6eef7;
+            font-weight: 500;
+            text-align: center;
+            cursor: default;
+            user-select: none;
+            position: relative;
+            vertical-align: middle;
+        }
+        .col-header .header-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+        .col-header .header-controls select {
+            font-size: 11px;
+            padding: 2px 4px;
+            border-radius: 30px;
+            border: 1px solid #c6d6e4;
+            background: white;
+            color: #1f3e54;
+            cursor: pointer;
+            outline: none;
+            max-width: 80px;
+        }
+        .col-header .header-controls .rename-input {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 30px;
+            border: 1px solid #c6d6e4;
+            background: white;
+            color: #1f3e54;
+            outline: none;
+            width: 90px;
+            transition: 0.15s;
+            font-weight: 500;
+        }
+        .col-header .header-controls .rename-input:focus {
+            border-color: #1a6e4b;
+            box-shadow: 0 0 0 2px rgba(26, 110, 75, 0.15);
+        }
+        .col-header .del-col-btn {
+            background: transparent;
+            border: none;
+            color: #b55a5a;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0 4px;
+            border-radius: 30px;
+            transition: 0.1s;
+        }
+        .col-header .del-col-btn:hover {
+            background: #fce2e2;
+        }
+        .row-actions {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            align-items: center;
+        }
+        .row-actions button {
+            background: transparent;
+            border: none;
+            color: #556f84;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 30px;
+            font-size: 13px;
+            transition: 0.1s;
+        }
+        .row-actions button:hover {
+            background: #e2eaf2;
+        }
+        .row-actions .del-row-btn {
+            color: #b55a5a;
+        }
+        .row-actions .del-row-btn:hover {
+            background: #fce2e2;
+        }
+        .empty-state {
+            padding: 50px 20px;
+            text-align: center;
+            color: #6b859e;
+            background: #fafdff;
+        }
+        .empty-state i {
+            font-size: 50px;
+            color: #c2d6e8;
+            margin-bottom: 14px;
+            display: block;
+        }
+        .empty-state p {
+            font-size: 16px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .data-type-indicator {
+            font-size: 10px;
+            background: #d3e2f0;
+            padding: 1px 8px;
+            border-radius: 30px;
+            color: #1f4057;
+            margin-left: 4px;
+        }
+
+        /* ── footer ── */
+        .footer-actions {
+            margin-top: 18px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .footer-actions .left {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+        .footer-actions .right {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        #rowCountDisplay {
+            font-size: 13px;
+            color: #2e4c66;
+            background: #e9f0f7;
+            padding: 4px 18px;
+            border-radius: 40px;
+        }
+        .toast-message {
+            background: #1f3b4e;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 60px;
+            font-size: 14px;
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.25s;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .toast-message.show {
+            opacity: 1;
+        }
+        .header-action-btn {
+            background: #e6eef7;
+            border: 1px solid #cddbe9;
+            border-radius: 30px;
+            padding: 4px 14px;
+            font-size: 12px;
+            cursor: pointer;
+            color: #1f3e54;
+            transition: 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .header-action-btn:hover {
+            background: #d3e2f0;
+            border-color: #b0c6d6;
+        }
+
+        @media (max-width: 700px) {
+            .app-container {
+                padding: 12px;
+            }
+            .logo-area h1 {
+                font-size: 18px;
+            }
+            .format-bar {
+                border-radius: 20px;
+                padding: 6px 10px;
+            }
+            .footer-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .footer-actions .left,
+            .footer-actions .right {
+                justify-content: center;
+            }
+            .col-header .header-controls .rename-input {
+                width: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- header -->
+        <header>
+            <div class="logo-area">
+                <i class="fas fa-table"></i>
+                <h1>SheetPro <span>multi-tab</span></h1>
+            </div>
+            <div class="toolbar">
+                <div class="file-upload-wrap">
+                    <button class="btn"><i class="fas fa-upload"></i> Upload</button>
+                    <input type="file" id="fileInput" accept=".xlsx,.xls">
+                </div>
+                <span class="status-badge" id="fileStatus"><i class="fas fa-circle"></i> No file</span>
+            </div>
+        </header>
+
+        <!-- Tabs -->
+        <div class="tabs-bar" id="tabsContainer">
+            <div class="tab-item active" data-tab="0">Sheet1 <span class="tab-close" data-tab="0">✕</span></div>
+            <button class="tab-add-btn" id="addTabBtn"><i class="fas fa-plus"></i> New tab</button>
+        </div>
+
+        <!-- Formatting bar -->
+        <div class="format-bar" id="formatBar">
+            <button class="btn" id="boldBtn"><i class="fas fa-bold"></i></button>
+            <button class="btn" id="italicBtn"><i class="fas fa-italic"></i></button>
+            <button class="btn" id="underlineBtn"><i class="fas fa-underline"></i></button>
+            <span class="sep"></span>
+            <div class="color-picker-wrap">
+                <i class="fas fa-font" style="color:#2a5d7a;"></i>
+                <input type="color" id="textColorPicker" value="#1f3e54">
+            </div>
+            <div class="color-picker-wrap">
+                <i class="fas fa-fill-drip" style="color:#2a5d7a;"></i>
+                <input type="color" id="bgColorPicker" value="#ffffff">
+            </div>
+            <span class="sep"></span>
+            <select id="fontSizeSelect">
+                <option value="12">12</option>
+                <option value="14" selected>14</option>
+                <option value="16">16</option>
+                <option value="18">18</option>
+                <option value="20">20</option>
+                <option value="24">24</option>
+            </select>
+            <span class="sep"></span>
+            <button class="btn" id="clearFormatBtn"><i class="fas fa-eraser"></i> Clear</button>
+            <button class="btn" id="useFirstRowAsHeaderBtn"><i class="fas fa-arrow-up"></i> Header</button>
+        </div>
+
+        <!-- Grid -->
+        <div class="grid-wrapper">
+            <table id="excelGrid">
+                <thead id="gridHead"></thead>
+                <tbody id="gridBody"></tbody>
+            </table>
+            <div id="emptyState" class="empty-state">
+                <i class="fas fa-file-excel"></i>
+                <p><strong>Upload or create a sheet</strong><br>Multiple tabs, formatting, data types & more</p>
+            </div>
+        </div>
+
+        <!-- footer -->
+        <div class="footer-actions">
+            <div class="left">
+                <span id="rowCountDisplay">Rows: 0</span>
+                <button class="btn" id="addRowBtn"><i class="fas fa-plus-circle"></i> Row</button>
+                <button class="btn" id="addColBtn"><i class="fas fa-plus"></i> Col</button>
+                <button class="btn btn-outline-danger" id="removeLastColBtn"><i class="fas fa-minus"></i> Remove col</button>
+            </div>
+            <div class="right">
+                <button class="btn btn-success" id="saveBtn"><i class="fas fa-save"></i> Save .xlsx</button>
+                <button class="btn btn-primary" id="exportAllBtn"><i class="fas fa-file-export"></i> Export all tabs</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast-message"></div>
+
+    <script>
+        (function() {
+            "use strict";
+
+            // ─── STATE ──────────────────────────────────────────────
+            let sheets = {}; // { tabId: { headers, data, types } }
+            let activeTabId = '0';
+            let tabCounter = 1;
+            let fileName = "workbook.xlsx";
+
+            // ─── DOM refs ──────────────────────────────────────────
+            const gridHead = document.getElementById('gridHead');
+            const gridBody = document.getElementById('gridBody');
+            const emptyState = document.getElementById('emptyState');
+            const fileInput = document.getElementById('fileInput');
+            const fileStatus = document.getElementById('fileStatus');
+            const rowCountDisplay = document.getElementById('rowCountDisplay');
+            const toastEl = document.getElementById('toast');
+            const tabsContainer = document.getElementById('tabsContainer');
+
+            // Formatting state (per cell)
+            let cellFormats = {}; // key: "row,col" => { bold, italic, underline, color, bg, size }
+
+            // ─── Helpers ────────────────────────────────────────────
+            function showToast(msg, duration = 2200) {
+                toastEl.textContent = msg;
+                toastEl.classList.add('show');
+                clearTimeout(toastEl._hideTimer);
+                toastEl._hideTimer = setTimeout(() => toastEl.classList.remove('show'), duration);
+            }
+
+            function getActiveSheet() {
+                return sheets[activeTabId] || null;
+            }
+
+            function ensureSheetExists(tabId) {
+                if (!sheets[tabId]) {
+                    sheets[tabId] = {
+                        headers: ['A', 'B', 'C'],
+                        data: [
+                            ['', '', ''],
+                            ['', '', '']
+                        ],
+                        types: ['text', 'text', 'text']
+                    };
+                }
+                return sheets[tabId];
+            }
+
+            // ─── Formatting helpers ────────────────────────────────
+            function getCellKey(row, col) { return row + ',' + col; }
+
+            function getFormat(row, col) {
+                return cellFormats[getCellKey(row, col)] || {};
+            }
+
+            function setFormat(row, col, props) {
+                const key = getCellKey(row, col);
+                if (!cellFormats[key]) cellFormats[key] = {};
+                Object.assign(cellFormats[key], props);
+                renderGrid();
+            }
+
+            function applyFormatToSelection(props) {
+                // For simplicity: apply to all cells in active sheet
+                const sheet = getActiveSheet();
+                if (!sheet) return;
+                for (let r = 0; r < sheet.data.length; r++) {
+                    for (let c = 0; c < sheet.headers.length; c++) {
+                        const key = getCellKey(r, c);
+                        if (!cellFormats[key]) cellFormats[key] = {};
+                        Object.assign(cellFormats[key], props);
+                    }
+                }
+                renderGrid();
+                showToast('Format applied to all cells');
+            }
+
+            function clearAllFormats() {
+                const sheet = getActiveSheet();
+                if (!sheet) return;
+                for (let r = 0; r < sheet.data.length; r++) {
+                    for (let c = 0; c < sheet.headers.length; c++) {
+                        delete cellFormats[getCellKey(r, c)];
+                    }
+                }
+                renderGrid();
+                showToast('Formats cleared');
+            }
+
+            // ─── Render ─────────────────────────────────────────────
+            function renderGrid() {
+                const sheet = getActiveSheet();
+                gridHead.innerHTML = '';
+                gridBody.innerHTML = '';
+
+                if (!sheet || !sheet.headers || sheet.headers.length === 0 || sheet.data.length === 0) {
+                    emptyState.style.display = 'block';
+                    rowCountDisplay.textContent = 'Rows: 0';
+                    return;
+                }
+                emptyState.style.display = 'none';
+
+                const headers = sheet.headers;
+                const data = sheet.data;
+                const types = sheet.types || headers.map(() => 'text');
+
+                // header row
+                const headRow = document.createElement('tr');
+                const thAction = document.createElement('th');
+                thAction.style.width = '50px';
+                thAction.style.background = '#eef4fa';
+                thAction.textContent = '⚙️';
+                headRow.appendChild(thAction);
+
+                headers.forEach((colName, colIndex) => {
+                    const th = document.createElement('th');
+                    th.className = 'col-header';
+                    th.style.minWidth = '140px';
+
+                    const topDiv = document.createElement('div');
+                    topDiv.style.display = 'flex';
+                    topDiv.style.alignItems = 'center';
+                    topDiv.style.justifyContent = 'center';
+                    topDiv.style.gap = '6px';
+                    topDiv.style.marginBottom = '2px';
+
+                    const nameInput = document.createElement('input');
+                    nameInput.type = 'text';
+                    nameInput.className = 'rename-input';
+                    nameInput.value = colName;
+                    nameInput.placeholder = 'Name';
+                    nameInput.addEventListener('change', function() {
+                        const trimmed = this.value.trim();
+                        if (trimmed === '') { showToast('Name cannot be empty', 1600); return; }
+                        headers[colIndex] = trimmed;
+                        renderGrid();
+                        showToast(`Renamed to "${trimmed}"`);
+                    });
+                    nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') this.blur(); });
+                    topDiv.appendChild(nameInput);
+
+                    const typeBadge = document.createElement('span');
+                    typeBadge.className = 'data-type-indicator';
+                    const type = types[colIndex] || 'text';
+                    typeBadge.textContent = type.toUpperCase();
+                    topDiv.appendChild(typeBadge);
+
+                    th.appendChild(topDiv);
+
+                    const controlsDiv = document.createElement('div');
+                    controlsDiv.className = 'header-controls';
+
+                    const select = document.createElement('select');
+                    ['text', 'number', 'date'].forEach(t => {
+                        const opt = document.createElement('option');
+                        opt.value = t;
+                        opt.textContent = t.charAt(0).toUpperCase() + t.slice(1);
+                        if (t === type) opt.selected = true;
+                        select.appendChild(opt);
+                    });
+                    select.addEventListener('change', (e) => {
+                        types[colIndex] = e.target.value;
+                        applyTypeToColumn(colIndex);
+                        showToast(`Type set to ${e.target.value}`);
+                    });
+                    controlsDiv.appendChild(select);
+
+                    const delBtn = document.createElement('button');
+                    delBtn.className = 'del-col-btn';
+                    delBtn.innerHTML = '<i class="fas fa-times-circle"></i>';
+                    delBtn.title = 'Delete column';
+                    delBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        deleteColumn(colIndex);
+                    });
+                    controlsDiv.appendChild(delBtn);
+
+                    th.appendChild(controlsDiv);
+                    headRow.appendChild(th);
+                });
+                gridHead.appendChild(headRow);
+
+                // body rows
+                for (let r = 0; r < data.length; r++) {
+                    const row = data[r];
+                    const tr = document.createElement('tr');
+
+                    const tdAction = document.createElement('td');
+                    tdAction.style.textAlign = 'center';
+                    tdAction.style.background = '#f8fafc';
+                    const delRowBtn = document.createElement('button');
+                    delRowBtn.className = 'del-row-btn';
+                    delRowBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+                    delRowBtn.title = 'Delete row';
+                    delRowBtn.addEventListener('click', () => deleteRow(r));
+                    tdAction.appendChild(delRowBtn);
+                    tr.appendChild(tdAction);
+
+                    for (let c = 0; c < headers.length; c++) {
+                        const td = document.createElement('td');
+                        td.contentEditable = true;
+                        const type = types[c] || 'text';
+                        const rawVal = (row[c] !== undefined && row[c] !== null) ? row[c] : '';
+                        td.textContent = formatValue(rawVal, type);
+                        td.dataset.colIndex = c;
+                        td.dataset.rowIndex = r;
+
+                        // Apply formatting
+                        const fmt = getFormat(r, c);
+                        if (fmt.bold) td.style.fontWeight = 'bold';
+                        if (fmt.italic) td.style.fontStyle = 'italic';
+                        if (fmt.underline) td.style.textDecoration = 'underline';
+                        if (fmt.color) td.style.color = fmt.color;
+                        if (fmt.bg) td.style.backgroundColor = fmt.bg;
+                        if (fmt.size) td.style.fontSize = fmt.size + 'px';
+
+                        td.addEventListener('input', function() {
+                            const colIdx = parseInt(this.dataset.colIndex);
+                            const rowIdx = parseInt(this.dataset.rowIndex);
+                            const newRaw = this.textContent.trim();
+                            const type = types[colIdx] || 'text';
+                            let parsed = parseValue(newRaw, type);
+                            if (data[rowIdx] && data[rowIdx][colIdx] !== undefined) {
+                                data[rowIdx][colIdx] = parsed;
+                            }
+                            this.textContent = formatValue(parsed, type);
+                            // re-apply formats
+                            const fmt2 = getFormat(rowIdx, colIdx);
+                            if (fmt2.bold) this.style.fontWeight = 'bold';
+                            if (fmt2.italic) this.style.fontStyle = 'italic';
+                            if (fmt2.underline) this.style.textDecoration = 'underline';
+                            if (fmt2.color) this.style.color = fmt2.color;
+                            if (fmt2.bg) this.style.backgroundColor = fmt2.bg;
+                            if (fmt2.size) this.style.fontSize = fmt2.size + 'px';
+                        });
+
+                        tr.appendChild(td);
+                    }
+                    gridBody.appendChild(tr);
+                }
+
+                rowCountDisplay.textContent = `Rows: ${data.length}`;
+            }
+
+            // ─── Data type helpers ─────────────────────────────────
+            function formatValue(value, type) {
+                if (value === undefined || value === null || value === '') return '';
+                if (type === 'number') {
+                    const num = parseFloat(value);
+                    return isNaN(num) ? value : String(num);
+                }
+                if (type === 'date') {
+                    let d = new Date(value);
+                    if (isNaN(d.getTime())) {
+                        const num = parseFloat(value);
+                        if (!isNaN(num) && num > 0) d = new Date((num - 25569) * 86400 * 1000);
+                    }
+                    if (!isNaN(d.getTime())) return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short',
+                        day: 'numeric' });
+                    return value;
+                }
+                return String(value);
+            }
+
+            function parseValue(raw, type) {
+                if (raw === undefined || raw === null || raw === '') return '';
+                if (type === 'number') {
+                    const num = parseFloat(raw);
+                    return isNaN(num) ? raw : num;
+                }
+                if (type === 'date') {
+                    let d = new Date(raw);
+                    if (isNaN(d.getTime())) {
+                        const num = parseFloat(raw);
+                        if (!isNaN(num) && num > 0) d = new Date((num - 25569) * 86400 * 1000);
+                    }
+                    if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+                    return raw;
+                }
+                return String(raw);
+            }
+
+            function applyTypeToColumn(colIndex) {
+                const sheet = getActiveSheet();
+                if (!sheet) return;
+                const type = sheet.types[colIndex] || 'text';
+                for (let r = 0; r < sheet.data.length; r++) {
+                    const raw = sheet.data[r][colIndex];
+                    if (raw !== undefined && raw !== null && raw !== '') {
+                        sheet.data[r][colIndex] = parseValue(raw, type);
+                    }
+                }
+                renderGrid();
+            }
+
+            // ─── Data manipulation ──────────────────────────────────
+            function deleteRow(rowIndex) {
+                const sheet = getActiveSheet();
+                if (!sheet) return;
+                if (rowIndex < 0 || rowIndex >= sheet.data.length) return;
+                sheet.data.splice(rowIndex, 1);
+                // remove formats for this row
+                for (let c = 0; c < sheet.headers.length; c++) {
+                    delete cellFormats[getCellKey(rowIndex, c)];
+                }
+                renderGrid();
+                showToast(`Row ${rowIndex + 1} deleted`);
+            }
+
+            function deleteColumn(colIndex) {
+                const sheet = getActiveSheet();
+                if (!sheet) return;
+                if (colIndex < 0 || colIndex >= sheet.headers.length) return;
+                sheet.headers.splice(colIndex, 1);
+                sheet.types.splice(colIndex, 1);
+                for (let r = 0; r < sheet.data.length; r++) {
+                    if (sheet.data[r] && sheet.data[r].length > colIndex) {
+                        sheet.data[r].splice(colIndex, 1);
+                    }
+                }
+                // remove formats for this column
+                for (let r = 0; r < sheet.data.length; r++) {
+                    delete cellFormats[getCellKey(r, colIndex)];
+                }
+                renderGrid();
+                showToast('Column deleted');
+            }
+
+            function addRow() {
+                const sheet = getActiveSheet();
+                if (!sheet) { showToast('Create a sheet first', 1800); return; }
+                const newRow = new Array(sheet.headers.length).fill('');
+                sheet.data.push(newRow);
+                renderGrid();
+                showToast('Row added');
+            }
+
+            function addColumn() {
+                const sheet = getActiveSheet();
+                if (!sheet) { showToast('Create a sheet first', 1800); return; }
+                const newColName = `Col ${sheet.headers.length + 1}`;
+                sheet.headers.push(newColName);
+                sheet.types.push('text');
+                for (let r = 0; r < sheet.data.length; r++) {
+                    sheet.data[r].push('');
+                }
+                renderGrid();
+                showToast(`Column "${newColName}" added`);
+            }
+
+            function removeLastColumn() {
+                const sheet = getActiveSheet();
+                if (!sheet || sheet.headers.length === 0) { showToast('No columns', 1600); return; }
+                deleteColumn(sheet.headers.length - 1);
+            }
+
+            function useFirstRowAsHeader() {
+                const sheet = getActiveSheet();
+                if (!sheet || sheet.data.length === 0) { showToast('No data', 1800); return; }
+                const firstRow = sheet.data[0];
+                if (!firstRow || firstRow.length === 0) { showToast('First row empty', 1800); return; }
+                const newHeaders = firstRow.map(cell => (cell !== undefined && cell !== null && cell !== '') ? String(
+                cell) : `Col ${firstRow.indexOf(cell) + 1}`);
+                const newData = sheet.data.slice(1);
+                const colCount = newHeaders.length;
+                for (let r = 0; r < newData.length; r++) {
+                    while (newData[r].length < colCount) newData[r].push('');
+                    if (newData[r].length > colCount) newData[r] = newData[r].slice(0, colCount);
+                }
+                sheet.headers = newHeaders;
+                sheet.data = newData;
+                sheet.types = newHeaders.map(() => 'text');
+                // clear formats
+                cellFormats = {};
+                renderGrid();
+                showToast(`First row as header: ${newData.length} rows`);
+            }
+
+            // ─── Tabs ───────────────────────────────────────────────
+            function createTab(name) {
+                const id = String(tabCounter++);
+                sheets[id] = {
+                    headers: ['A', 'B', 'C'],
+                    data: [
+                        ['', '', ''],
+                        ['', '', '']
+                    ],
+                    types: ['text', 'text', 'text']
+                };
+                // add tab button
+                const tabDiv = document.createElement('div');
+                tabDiv.className = 'tab-item';
+                tabDiv.dataset.tab = id;
+                tabDiv.innerHTML = `${name} <span class="tab-close" data-tab="${id}">✕</span>`;
+                tabDiv.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('tab-close')) return;
+                    switchTab(id);
+                });
+                const closeSpan = tabDiv.querySelector('.tab-close');
+                closeSpan.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeTab(id);
+                });
+                tabsContainer.insertBefore(tabDiv, tabsContainer.querySelector('.tab-add-btn'));
+                switchTab(id);
+                showToast(`Tab "${name}" created`);
+                return id;
+            }
+
+            function switchTab(id) {
+                activeTabId = id;
+                // update active class
+                document.querySelectorAll('.tab-item').forEach(el => {
+                    el.classList.toggle('active', el.dataset.tab === id);
+                });
+                ensureSheetExists(id);
+                renderGrid();
+            }
+
+            function closeTab(id) {
+                if (Object.keys(sheets).length <= 1) {
+                    showToast('Cannot close the last tab', 1800);
+                    return;
+                }
+                delete sheets[id];
+                const tabEl = document.querySelector(`.tab-item[data-tab="${id}"]`);
+                if (tabEl) tabEl.remove();
+                // switch to first available tab
+                const firstTab = document.querySelector('.tab-item');
+                if (firstTab) switchTab(firstTab.dataset.tab);
+                else {
+                    // create default
+                    const newId = createTab('Sheet1');
+                    switchTab(newId);
+                }
+                showToast('Tab closed');
+            }
+
+            // ─── Save / Export ──────────────────────────────────────
+            function saveAsXLSX() {
+                const sheet = getActiveSheet();
+                if (!sheet || sheet.data.length === 0) { showToast('No data to save', 1800); return; }
+                const output = [sheet.headers.slice()];
+                sheet.data.forEach(row => {
+                    const r = row.slice(0, sheet.headers.length);
+                    while (r.length < sheet.headers.length) r.push('');
+                    output.push(r);
+                });
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(output);
+                XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+                const saveName = fileName.replace(/\.[^.]+$/, '') + '_edited.xlsx';
+                XLSX.writeFile(wb, saveName);
+                showToast(`Saved as "${saveName}"`);
+            }
+
+            function exportAllTabs() {
+                if (Object.keys(sheets).length === 0) { showToast('No sheets to export', 1800); return; }
+                const wb = XLSX.utils.book_new();
+                Object.keys(sheets).forEach((id, idx) => {
+                    const sheet = sheets[id];
+                    const output = [sheet.headers.slice()];
+                    sheet.data.forEach(row => {
+                        const r = row.slice(0, sheet.headers.length);
+                        while (r.length < sheet.headers.length) r.push('');
+                        output.push(r);
+                    });
+                    const ws = XLSX.utils.aoa_to_sheet(output);
+                    XLSX.utils.book_append_sheet(wb, ws, `Sheet${idx + 1}`);
+                });
+                const saveName = fileName.replace(/\.[^.]+$/, '') + '_all_tabs.xlsx';
+                XLSX.writeFile(wb, saveName);
+                showToast(`Exported ${Object.keys(sheets).length} tabs as "${saveName}"`);
+            }
+
+            // ─── File loading ───────────────────────────────────────
+            function loadFile(data) {
+                try {
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    // Clear existing sheets
+                    sheets = {};
+                    tabCounter = 1;
+                    // Remove all tab buttons except the add button
+                    document.querySelectorAll('.tab-item').forEach(el => el.remove());
+
+                    workbook.SheetNames.forEach((name, idx) => {
+                        const ws = workbook.Sheets[name];
+                        const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+                        if (!raw || raw.length === 0) return;
+                        const headers = raw[0].map(h => (h !== undefined && h !== null) ? String(h) : '');
+                        const rows = raw.slice(1).map(row => {
+                            const r = row.slice(0, headers.length);
+                            while (r.length < headers.length) r.push('');
+                            return r;
+                        });
+                        const id = String(tabCounter++);
+                        sheets[id] = {
+                            headers: headers,
+                            data: rows,
+                            types: headers.map((_, colIdx) => {
+                                let allNum = true,
+                                    allDate = true;
+                                for (let r = 0; r < rows.length; r++) {
+                                    const val = rows[r][colIdx];
+                                    if (val === '' || val === null || val === undefined) continue;
+                                    const num = parseFloat(val);
+                                    if (isNaN(num)) allNum = false;
+                                    const d = new Date(val);
+                                    if (isNaN(d.getTime())) {
+                                        const num2 = parseFloat(val);
+                                        if (!isNaN(num2) && num2 > 0) {
+                                            const d2 = new Date((num2 - 25569) * 86400 * 1000);
+                                            if (isNaN(d2.getTime())) allDate = false;
+                                        } else allDate = false;
+                                    }
+                                }
+                                if (allNum && rows.length > 0) return 'number';
+                                if (allDate && rows.length > 0) return 'date';
+                                return 'text';
+                            })
+                        };
+                        // Add tab UI
+                        const tabDiv = document.createElement('div');
+                        tabDiv.className = 'tab-item';
+                        tabDiv.dataset.tab = id;
+                        tabDiv.innerHTML = `${name} <span class="tab-close" data-tab="${id}">✕</span>`;
+                        tabDiv.addEventListener('click', (e) => {
+                            if (e.target.classList.contains('tab-close')) return;
+                            switchTab(id);
+                        });
+                        const closeSpan = tabDiv.querySelector('.tab-close');
+                        closeSpan.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            closeTab(id);
+                        });
+                        tabsContainer.insertBefore(tabDiv, tabsContainer.querySelector('.tab-add-btn'));
+                    });
+
+                    // switch to first tab
+                    const firstTab = document.querySelector('.tab-item');
+                    if (firstTab) switchTab(firstTab.dataset.tab);
+                    else {
+                        const newId = createTab('Sheet1');
+                        switchTab(newId);
+                    }
+
+                    if (fileInput.files && fileInput.files[0]) {
+                        fileName = fileInput.files[0].name;
+                        fileStatus.innerHTML = `<i class="fas fa-check-circle" style="color:#1e7a4b;"></i> ${fileName}`;
+                    }
+                    showToast(`Loaded ${Object.keys(sheets).length} tabs`);
+                } catch (e) {
+                    showToast('Error: ' + e.message, 3000);
+                    console.error(e);
+                }
+            }
+
+            // ─── Init ───────────────────────────────────────────────
+            function init() {
+                // Create default sheet
+                const id = createTab('Sheet1');
+                switchTab(id);
+                renderGrid();
+
+                // ─── Event listeners ──────────────────────────────
+                fileInput.addEventListener('change', function(e) {
+                    const file = this.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = function(ev) {
+                        loadFile(new Uint8Array(ev.target.result));
+                        fileInput.value = '';
+                    };
+                    reader.onerror = () => showToast('Failed to read file', 2000);
+                    reader.readAsArrayBuffer(file);
+                });
+
+                document.getElementById('addTabBtn').addEventListener('click', () => {
+                    const name = `Sheet${tabCounter}`;
+                    createTab(name);
+                });
+
+                document.getElementById('addRowBtn').addEventListener('click', addRow);
+                document.getElementById('addColBtn').addEventListener('click', addColumn);
+                document.getElementById('removeLastColBtn').addEventListener('click', removeLastColumn);
+                document.getElementById('saveBtn').addEventListener('click', saveAsXLSX);
+                document.getElementById('exportAllBtn').addEventListener('click', exportAllTabs);
+                document.getElementById('useFirstRowAsHeaderBtn').addEventListener('click', useFirstRowAsHeader);
+
+                // Formatting
+                document.getElementById('boldBtn').addEventListener('click', () => applyFormatToSelection({ bold: true }));
+                document.getElementById('italicBtn').addEventListener('click', () => applyFormatToSelection({ italic: true }));
+                document.getElementById('underlineBtn').addEventListener('click', () => applyFormatToSelection({ underline: true }));
+                document.getElementById('clearFormatBtn').addEventListener('click', clearAllFormats);
+                document.getElementById('textColorPicker').addEventListener('input', (e) => {
+                    applyFormatToSelection({ color: e.target.value });
+                });
+                document.getElementById('bgColorPicker').addEventListener('input', (e) => {
+                    applyFormatToSelection({ bg: e.target.value });
+                });
+                document.getElementById('fontSizeSelect').addEventListener('change', (e) => {
+                    applyFormatToSelection({ size: parseInt(e.target.value) });
+                });
+
+                // drag/drop
+                document.addEventListener('dragover', (e) => e.preventDefault());
+                document.addEventListener('drop', (e) => e.preventDefault());
+            }
+
+            // expose for inline
+            window.deleteColumn = deleteColumn;
+            window.deleteRow = deleteRow;
+            window.switchTab = switchTab;
+            window.closeTab = closeTab;
+
+            init();
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Data & BI Glossary · 3-Column</title>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #f0f4fb;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      padding: 2rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .app-wrapper {
+      max-width: 1400px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 40px;
+      padding: 2rem 2rem 2.5rem;
+      box-shadow: 0 20px 40px -12px rgba(0, 20, 40, 0.2), 0 8px 20px -8px rgba(0, 0, 0, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    h1 {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-weight: 600;
+      font-size: 2rem;
+      letter-spacing: -0.02em;
+      color: #0c1d2e;
+      margin-bottom: 1.2rem;
+      padding-bottom: 0.8rem;
+      border-bottom: 2px solid rgba(0, 0, 0, 0.04);
+      flex-wrap: wrap;
+    }
+
+    h1 i {
+      color: #3a6aff;
+      background: rgba(58, 106, 255, 0.12);
+      padding: 8px 14px;
+      border-radius: 40px;
+      font-size: 1.8rem;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 0.5rem 0 1.8rem 0;
+      align-items: center;
+    }
+
+    .toolbar button {
+      background: white;
+      border: 1px solid #dae0ea;
+      padding: 0.5rem 1.2rem;
+      border-radius: 40px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #1e3145;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(4px);
+    }
+
+    .toolbar button i {
+      color: #3a6aff;
+      font-size: 0.9rem;
+    }
+
+    .toolbar button:hover {
+      background: white;
+      border-color: #b0c8e8;
+      box-shadow: 0 4px 12px rgba(58, 106, 255, 0.08);
+    }
+
+    .toolbar button.primary {
+      background: #3a6aff;
+      border-color: #3a6aff;
+      color: white;
+    }
+    .toolbar button.primary i {
+      color: white;
+    }
+    .toolbar button.primary:hover {
+      background: #2a56e0;
+      border-color: #2a56e0;
+    }
+
+    .toolbar .file-input-wrap {
+      position: relative;
+      display: inline-block;
+    }
+    .toolbar .file-input-wrap input[type="file"] {
+      position: absolute;
+      left: 0;
+      top: 0;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 20px;
+      border: 1px solid rgba(0, 0, 0, 0.04);
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      min-width: 700px;
+    }
+
+    thead {
+      background: #e8eef9;
+      border-bottom: 2px solid #d0dbea;
+    }
+
+    th {
+      text-align: left;
+      padding: 1rem 1rem 0.8rem 1.2rem;
+      font-weight: 600;
+      color: #1a2c42;
+      letter-spacing: 0.02em;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      position: relative;
+    }
+
+    th:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 20%;
+      height: 60%;
+      width: 1px;
+      background: #c8d4e5;
+    }
+
+    td {
+      padding: 0.7rem 1rem 0.7rem 1.2rem;
+      border-bottom: 1px solid #e6edf6;
+      vertical-align: top;
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    td:not(:last-child) {
+      border-right: 1px solid #e6edf6;
+    }
+
+    .col-term {
+      font-weight: 500;
+      color: #0c1d2e;
+      min-width: 150px;
+    }
+    .col-concept {
+      min-width: 200px;
+    }
+    .col-remark {
+      min-width: 160px;
+    }
+
+    .editable-text {
+      background: transparent;
+      border: none;
+      width: 100%;
+      padding: 4px 6px;
+      font-family: inherit;
+      font-size: inherit;
+      color: #1e3145;
+      border-radius: 8px;
+      transition: background 0.1s;
+      resize: vertical;
+      min-height: 2.2rem;
+    }
+
+    .editable-text:focus {
+      outline: 2px solid #3a6aff;
+      outline-offset: 1px;
+      background: white;
+    }
+
+    .editable-text:hover {
+      background: rgba(58, 106, 255, 0.04);
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      justify-content: flex-end;
+      white-space: nowrap;
+    }
+
+    .row-actions button {
+      background: transparent;
+      border: none;
+      color: #7a8ba3;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 30px;
+      transition: all 0.1s;
+      font-size: 0.85rem;
+    }
+
+    .row-actions button:hover {
+      background: rgba(0, 0, 0, 0.04);
+      color: #1e3145;
+    }
+
+    .row-actions .btn-del:hover {
+      color: #d9534f;
+      background: rgba(217, 83, 79, 0.08);
+    }
+
+    .add-row-btn {
+      margin-top: 1.2rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .add-row-btn button {
+      background: white;
+      border: 2px dashed #b8cbe0;
+      padding: 0.7rem 2rem;
+      border-radius: 60px;
+      font-weight: 500;
+      color: #2d4a6a;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.95rem;
+      background: rgba(255, 255, 255, 0.4);
+    }
+
+    .add-row-btn button:hover {
+      border-color: #3a6aff;
+      background: rgba(58, 106, 255, 0.06);
+      color: #1e3145;
+    }
+
+    .status-msg {
+      margin-top: 1.2rem;
+      font-size: 0.85rem;
+      color: #3a6aff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .status-msg.show {
+      opacity: 1;
+    }
+
+    .footer-note {
+      margin-top: 1.8rem;
+      font-size: 0.75rem;
+      color: #7e8fa6;
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+
+    .footer-note span i {
+      margin-right: 6px;
+      color: #3a6aff;
+      opacity: 0.5;
+    }
+
+    @media (max-width: 760px) {
+      .app-wrapper { padding: 1.2rem; }
+      th, td { padding: 0.5rem 0.6rem; }
+      .toolbar button { padding: 0.4rem 0.9rem; font-size: 0.8rem; }
+      h1 { font-size: 1.4rem; }
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.02); border-radius: 20px; }
+    ::-webkit-scrollbar-thumb { background: #cbd6e5; border-radius: 20px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a9b9cf; }
+  </style>
+</head>
+<body>
+
+<div class="app-wrapper">
+  <h1>
+    <i class="fas fa-database"></i>
+    Data · Glossary
+  </h1>
+
+  <div class="toolbar">
+    <button class="primary" id="addRowBtn"><i class="fas fa-plus"></i> Add row</button>
+    <button id="exportBtn"><i class="fas fa-download"></i> Export JSON</button>
+    <div class="file-input-wrap">
+      <button><i class="fas fa-upload"></i> Import JSON</button>
+      <input type="file" id="fileInput" accept=".json" />
+    </div>
+    <button id="resetDefaultBtn"><i class="fas fa-undo-alt"></i> Reset defaults</button>
+  </div>
+
+  <div class="table-wrap">
+    <table id="glossaryTable">
+      <thead>
+        <tr>
+          <th>Term / Concept</th>
+          <th>Meaning &amp; Concepts</th>
+          <th>Remarks <span style="font-weight:400; margin-left:6px; opacity:0.6;">(editable)</span></th>
+          <th style="text-align:right; min-width:80px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <!-- rows injected by JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <div class="add-row-btn">
+    <button id="addRowBtnBottom"><i class="fas fa-plus-circle"></i> Add new term</button>
+  </div>
+
+  <div id="statusMsg" class="status-msg"><i class="fas fa-check-circle"></i> <span id="statusText">ready</span></div>
+
+  <div class="footer-note">
+    <span><i class="fas fa-pen"></i> click any cell to edit</span>
+    <span><i class="fas fa-arrow-up"></i> + / − to manage rows</span>
+    <span><i class="fas fa-file-json"></i> import / export JSON</span>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // -------- DEFAULT DATA (Data Science, BI, GCP, Looker, Airflow) --------
+    const DEFAULT_ROWS = [
+      { term: "CDC pipeline", concept: "Change Data Capture – real-time ingestion of changes from source DBs (e.g., Debezium, Datastream).", remark: "Used for streaming & replication." },
+      { term: "Looker (GCP)", concept: "BI platform with LookML semantic layer; embedded analytics, dashboards, and data exploration.", remark: "Part of Google Cloud." },
+      { term: "Airflow DAG", concept: "Directed Acyclic Graph – workflow definition in Python; schedules & manages data pipelines.", remark: "Orchestration tool." },
+      { term: "BigQuery", concept: "Serverless, highly scalable data warehouse on GCP with ANSI SQL and built-in ML.", remark: "Separation of storage & compute." },
+      { term: "Dataform", concept: "SQL-based data transformation tool for BigQuery; uses JS for dependency management.", remark: "Great for ELT." },
+      { term: "dbt (data build tool)", concept: "Analytics engineering tool that enables transformation in data warehouses using SQL + Jinja.", remark: "Core to modern data stack." },
+      { term: "Pub/Sub", concept: "GCP messaging service for asynchronous data ingestion and event-driven architectures.", remark: "Used with Dataflow." },
+      { term: "Dataflow (Apache Beam)", concept: "Unified stream and batch processing on GCP; runs Beam pipelines.", remark: "Serverless." },
+      { term: "Composer (Airflow on GCP)", concept: "Managed Airflow environment on Google Cloud; fully integrated with GCP services.", remark: "Scheduler + workers." },
+      { term: "LookML", concept: "Looker's modeling language – defines dimensions, measures, joins, and derived tables.", remark: "Version controlled." },
+      { term: "KPI / Metrics", concept: "Key Performance Indicators – quantifiable measures used to track business performance.", remark: "Often displayed in dashboards." },
+      { term: "Semantic Layer", concept: "Business logic layer that provides consistent metrics & dimensions for BI tools.", remark: "Looker, dbt, etc." }
+    ];
+
+    // -------- STATE --------
+    let rowsData = [];
+
+    // -------- DOM refs --------
+    const tbody = document.getElementById('tableBody');
+    const statusMsg = document.getElementById('statusMsg');
+    const statusText = document.getElementById('statusText');
+
+    // -------- helpers --------
+    function showStatus(msg, isError = false) {
+      statusText.textContent = msg;
+      statusMsg.classList.add('show');
+      if (isError) {
+        statusMsg.style.color = '#d9534f';
+        statusMsg.querySelector('i').className = 'fas fa-exclamation-circle';
+      } else {
+        statusMsg.style.color = '#3a6aff';
+        statusMsg.querySelector('i').className = 'fas fa-check-circle';
+      }
+      clearTimeout(window._statusTimeout);
+      window._statusTimeout = setTimeout(() => {
+        statusMsg.classList.remove('show');
+      }, 2500);
+    }
+
+    // -------- render table --------
+    function render() {
+      if (!tbody) return;
+      let html = '';
+      rowsData.forEach((row, index) => {
+        const term = row.term || '';
+        const concept = row.concept || '';
+        const remark = row.remark || '';
+        html += `
+          <tr data-index="${index}">
+            <td class="col-term">
+              <textarea class="editable-text" data-field="term" rows="1">${escapeHtml(term)}</textarea>
+            </td>
+            <td class="col-concept">
+              <textarea class="editable-text" data-field="concept" rows="2">${escapeHtml(concept)}</textarea>
+            </td>
+            <td class="col-remark">
+              <textarea class="editable-text" data-field="remark" rows="1">${escapeHtml(remark)}</textarea>
+            </td>
+            <td style="text-align:right;">
+              <div class="row-actions">
+                <button class="btn-add-below" title="Add row below"><i class="fas fa-plus"></i></button>
+                <button class="btn-del" title="Delete row"><i class="fas fa-trash-alt"></i></button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+
+      // attach event listeners to textareas (auto-save on change)
+      tbody.querySelectorAll('.editable-text').forEach(ta => {
+        ta.addEventListener('input', function() {
+          const tr = this.closest('tr');
+          const idx = parseInt(tr.dataset.index, 10);
+          const field = this.dataset.field;
+          if (!isNaN(idx) && rowsData[idx]) {
+            rowsData[idx][field] = this.value;
+          }
+        });
+        // auto-resize
+        autoResize(ta);
+        ta.addEventListener('input', function() { autoResize(this); });
+      });
+
+      // attach row action buttons
+      tbody.querySelectorAll('.btn-add-below').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const tr = this.closest('tr');
+          const idx = parseInt(tr.dataset.index, 10);
+          if (!isNaN(idx)) {
+            addRowBelow(idx);
+          }
+        });
+      });
+
+      tbody.querySelectorAll('.btn-del').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const tr = this.closest('tr');
+          const idx = parseInt(tr.dataset.index, 10);
+          if (!isNaN(idx)) {
+            deleteRow(idx);
+          }
+        });
+      });
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function autoResize(el) {
+      el.style.height = 'auto';
+      el.style.height = (el.scrollHeight) + 'px';
+    }
+
+    // -------- CRUD --------
+    function addRowBelow(index) {
+      const newRow = { term: 'New term', concept: 'Define concept', remark: '' };
+      rowsData.splice(index + 1, 0, newRow);
+      render();
+      showStatus('Row added');
+    }
+
+    function deleteRow(index) {
+      if (rowsData.length <= 1) {
+        showStatus('Cannot delete the last row', true);
+        return;
+      }
+      rowsData.splice(index, 1);
+      render();
+      showStatus('Row deleted');
+    }
+
+    function addRowAtEnd() {
+      rowsData.push({ term: 'New term', concept: 'Define concept', remark: '' });
+      render();
+      showStatus('Row added at bottom');
+    }
+
+    // -------- load data --------
+    function loadData(data) {
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        showStatus('Invalid data', true);
+        return;
+      }
+      rowsData = data.map(r => ({
+        term: r.term || '',
+        concept: r.concept || '',
+        remark: r.remark || ''
+      }));
+      render();
+      showStatus('Data loaded');
+    }
+
+    function resetDefaults() {
+      rowsData = DEFAULT_ROWS.map(r => ({ ...r }));
+      render();
+      showStatus('Reset to defaults');
+    }
+
+    // -------- Export JSON --------
+    function exportJSON() {
+      const json = JSON.stringify(rowsData, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'bi_glossary_' + new Date().toISOString().slice(0,10) + '.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showStatus('Exported JSON');
+    }
+
+    // -------- Import JSON (from file) --------
+    function importJSON(file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (Array.isArray(data) && data.length > 0) {
+            loadData(data);
+          } else {
+            showStatus('JSON must be an array of objects', true);
+          }
+        } catch (err) {
+          showStatus('Invalid JSON file', true);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // -------- INIT --------
+    function init() {
+      // load defaults
+      rowsData = DEFAULT_ROWS.map(r => ({ ...r }));
+      render();
+
+      // event listeners
+      document.getElementById('addRowBtn')?.addEventListener('click', addRowAtEnd);
+      document.getElementById('addRowBtnBottom')?.addEventListener('click', addRowAtEnd);
+      document.getElementById('exportBtn')?.addEventListener('click', exportJSON);
+      document.getElementById('resetDefaultBtn')?.addEventListener('click', resetDefaults);
+
+      const fileInput = document.getElementById('fileInput');
+      if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+          if (this.files && this.files.length > 0) {
+            importJSON(this.files[0]);
+            this.value = ''; // reset so same file can be re-imported
+          }
+        });
+      }
+
+      // keyboard shortcut: Ctrl+Enter on textarea to add row below
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+          const target = e.target;
+          if (target.classList && target.classList.contains('editable-text')) {
+            const tr = target.closest('tr');
+            if (tr) {
+              const idx = parseInt(tr.dataset.index, 10);
+              if (!isNaN(idx)) {
+                addRowBelow(idx);
+                e.preventDefault();
+              }
+            }
+          }
+        }
+      });
+
+      showStatus('Ready — click any cell to edit');
+    }
+
+    // run
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+
+  })();
+</script>
+
+<!-- Inter font -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&display=swap" rel="stylesheet">
+
+</body>
+</html>

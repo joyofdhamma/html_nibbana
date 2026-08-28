@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teams Video Call</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #000; /* Pure black for OLED battery saving */
+      color: #fff;
+      margin: 0;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .video-area {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #111; /* dark fallback */
+    }
+
+    .main-video {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, #2c2c2c, #1a1a1a);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0;
+    }
+
+    .inset-video {
+      position: absolute;
+      bottom: 110px; /* keep above control bar */
+      right: 30px;
+      width: 220px;
+      height: 140px;
+      background: #222;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .control-bar {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20px;
+      background: rgba(20, 20, 20, 0.9);
+      padding: 12px 20px;
+      border-radius: 40px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    }
+
+    .control-btn {
+      width: 55px;
+      height: 55px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      background: #2c2c2c;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .control-btn:hover {
+      background: #444;
+      transform: scale(1.1);
+    }
+
+    .control-btn.end {
+      background: #d44337;
+    }
+
+    .control-btn.end:hover {
+      background: #b8372d;
+    }
+
+    #call-timer {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 16px;
+      background: rgba(0,0,0,0.6);
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="video-area">
+    <!-- Timer -->
+    <div id="call-timer">00:00:00</div>
+
+    <!-- Main video (Remote user) -->
+    <div class="main-video">
+      <i class="fas fa-user-circle text-9xl text-gray-400"></i>
+      <h2 class="text-2xl font-bold mt-4">Thiyagarajan Ravichandran</h2> <!-- insert name here -->
+      <p class="text-gray-300"></p> <!-- Insert Jobt title here -->
+    </div>
+
+    <!-- Inset video (Local user) -->
+    <div class="inset-video">
+      <div class="text-center text-gray-200">
+        <i class="fas fa-user-circle text-4xl"></i>
+        <p class="text-sm">You</p>
+      </div>
+    </div>
+
+    <!-- Control Bar -->
+    <div class="control-bar">
+      <div id="mic-btn" class="control-btn">
+        <i class="fas fa-microphone"></i>
+      </div>
+      <div id="camera-btn" class="control-btn">
+        <i class="fas fa-video"></i>
+      </div>
+      <div id="end-call-btn" class="control-btn end">
+        <i class="fas fa-phone"></i>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let seconds = 0;
+    const callTimer = document.getElementById("call-timer");
+    setInterval(() => {
+      seconds++;
+      const h = String(Math.floor(seconds / 3600)).padStart(2, "0");
+      const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
+      const s = String(seconds % 60).padStart(2, "0");
+      callTimer.textContent = `${h}:${m}:${s}`;
+    }, 1000);
+
+    // Toggle mic
+    document.getElementById("mic-btn").onclick = function () {
+      const icon = this.querySelector("i");
+      if (icon.classList.contains("fa-microphone")) {
+        icon.classList.replace("fa-microphone", "fa-microphone-slash");
+        this.style.background = "#b8372d";
+      } else {
+        icon.classList.replace("fa-microphone-slash", "fa-microphone");
+        this.style.background = "#2c2c2c";
+      }
+    };
+
+    // Toggle camera
+    document.getElementById("camera-btn").onclick = function () {
+      const icon = this.querySelector("i");
+      if (icon.classList.contains("fa-video")) {
+        icon.classList.replace("fa-video", "fa-video-slash");
+        this.style.background = "#b8372d";
+      } else {
+        icon.classList.replace("fa-video-slash", "fa-video");
+        this.style.background = "#2c2c2c";
+      }
+    };
+
+    // End call
+    document.getElementById("end-call-btn").onclick = function () {
+      document.querySelector(".main-video").innerHTML = `
+        <div class="text-center">
+          <i class="fas fa-phone-slash text-6xl text-red-600 mb-4"></i>
+          <h2 class="text-2xl font-bold">Call Ended</h2>
+          <p class="mt-2">Duration: ${callTimer.textContent}</p>
+        </div>`;
+      document.querySelector(".control-bar").style.display = "none";
+    };
+  </script>
+</body>
+</html>

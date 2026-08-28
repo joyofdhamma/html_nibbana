@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #181310;
+      color: #fff;
+      text-align: center;
+      padding: 0;
+      margin: 0;
+      position: relative; 
+    }
+    #reader {
+      background: rgba(0, 0, 0, 0.95);
+      color: #fff;
+      padding: 20px;
+      width: 95%;
+      height: calc(100vh - 120px);
+      margin: 0 auto;
+      overflow-y: auto;
+      border-radius: 8px;
+      text-align: left;
+    }
+    button {
+      margin: 5px;
+      padding: 8px 15px;
+      font-size: 0.9em;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+    }
+    #settings, #fullscreenBtn {
+      cursor: pointer;
+      font-size: 1.2em;
+      background: #333;
+      color: white;
+      padding: 5px;
+      border-radius: 5px;
+      display: inline-block;
+      margin-left: 10px;
+    }
+    #settingsPanel {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #333;
+      padding: 20px;
+      border-radius: 8px;
+      display: none;
+      color: white;
+      z-index: 100;
+      width: 300px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    select, input[type=range] {
+      margin: 8px 0;
+      width: 100%;
+    }
+    .highlighted {
+     background: gray;
+     color: black;
+     font-weight: bold;
+     text-decoration: underline;
+     font-size: 25px;
+    }
+    #timerControls {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 15;
+      background: rgba(0,0,0,0.6);
+      padding: 5px 10px;
+      border-radius: 8px;
+      color: white;
+    }
+#timerDisplay {
+  font-weight: bold;
+  font-size: 1.0em;
+  position: fixed;     /* Fixed ensures it stays in place even if scrolling */
+  top: 15px;           /* Distance from the top edge */
+  left: 50%;           /* Start horizontally in the center */
+  transform: translateX(-50%); /* Shift left half its width */
+  text-align: center;
+  width: auto;         /* Make sure width isn’t restricting alignment */
+  z-index: 9999;      /* Keep above all other elements */
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
+}
+
+    #controlsContainer {
+      margin: 10px auto;
+      width: 95%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #controlsContainer button {
+      margin: 0 5px;
+    }
+    .settings-option {
+      margin: 15px 0;
+    }
+    .settings-option label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    #overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 99;
+    }
+    #audioInfo {
+      font-size: 0.8em;
+      margin-top: 5px;
+      color: #ccc;
+    }
+  </style>
+</head>
+<body>
+<div id="timerControls">
+  <span id="timerDisplay">⏱ 00:00</span>
+</div>
+
+<div id="reader" contenteditable="true"></div>
+
+<div id="controlsContainer">
+  <button onclick="readText()">Read All</button>
+  <button onclick="pauseText()">Pause</button>
+  <button onclick="stopText()">Stop</button>
+  <div id="settings" onclick="toggleSettings()">⚙️</div>
+  <div id="fullscreenBtn" onclick="toggleFullScreen()">▢</div>
+</div>
+
+<div id="overlay" onclick="toggleSettings()"></div>
+
+<div id="settingsPanel">
+  <div class="settings-option">
+  <!-- Add this help link at the top of the settings panel -->
+  <div style="text-align: right; margin-bottom: 15px;">
+    <a href="https://drive.google.com/drive/folders/1G2NmZToypIvF_DNO_s9-colr_n9enSej" id="helpLink" target="_blank" style="text-decoration: none; color: white; font-size: 1.2em;">
+      💡 Books
+    </a>
+  </div>
+    <label>Choose Document</label>
+    <input type="file" id="upload" accept=".docx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+    <div id="documentInfo"></div>
+  </div>
+  
+  <div class="settings-option">
+    <label>Voice</label>
+    <select id="voiceSelect"></select>
+  </div>
+  
+  <div class="settings-option">
+    <label>TTS Speed</label>
+    <input type="range" id="rateSlider" min="0.5" max="2" step="0.1" value="1">
+  </div>
+  
+  <div class="settings-option">
+    <label>TTS Volume</label>
+    <input type="range" id="ttsVolumeSlider" min="0" max="1" step="0.1" value="1">
+  </div>
+  
+  <div class="settings-option">
+    <label>Background Music</label>
+    <input type="file" id="mp3Upload" accept="audio/*">
+    <div id="audioInfo">No audio selected</div>
+  </div>
+  
+  <div class="settings-option">
+    <label>Music Volume</label>
+    <input type="range" id="musicVolumeSlider" min="0" max="1" step="0.1" value="0.5">
+  </div>
+
+  <div class="settings-option">
+  <label>
+    <input type="checkbox" id="repeatCheckbox"> Repeat Music
+  </label>
+</div>
+
+  <div style="text-align: center; margin-top: 15px;">
+    <button onclick="toggleSettings()">Close</button>
+  </div>
+</div>
+
+<script>
+  // Initialize variables
+  const reader = document.getElementById("reader");
+  const voiceSelect = document.getElementById("voiceSelect");
+  const rateSlider = document.getElementById("rateSlider");
+  const ttsVolumeSlider = document.getElementById("ttsVolumeSlider");
+  const documentInfo = document.getElementById("documentInfo");
+  const audioInfo = document.getElementById("audioInfo");
+  const repeatCheckbox = document.getElementById("repeatCheckbox");
+
+  let voices = [], utterance, isPaused = false, selectionText = "", textArray = [], currentIndex = 0;
+  let audioPlayer = new Audio();
+  let isMp3Playing = false;
+
+  // Session persistence variables
+  const SESSION_KEY = "studyAssistantSession";
+  let sessionData = {
+    documentContent: "",
+    documentName: "",
+    audioFile: null,
+    audioFileName: "",
+    scrollPosition: 0,
+    timerSeconds: 0,
+    voice: "",
+    rate: 1,
+    ttsVolume: 1,
+    musicVolume: 0.5
+  };
+
+  // Initialize the application
+window.addEventListener("DOMContentLoaded", () => {
+    loadSession();
+    setupEventListeners();
+    initializeVoiceList();
+    
+    // Add help link editor functionality
+    const helpLink = document.getElementById('helpLink');
+    if (helpLink) {  // Check if element exists
+        // Double-click the 💡 icon to edit the link
+        helpLink.addEventListener('dblclick', function(e) {
+            e.preventDefault();
+            const newUrl = prompt('Enter help URL:', this.href);
+            if (newUrl) {
+                this.href = newUrl;
+                localStorage.setItem('helpLinkUrl', newUrl);
+            }
+        });
+        
+        // Load saved link if exists
+        const savedUrl = localStorage.getItem('helpLinkUrl');
+        if (savedUrl) {
+            helpLink.href = savedUrl;
+        }
+    }
+});
+
+  // Save session before window closes
+  window.addEventListener("beforeunload", saveSession);
+
+  function loadSession() {
+    const savedSession = localStorage.getItem(SESSION_KEY);
+    if (savedSession) {
+      try {
+        sessionData = JSON.parse(savedSession);
+        
+        // Restore document content
+        if (sessionData.documentContent) {
+          if (sessionData.documentName.endsWith(".docx")) {
+            reader.innerHTML = sessionData.documentContent;
+          } else {
+            reader.innerText = sessionData.documentContent;
+          }
+          documentInfo.textContent = sessionData.documentName;
+        }
+        
+        // Restore audio
+        if (sessionData.audioFile) {
+          audioPlayer.src = sessionData.audioFile;
+          audioInfo.textContent = sessionData.audioFileName;
+        }
+        // Add this to your loadSession function to restore repeat setting
+        if (sessionData.repeatMusic !== undefined) {
+        repeatCheckbox.checked = sessionData.repeatMusic;
+       audioPlayer.loop = sessionData.repeatMusic;
+        }
+        // Restore scroll position
+        setTimeout(() => {
+          reader.scrollTop = sessionData.scrollPosition;
+        }, 100);
+        
+        // Restore timer
+        totalSeconds = sessionData.timerSeconds || 0;
+        updateTimerDisplay();
+        
+        // Restore settings
+        rateSlider.value = sessionData.rate || 1;
+        ttsVolumeSlider.value = sessionData.ttsVolume || 1;
+        document.getElementById("musicVolumeSlider").value = sessionData.musicVolume || 0.5;
+        
+      } catch (e) {
+        console.error("Failed to load session:", e);
+      }
+    }
+  }
+
+  function saveSession() {
+    sessionData.documentContent = reader.innerHTML;
+    sessionData.scrollPosition = reader.scrollTop;
+    sessionData.timerSeconds = totalSeconds;
+    sessionData.rate = parseFloat(rateSlider.value);
+    sessionData.ttsVolume = parseFloat(ttsVolumeSlider.value);
+    sessionData.musicVolume = parseFloat(document.getElementById("musicVolumeSlider").value);
+    sessionData.repeatMusic = repeatCheckbox.checked;
+
+    if (utterance && utterance.voice) {
+      sessionData.voice = utterance.voice.name;
+    }
+    
+    localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+  }
+
+function getVisibleText() {
+    const reader = document.getElementById('reader');
+    const readerRect = reader.getBoundingClientRect();
+    let visibleText = '';
+    
+    // Walk through all text nodes in the reader
+    const walker = document.createTreeWalker(
+        reader,
+        NodeFilter.SHOW_TEXT,
+        null,
+        false
+    );
+    
+    let node;
+    while (node = walker.nextNode()) {
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        
+        // Get the position of this text node
+        const rects = range.getClientRects();
+        for (let i = 0; i < rects.length; i++) {
+            const rect = rects[i];
+            // Check if this portion of text is visible in the reader
+            if (rect.bottom > readerRect.top && 
+                rect.top < readerRect.bottom &&
+                rect.right > readerRect.left &&
+                rect.left < readerRect.right) {
+                visibleText += node.textContent + ' ';
+                break; // No need to check other rects for this node
+            }
+        }
+    }
+    
+    return visibleText.trim();
+}
+
+  function setupEventListeners() {
+    document.getElementById("upload").addEventListener("change", handleFileUpload);
+    document.getElementById("mp3Upload").addEventListener("change", handleMusicUpload);
+    document.getElementById("musicVolumeSlider").addEventListener("input", function() {
+      audioPlayer.volume = this.value;
+      sessionData.musicVolume = this.value;
+    });
+    
+    // Add this new event listener for the repeat checkbox
+    document.getElementById("repeatCheckbox").addEventListener("change", function() {
+      audioPlayer.loop = this.checked;
+      sessionData.repeatMusic = this.checked; // Save to session
+      if (this.checked && !isMp3Playing && audioPlayer.src) {
+        audioPlayer.play().catch(e => console.log("Audio play error:", e));
+      }
+    });
+    
+    // Auto-save session periodically
+    setInterval(saveSession, 30000);
+}
+  function toggleSettings() {
+    const panel = document.getElementById("settingsPanel");
+    const overlay = document.getElementById("overlay");
+    if (panel.style.display === "block") {
+      panel.style.display = "none";
+      overlay.style.display = "none";
+    } else {
+      panel.style.display = "block";
+      overlay.style.display = "block";
+    }
+  }
+
+  function toggleFullScreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  }
+
+  async function handleFileUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    sessionData.documentName = file.name;
+    documentInfo.textContent = file.name;
+    
+    const readerDOM = new FileReader();
+    if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let text = "";
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          text += content.items.map(item => item.str).join(" ") + "\n";
+        }
+        reader.innerText = text;
+      } catch (error) {
+        console.error("PDF processing error:", error);
+        alert("Error processing PDF file");
+      }
+    } else if (file.name.endsWith(".docx")) {
+      readerDOM.onload = function(evt) {
+        mammoth.convertToHtml({ arrayBuffer: evt.target.result })
+          .then(result => {
+            reader.innerHTML = result.value;
+          })
+          .catch(error => {
+            console.error("DOCX processing error:", error);
+            alert("Error processing DOCX file");
+          });
+      };
+      readerDOM.readAsArrayBuffer(file);
+    } else {
+      readerDOM.onload = function() {
+        reader.innerText = readerDOM.result;
+      };
+      readerDOM.readAsText(file);
+    }
+  }
+
+  function handleMusicUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Check if the file is an audio file (more permissive check for Android)
+    if (!file.type.startsWith("audio/") && !file.name.match(/\.(mp3|wav|ogg|m4a)$/i)) {
+      alert("Please select an audio file (MP3, WAV, OGG, etc.)");
+      return;
+    }
+    
+    const url = URL.createObjectURL(file);
+    audioPlayer.src = url;
+    audioPlayer.volume = document.getElementById("musicVolumeSlider").value;
+    audioPlayer.play().then(() => {
+      isMp3Playing = true;
+      sessionData.audioFile = url;
+      sessionData.audioFileName = file.name;
+      audioInfo.textContent = file.name;
+    }).catch(error => {
+      console.error("Audio playback error:", error);
+      alert("Error playing audio file. Please try another file.");
+    });
+  }
+
+  function initializeVoiceList() {
+    // Load voices and try to restore saved voice preference
+    function populateVoiceList() {
+      voices = speechSynthesis.getVoices();
+      voiceSelect.innerHTML = '';
+      
+      const savedVoice = sessionData.voice;
+      let voiceFound = false;
+      
+      voices.forEach(voice => {
+        const option = document.createElement("option");
+        option.textContent = `${voice.name} (${voice.lang})`;
+        option.setAttribute("data-name", voice.name);
+        if (savedVoice && voice.name === savedVoice) {
+          option.selected = true;
+          voiceFound = true;
+        //} else if (!savedVoice && voice.name.includes("Ravi")) {
+          } else if (!savedVoice && voice.name.includes("Ravi")) {
+          option.selected = true;
+        }
+        voiceSelect.appendChild(option);
+      });
+      
+      if (!voiceFound && savedVoice) {
+        // Try to find a similar voice if exact match not found
+        const similarVoice = voices.find(v => v.name.includes(savedVoice.split(" ")[0]));
+        if (similarVoice) {
+          voiceSelect.value = `${similarVoice.name} (${similarVoice.lang})`;
+        }
+      }
+    }
+    
+    populateVoiceList();
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+      speechSynthesis.onvoiceschanged = populateVoiceList;
+    }
+  }
+
+  //function getSelectedOrCaretText() {
+    //const selection = window.getSelection();
+    //if (selection && !selection.isCollapsed) {
+      //return selection.toString();
+    //}
+    //const range = selection.getRangeAt(0);
+    //const container = document.createElement("div");
+    //container.appendChild(range.cloneContents());
+    //return container.innerText;
+  //}
+
+  function readText() {
+    if (isPaused && utterance) {
+        speechSynthesis.resume();
+	startTimer();
+        isPaused = false;
+        return;
+    }
+    stopText();
+    
+    // Get only visible text
+    selectionText = getVisibleText();
+    
+    startTimer();
+    if (!selectionText.trim()) {
+        alert("No visible text found. Scroll to the content you want to read.");
+        return;
+    }
+
+    textArray = selectionText.split(/(?<=[.!?])\s+/g);
+    currentIndex = 0;
+    speakNext();
+}
+
+  function speakNext() {
+    if (currentIndex >= textArray.length) return;
+    const sentence = textArray[currentIndex];
+
+    utterance = new SpeechSynthesisUtterance(sentence);
+    const selectedOption = voiceSelect.selectedOptions[0].getAttribute("data-name");
+    utterance.voice = voices.find(v => v.name === selectedOption);
+    utterance.rate = parseFloat(rateSlider.value);
+    utterance.volume = parseFloat(ttsVolumeSlider.value);
+
+    utterance.onstart = () => highlightSentence(sentence);
+    utterance.onend = () => {
+      removeHighlight();
+      currentIndex++;
+      speakNext();
+    };
+
+    speechSynthesis.speak(utterance);
+  }
+
+  function highlightSentence(sentence) {
+    removeHighlight();
+    const textNodes = Array.from(reader.querySelectorAll("*"))
+      .flatMap(el => Array.from(el.childNodes))
+      .filter(node => node.nodeType === Node.TEXT_NODE);
+
+    for (const node of textNodes) {
+      const index = node.textContent.indexOf(sentence);
+      if (index !== -1) {
+        const range = document.createRange();
+        range.setStart(node, index);
+        range.setEnd(node, index + sentence.length);
+
+        const span = document.createElement("span");
+        span.className = "highlighted";
+        range.surroundContents(span);
+
+        const readerRect = reader.getBoundingClientRect();
+        const spanRect = span.getBoundingClientRect();
+
+        if (spanRect.top < readerRect.top || spanRect.bottom > readerRect.bottom) {
+          span.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        break;
+      }
+    }
+  }
+
+  function removeHighlight() {
+    document.querySelectorAll(".highlighted").forEach(span => {
+      const parent = span.parentNode;
+      parent.replaceChild(document.createTextNode(span.textContent), span);
+      parent.normalize();
+    });
+  }
+
+  function pauseText() {
+    if (speechSynthesis.speaking) {
+      speechSynthesis.pause();
+      isPaused = true;
+      pauseTimer();
+    }
+    if (isMp3Playing) {
+      audioPlayer.pause();
+    }
+  }
+
+  function stopText() {
+    speechSynthesis.cancel();
+    isPaused = false;
+    removeHighlight();
+    resetTimer();
+  }
+
+  // Timer logic
+  let timerInterval, totalSeconds = 0, timerRunning = false;
+
+  function updateTimerDisplay() {
+    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+    const seconds = String(totalSeconds % 60).padStart(2, '0');
+    document.getElementById("timerDisplay").textContent = `⏱ ${minutes}:${seconds}`;
+  }
+
+  function startTimer() {
+    if (timerRunning) return;
+    timerRunning = true;
+    timerInterval = setInterval(() => {
+      totalSeconds++;
+      updateTimerDisplay();
+    }, 1000);
+  }
+
+  function pauseTimer() {
+    clearInterval(timerInterval);
+    timerRunning = false;
+  }
+
+  function resetTimer() {
+    clearInterval(timerInterval);
+    totalSeconds = 0;
+    updateTimerDisplay();
+    timerRunning = false;
+  }
+// Spacebar toggle: Read All ↔ Pause
+document.addEventListener("keydown", function (e) {
+  if (e.code === "Space" && !e.target.matches("input, textarea, [contenteditable='true']")) {
+    e.preventDefault(); // Prevent page scrolling on spacebar
+
+    if (speechSynthesis.speaking && !isPaused) {
+      pauseText(); // Currently reading → pause
+    } else {
+      readText(); // Currently paused or stopped → start/resume
+    }
+  }
+});
+
+</script>
+</body>
+</html>

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Multi-Tab Scratchpad</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #111;
+    color: #eee;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+  #tabs {
+    display: flex;
+    background: #222;
+    border-bottom: 1px solid #333;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .tab {
+    padding: 8px 14px;
+    cursor: pointer;
+    border-right: 1px solid #333;
+    background: #222;
+    color: #ccc;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tab.active { background: #444; color: #0f0; font-weight: bold; }
+  .tab span.name { min-width: 50px; }
+  .tab input.rename {
+    background: #333;
+    border: none;
+    color: #eee;
+    font-size: 14px;
+    padding: 2px 4px;
+    width: 100px;
+  }
+  .close-btn { color: #f55; cursor: pointer; font-weight: bold; }
+  #toolbar {
+    background: #222;
+    padding: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    border-bottom: 1px solid #333;
+  }
+  #toolbar button {
+    background: #333;
+    color: #eee;
+    border: none;
+    padding: 6px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  #toolbar button:hover { background: #444; }
+  #notepad {
+    flex: 1;
+    width: 100%;
+    background: #222;
+    color: #eee;
+    padding: 10px;
+    font-size: 1.1em;
+    box-sizing: border-box;
+    overflow-y: auto;
+    outline: none;
+  }
+  #notepad * { color: #eee !important; background: transparent !important; }
+  .resizable {
+    display: inline-block;
+    position: relative;
+    resize: both;
+    overflow: auto;
+    max-width: 95%;
+    margin: 5px 0;
+    border: 1px dashed #666;
+    padding: 2px;
+    border-radius: 4px;
+  }
+  .resizable img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<!-- Tabs -->
+<div id="tabs"></div>
+
+<!-- Toolbar -->
+<div id="toolbar">
+  <button onclick="format('bold')"><b>B</b></button>
+  <button onclick="format('italic')"><i>I</i></button>
+  <button onclick="format('underline')"><u>U</u></button>
+  <button onclick="format('insertUnorderedList')">• Bullets</button>
+  <button onclick="format('insertOrderedList')">1. List</button>
+  <button onclick="insertCheckbox()">☑ Checkbox</button>
+  <button onclick="format('formatBlock','h2')">H2</button>
+  <button onclick="insertImage()">🖼️ Image</button>
+  <button onclick="addTab()">➕ New Tab</button>
+  <button onclick="downloadNotes()">⬇️ Download</button>
+  <button onclick="document.getElementById('uploadJSON').click()">⬆️ Upload</button>
+  <input type="file" id="fileInput" accept="image/*" style="display:none">
+  <input type="file" id="uploadJSON" accept="application/json" style="display:none" />
+</div>
+
+<!-- Editor -->
+<div id="notepad" contenteditable="true" spellcheck="true" placeholder="Start typing..."></div>
+
+<script>
+  const tabsDiv = document.getElementById('tabs');
+  const notepad = document.getElementById('notepad');
+  const fileInput = document.getElementById('fileInput');
+  const uploadJSON = document.getElementById('uploadJSON');
+
+  let tabs = JSON.parse(localStorage.getItem('scratchpadTabs')) || [];
+  let activeTab = localStorage.getItem('scratchpadActive') || null;
+
+  function loadTabs() {
+    tabsDiv.innerHTML = '';
+    tabs.forEach(tab => {
+      const tabEl = document.createElement('div');
+      tabEl.className = 'tab' + (tab.id === activeTab ? ' active' : '');
+      tabEl.dataset.id = tab.id;
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'name';
+      nameSpan.textContent = tab.name;
+      nameSpan.onclick = (e) => {
+        e.stopPropagation();
+        renameTab(tab, nameSpan);
+      };
+      tabEl.appendChild(nameSpan);
+
+      const close = document.createElement('span');
+      close.className = 'close-btn';
+      close.innerHTML = '×';
+      close.onclick = (e) => {
+        e.stopPropagation();
+        closeTab(tab.id);
+      };
+      tabEl.appendChild(close);
+
+      tabEl.onclick = () => switchTab(tab.id);
+      tabsDiv.appendChild(tabEl);
+    });
+
+    if (!activeTab && tabs.length > 0) {
+      activeTab = tabs[0].id;
+    }
+    loadContent();
+  }
+
+  function renameTab(tab, nameSpan) {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'rename';
+    input.value = tab.name;
+    nameSpan.replaceWith(input);
+    input.focus();
+
+    input.onblur = saveName;
+    input.onkeydown = (e) => {
+      if (e.key === 'Enter') saveName();
+    };
+
+    function saveName() {
+      tab.name = input.value.trim() || "Untitled";
+      saveTabs();
+      loadTabs();
+    }
+  }
+
+  function saveTabs() {
+    localStorage.setItem('scratchpadTabs', JSON.stringify(tabs));
+  }
+
+  function addTab() {
+    const id = 'tab-' + Date.now();
+    const newTab = { id, name: 'Note', content: '' };
+    tabs.push(newTab);
+    activeTab = id;
+    saveTabs();
+    localStorage.setItem('scratchpadActive', activeTab);
+    loadTabs();
+  }
+
+  function closeTab(id) {
+    tabs = tabs.filter(t => t.id !== id);
+    if (activeTab === id) {
+      activeTab = tabs.length ? tabs[0].id : null;
+    }
+    saveTabs();
+    localStorage.setItem('scratchpadActive', activeTab || '');
+    loadTabs();
+  }
+
+  function switchTab(id) {
+    saveContent();
+    activeTab = id;
+    localStorage.setItem('scratchpadActive', id);
+    loadTabs();
+  }
+
+  function loadContent() {
+    const tab = tabs.find(t => t.id === activeTab);
+    notepad.innerHTML = tab ? tab.content : '';
+  }
+
+  function saveContent() {
+    const tab = tabs.find(t => t.id === activeTab);
+    if (tab) {
+      tab.content = notepad.innerHTML;
+      saveTabs();
+    }
+  }
+
+  notepad.addEventListener('input', saveContent);
+
+  // Toolbar formatting
+  function format(cmd, val = null) {
+    document.execCommand(cmd, false, val);
+    notepad.focus();
+    saveContent();
+  }
+
+  function insertCheckbox() {
+    insertAtCursor('<input type="checkbox"> ');
+    saveContent();
+  }
+
+  function insertImage() {
+    fileInput.click();
+  }
+  fileInput.addEventListener("change", () => {
+    const file = fileInput.files[0];
+    if (file && file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        insertResizableImage(event.target.result);
+        saveContent();
+      };
+      reader.readAsDataURL(file);
+    }
+    fileInput.value = "";
+  });
+
+  notepad.addEventListener('paste', (e) => {
+    for (const item of e.clipboardData.items) {
+      if (item.type.indexOf("image") !== -1) {
+        const file = item.getAsFile();
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          insertResizableImage(event.target.result);
+          saveContent();
+        };
+        reader.readAsDataURL(file);
+        e.preventDefault();
+      }
+    }
+  });
+
+  notepad.addEventListener('dragover', (e) => e.preventDefault());
+  notepad.addEventListener('drop', (e) => {
+    e.preventDefault();
+    for (const file of e.dataTransfer.files) {
+      if (file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          insertResizableImage(event.target.result);
+          saveContent();
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  });
+
+  function insertResizableImage(src) {
+    insertAtCursor(`<div class="resizable"><img src="${src}"></div>`);
+  }
+
+  function insertAtCursor(html) {
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return;
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+    const temp = document.createElement("div");
+    temp.innerHTML = html;
+    const frag = document.createDocumentFragment();
+    let node, lastNode;
+    while ((node = temp.firstChild)) {
+      lastNode = frag.appendChild(node);
+    }
+    range.insertNode(frag);
+    if (lastNode) {
+      range.setStartAfter(lastNode);
+      range.setEndAfter(lastNode);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  }
+
+  // === DOWNLOAD / UPLOAD JSON ===
+  function downloadNotes() {
+    saveContent();
+    const data = { tabs, activeTab };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "scratchpad_notes.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  uploadJSON.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (data.tabs) {
+          tabs = data.tabs;
+          activeTab = data.activeTab;
+          saveTabs();
+          localStorage.setItem('scratchpadActive', activeTab);
+          loadTabs();
+          alert("✅ Notes imported successfully!");
+        } else {
+          alert("Invalid JSON file format.");
+        }
+      } catch (err) {
+        alert("Error reading JSON: " + err.message);
+      }
+    };
+    reader.readAsText(file);
+  });
+
+  loadTabs();
+</script>
+</body>
+</html>
