@@ -1264,7 +1264,7 @@
             
             <div class="analysis-grid">
                 <div class="analysis-card"><h3>📊 Portfolio by Category & Returns</h3><div class="chart-wrapper"><canvas id="categoryCombinedChart"></canvas></div></div>
-                <div class="analysis-card"><h3>📈 T. Wt. % by Fund Type (Bar) vs Target (Line)</h3><div class="chart-wrapper"><canvas id="fundTypeWeightChart"></canvas></div></div>
+              <div class="analysis-card"><h3>📈 Fund Type Allocation Matrix</h3><div class="chart-wrapper"><canvas id="fundTypeWeightChart"></canvas></div></div>
                 <div class="analysis-card"><h3>⭐ Top 5 Performers</h3><div class="chart-wrapper"><canvas id="topPerformersChart"></canvas></div></div>
                 <div class="analysis-card"><h3>📈 Returns by Type</h3><div class="chart-wrapper"><canvas id="returnsByTypeChart"></canvas></div></div>
                 <div class="analysis-card"><h3>🎯 Investment vs Current</h3><div class="chart-wrapper"><canvas id="comparisonChart"></canvas></div></div>
@@ -2556,49 +2556,140 @@ const stpAllocations = [
         }
         let chart1, chart2, chart3, chart4, chart5, chart6;
         function updateCharts(data) {
-            if (data.length === 0) return;
-            // chart1: category combined
-            const ctxCombined = document.getElementById('categoryCombinedChart').getContext('2d');
-            if (chart1) chart1.destroy();
-            const catTotals = {};
-            const catReturns = {};
-            data.forEach(d => {
-                catTotals[d.category] = (catTotals[d.category] || 0) + d.invested;
-                if (!catReturns[d.category]) catReturns[d.category] = { total: 0, count: 0 };
-                catReturns[d.category].total += d.returnsPct;
-                catReturns[d.category].count++;
-            });
-            const catLabels = Object.keys(catTotals);
-            const catInvested = Object.values(catTotals);
-            const catAvgReturns = catLabels.map(c => catReturns[c] ? catReturns[c].total / catReturns[c].count : 0);
-            const totalCat = catInvested.reduce((a,b) => a+b, 0);
-            chart1 = new Chart(ctxCombined, {
-                type: 'bar',
-                data: {
-                    labels: catLabels,
-                    datasets: [
-                        { label: 'Investment (₹)', data: catInvested, backgroundColor: 'rgba(46, 204, 113, 0.7)', borderColor: '#2ecc71', borderWidth: 2, borderRadius: 4, order: 1, yAxisID: 'y' },
-                        { label: 'Avg Return %', data: catAvgReturns, type: 'line', borderColor: '#e74c3c', backgroundColor: 'rgba(231, 76, 60, 0.1)', pointBackgroundColor: '#e74c3c', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 5, tension: 0.3, fill: true, order: 0, yAxisID: 'y1' }
-                    ]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: true,
-                    plugins: {
-                        legend: { position: 'top', labels: { font: { size: 9 }, boxWidth: 12, padding: 8 } },
-                        datalabels: {
-                            color: '#fff', backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 4, padding: 3,
-                            font: { size: 8, weight: 'bold' },
-                            formatter: (v, ctx) => { if (ctx.datasetIndex === 0) return `${((v/totalCat)*100).toFixed(1)}%`; return `${v.toFixed(1)}%`; },
-                            anchor: 'end', align: 'top', offset: 2
-                        }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, position: 'left', ticks: { callback: (v) => `₹${(v/1000).toFixed(0)}K`, font: { size: 8 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
-                        y1: { beginAtZero: true, position: 'right', ticks: { callback: (v) => v + '%', font: { size: 8 } }, grid: { drawOnChartArea: false } },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
+    if (data.length === 0) return;
+    
+    // Calculate fund type totals
+    const ftTotals = {};
+    data.forEach(d => { 
+        const ft = d.fundType || 'Other'; 
+        ftTotals[ft] = (ftTotals[ft] || 0) + d.invested; 
+    });
+    
+    const totalFt = Object.values(ftTotals).reduce((a,b) => a+b, 0);
+    
+    // Define target weights
+    const targetWeights = { 
+        'Large Cap': 25, 
+        'Flexi Cap': 20, 
+        'Mid Cap': 12, 
+        'Large & Mid Cap': 8, 
+        'Index': 10, 
+        'Hybrid / Multi-Asset': 10, 
+        'International': 5, 
+        'Debt': 10, 
+        'Liquid / Cash': 10, 
+        'Other': 0 
+    };
+    
+    // Get all fund types
+    const ftLabels = Object.keys(ftTotals).sort();
+    
+    // Calculate percentages
+    const actualPercentages = ftLabels.map(ft => totalFt > 0 ? (ftTotals[ft] / totalFt * 100) : 0);
+    const targetPercentages = ftLabels.map(ft => targetWeights[ft] || 0);
+    const variancePercentages = ftLabels.map((ft, i) => targetPercentages[i] - actualPercentages[i]);
+    
+    // Colors for bars
+    const colors = ['#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#34495e', '#2c3e50', '#7f8c8d'];
+    
+    // Create a table/matrix chart using HTML table in the chart wrapper
+    const chartWrapper = document.getElementById('fundTypeWeightChart');
+    const canvas = document.getElementById('fundTypeWeightChart');
+    
+    // Clear the canvas and replace with table
+    const parent = canvas.parentNode;
+    
+    // Create table container
+    const tableContainer = document.createElement('div');
+    tableContainer.style.width = '100%';
+    tableContainer.style.height = '100%';
+    tableContainer.style.overflow = 'auto';
+    tableContainer.style.maxHeight = '300px';
+    
+    let tableHtml = `
+        <table style="width:100%; border-collapse: collapse; font-size: 12px; font-family: 'Inter', sans-serif;">
+            <thead>
+                <tr style="background: linear-gradient(135deg, #2c3555 0%, #1a1f36 100%); color: white; position: sticky; top: 0;">
+                    <th style="padding: 8px 10px; text-align: left; border-radius: 6px 0 0 0;">Fund Type</th>
+                    <th style="padding: 8px 10px; text-align: right;">Target %</th>
+                    <th style="padding: 8px 10px; text-align: right;">Actual %</th>
+                    <th style="padding: 8px 10px; text-align: right; border-radius: 0 6px 0 0;">Variance %</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    // Sort by variance (largest gap first)
+    const sortedIndices = ftLabels.map((_, i) => i).sort((a, b) => Math.abs(variancePercentages[b]) - Math.abs(variancePercentages[a]));
+    
+    let totalActual = 0;
+    let totalTarget = 0;
+    
+    sortedIndices.forEach(idx => {
+        const ft = ftLabels[idx];
+        const actual = actualPercentages[idx];
+        const target = targetPercentages[idx];
+        const variance = variancePercentages[idx];
+        
+        totalActual += actual;
+        totalTarget += target;
+        
+        const varianceColor = Math.abs(variance) < 1 ? '#27ae60' : (variance > 0 ? '#e74c3c' : '#2ecc71');
+        const varianceSign = variance > 0 ? '+' : '';
+        
+        const barColor = colors[idx % colors.length];
+        
+        tableHtml += `
+            <tr style="border-bottom: 1px solid #eef1f6; transition: background 0.2s;" 
+                onmouseover="this.style.background='#eef1fb'" 
+                onmouseout="this.style.background='transparent'">
+                <td style="padding: 6px 10px;">
+                    <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${barColor}; margin-right:8px; vertical-align:middle;"></span>
+                    ${ft}
+                </td>
+                <td style="padding: 6px 10px; text-align: right; font-weight: 600;">${target.toFixed(1)}%</td>
+                <td style="padding: 6px 10px; text-align: right; font-weight: 600;">${actual.toFixed(1)}%</td>
+                <td style="padding: 6px 10px; text-align: right; font-weight: 700; color: ${varianceColor};">
+                    ${varianceSign}${variance.toFixed(1)}%
+                    <span style="font-size: 10px; margin-left: 4px;">
+                        ${Math.abs(variance) < 1 ? '✅' : (variance > 0 ? '⬆️' : '⬇️')}
+                    </span>
+                </td>
+            </tr>
+        `;
+    });
+    
+    // Add total row
+    tableHtml += `
+        <tr style="border-top: 2px solid #2c3555; font-weight: 700; background: #f8f9fa;">
+            <td style="padding: 8px 10px;">TOTAL</td>
+            <td style="padding: 8px 10px; text-align: right;">${totalTarget.toFixed(1)}%</td>
+            <td style="padding: 8px 10px; text-align: right;">${totalActual.toFixed(1)}%</td>
+            <td style="padding: 8px 10px; text-align: right; color: ${(totalTarget - totalActual) < 1 ? '#27ae60' : '#e74c3c'}">
+                ${(totalTarget - totalActual).toFixed(1)}%
+            </td>
+        </tr>
+    `;
+    
+    tableHtml += `
+            </tbody>
+        </table>
+        <div style="font-size: 10px; color: #888; margin-top: 8px; text-align: center; padding: 4px;">
+            ⚡ Variance = Target % − Actual % &nbsp;|&nbsp; 
+            <span style="color: #27ae60;">✅ On track</span> &nbsp;|&nbsp; 
+            <span style="color: #e74c3c;">⬆️ Overweight</span> &nbsp;|&nbsp; 
+            <span style="color: #2ecc71;">⬇️ Underweight</span>
+        </div>
+    `;
+    
+    tableContainer.innerHTML = tableHtml;
+    
+    // Replace canvas with table
+    parent.replaceChild(tableContainer, canvas);
+    
+    // Store reference for cleanup
+    chart2 = tableContainer;
+}
 
             // chart2: fund type weight vs target
             const ctxFundWeight = document.getElementById('fundTypeWeightChart').getContext('2d');
