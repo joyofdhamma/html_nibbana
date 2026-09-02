@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Narration – RK Annadan</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background-color: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      max-width: 550px;
+      padding: 30px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .subhead {
+      text-align: center;
+      color: #666;
+      margin-bottom: 25px;
+      font-size: 0.95rem;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 12px;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #444;
+    }
+
+    select, input, textarea {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+      background: white;
+    }
+
+    select:focus, input:focus, textarea:focus {
+      outline: none;
+      border-color: #4a86e8;
+      box-shadow: 0 0 0 2px rgba(74, 134, 232, 0.2);
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .radio-group {
+      margin: 20px 0;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .radio-option {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .radio-option:last-child {
+      margin-bottom: 0;
+    }
+
+    .radio-option input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      margin-right: 10px;
+      accent-color: #4a86e8;
+    }
+
+    .radio-option label {
+      margin-bottom: 0;
+      font-weight: normal;
+    }
+
+    .message-output {
+      background-color: #f8f9fa;
+      border: 1px solid #e9e9e9;
+      border-radius: 8px;
+      padding: 18px;
+      margin: 25px 0;
+      min-height: 100px;
+      font-size: 16px;
+      color: #222;
+      white-space: pre-line;
+      line-height: 1.6;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .copy-btn {
+      background: linear-gradient(to right, #4a86e8, #3b78e7);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 20px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.3s;
+    }
+
+    .copy-btn:hover {
+      background: linear-gradient(to right, #3b78e7, #2a6ae0);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .copy-btn:active {
+      transform: translateY(0);
+    }
+
+    .copy-btn.copied {
+      background: linear-gradient(to right, #2ecc71, #27ae60);
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 25px;
+      color: #888;
+      font-size: 13px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .note-highlight {
+      background: #f0f4ff;
+      border-left: 3px solid #4a86e8;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      color: #2c3e50;
+      margin-top: 6px;
+    }
+
+    .inline-code {
+      background: #f1f1f1;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Narration builder</h1>
+    <div class="subhead">Joy Mazumdar</div>
+
+    <!-- Payment Type -->
+    <div class="input-group">
+      <label for="paymentType">Payment Type</label>
+      <select id="paymentType">
+        <option value="Maintance Fees - Flat no 102(B)">Maintenance Dibrugarh</option>
+        <option value="Payment towards Prerona NGO">Prerona</option>
+        <!-- UPDATED: label and value reflect "RK Annadan email" -->
+        <option value="RK Annadan email" selected>RK Annadan email</option>
+        <option value="other">Other (Enter custom text)</option>
+      </select>
+      <div class="note-highlight">✔ select your choice</div>
+    </div>
+
+    <!-- Custom text (hidden unless "Other") -->
+    <div class="input-group hidden" id="customTextGroup">
+      <label for="customText">Custom Payment Description</label>
+      <textarea id="customText" placeholder="Enter your custom payment description here..."></textarea>
+    </div>
+
+    <!-- Amount (₹) -->
+    <div class="input-group">
+      <label for="amount">Amount (₹)</label>
+      <input type="number" id="amount" placeholder="Enter amount" min="0" value="2000" step="1">
+    </div>
+
+    <!-- Date options -->
+    <div class="radio-group">
+      <label style="margin-bottom: 10px;">📅 Date format</label>
+      <div class="radio-option">
+        <input type="radio" id="withMonth" name="dateOption" value="withMonth" checked>
+        <label for="withMonth">Include month & year (e.g. Apr-2026)</label>
+      </div>
+      <div class="radio-option">
+        <input type="radio" id="withoutMonth" name="dateOption" value="withoutMonth">
+        <label for="withoutMonth">Without month/year</label>
+      </div>
+    </div>
+
+    <!-- Output -->
+    <div class="message-output" id="outputMessage">
+      Generated message will appear here
+    </div>
+
+    <button class="copy-btn" id="copyBtn">📋 Copy Message</button>
+    <p class="footer">Select type, amount – narration updates automatically</p>
+  </div>
+
+  <script>
+    (function() {
+      const paymentTypeSelect = document.getElementById('paymentType');
+      const customTextGroup = document.getElementById('customTextGroup');
+      const customText = document.getElementById('customText');
+      const amountInput = document.getElementById('amount');
+      const outputMessage = document.getElementById('outputMessage');
+      const copyBtn = document.getElementById('copyBtn');
+      const dateOptions = document.getElementsByName('dateOption');
+
+      // Helper: month-year string (e.g. "Apr-2026")
+      function getCurrentMonthYear() {
+        const date = new Date();
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const month = months[date.getMonth()];
+        const year = date.getFullYear();
+        return `${month}-${year}`;
+      }
+
+      // Helper: DD/MM/YYYY
+      function getCurrentDate() {
+        const date = new Date();
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+      }
+
+      // Core message builder
+      function generateMessage() {
+        let paymentType = paymentTypeSelect.value;
+
+        // If "Other" is selected, use custom text
+        if (paymentType === 'other') {
+          paymentType = customText.value.trim() || 'Payment';
+        }
+
+        const amount = amountInput.value || '0';
+        const pd = getCurrentDate();
+
+        // Determine date option
+        let dateOptionValue = 'withMonth'; // fallback
+        for (const opt of dateOptions) {
+          if (opt.checked) {
+            dateOptionValue = opt.value;
+            break;
+          }
+        }
+
+        // --- NEW: Build message with amount variable after "Rs." ---
+        // We want: "... Nara Narayan Seva on Sunday , Rs. {amount} /- ..."
+        // but we keep the overall structure clean.
+        // If paymentType === "RK Annadan email" we show the dedicated format.
+        // Otherwise we fallback to standard pattern but always place amount after Rs.
+        const baseAmountStr = `Rs. ${amount}/-`;
+
+        if (paymentType === 'RK Annadan email') {
+          // Special format for RK Annadan email (exactly as requested)
+          // "Sastanga Pranam Maharaj, Kindly find attached donation for Nara Narayan Seva on Sunday , Rs. {amount}/-"
+          // then details block.
+          let msg = `Sastanga Pranam Maharaj,\n`;
+          msg += `Kindly find attached donation for Nara Narayan Seva on Sunday , ${baseAmountStr}\n\n`;
+          msg += `Below are details for your reference:\n\n`;
+          msg += `Diksha Serial Number: 250752\n`;
+          msg += `Diksha Guru: Most Rev. Swami Gitanandaji Maharaj\n\n`;
+          msg += `Address:\n`;
+          msg += `Joy Mazumdar\n`;
+          msg += `Flat No. 102B,\n`;
+          msg += `D-Lane, Milan Nagar,\n`;
+          msg += `P.O. Dibrugarh,\n`;
+          msg += `Pin - 786003,\n`;
+          msg += `Assam\n\n`;
+          msg += `PAN No.: ALZPM9214C\n\n`;
+          msg += `Jai Shri Ramkrishna, Jai Shri Maa, Jai Swamiji Maharaj,\n`;
+          msg += `Jai Guru Maharaj`;
+
+          // If user selects "withMonth", we can prepend payment date line (optional)
+          // But we keep the donation date as "Sunday" static per request.
+          // We'll add a date line at the very top if "withMonth" is enabled.
+          if (dateOptionValue === 'withMonth') {
+            const monthYear = getCurrentMonthYear();
+            // Prepend date line (but keep the rest intact)
+            return `Payment Date ${pd}  (${monthYear})\n\n\n${msg}`;
+          } else {
+            // without month: just payment date
+            return `Payment Date ${pd}\n\n\n${msg}`;
+          }
+        } else {
+          // ----- Standard / other payment types -----
+          // We want amount after Rs. always.
+          // Build base: Payment Date ... / [paymentType] / Rs. {amount} /- / (month if selected) / Transferred
+          let message = `Payment Date ${pd}\n`;
+          message += `${paymentType}\n`;
+          message += `${baseAmountStr}`;
+
+          if (dateOptionValue === 'withMonth') {
+            const monthYear = getCurrentMonthYear();
+            message += `\nFor the month of *${monthYear}* -\nTransferred`;
+          } else {
+            message += `\nTransferred`;
+          }
+          return message;
+        }
+      }
+
+      function updateMessage() {
+        outputMessage.textContent = generateMessage();
+      }
+
+      // Toggle custom text field
+      function toggleCustomText() {
+        if (paymentTypeSelect.value === 'other') {
+          customTextGroup.classList.remove('hidden');
+        } else {
+          customTextGroup.classList.add('hidden');
+        }
+        updateMessage();
+      }
+
+      // ------ Init ------
+      // Ensure default selection is "RK Annadan email"
+      // (it's already set in HTML, but we force it just in case)
+      paymentTypeSelect.value = 'RK Annadan email';
+      toggleCustomText();  // hides custom text because value !== 'other'
+      updateMessage();
+
+      // ------ Event listeners ------
+      paymentTypeSelect.addEventListener('change', toggleCustomText);
+      customText.addEventListener('input', updateMessage);
+      amountInput.addEventListener('input', updateMessage);
+
+      for (const opt of dateOptions) {
+        opt.addEventListener('change', updateMessage);
+      }
+
+      // ------ Copy ------
+      copyBtn.addEventListener('click', function() {
+        const message = generateMessage();
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(message).then(showSuccess, fallbackCopy);
+        } else {
+          fallbackCopy();
+        }
+
+        function showSuccess() {
+          copyBtn.textContent = '✔ Copied!';
+          copyBtn.classList.add('copied');
+          setTimeout(() => {
+            copyBtn.textContent = '📋 Copy Message';
+            copyBtn.classList.remove('copied');
+          }, 2000);
+        }
+
+        function fallbackCopy() {
+          const textarea = document.createElement('textarea');
+          textarea.value = message;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          textarea.style.left = '-9999px';
+          document.body.appendChild(textarea);
+          textarea.focus();
+          textarea.select();
+          try {
+            document.execCommand('copy');
+            showSuccess();
+          } catch (err) {
+            alert('Could not copy. Please long-press the text above to copy manually.');
+          }
+          document.body.removeChild(textarea);
+        }
+      });
+
+      // Also update if amount changes via keyboard
+      amountInput.addEventListener('keyup', updateMessage);
+    })();
+  </script>
+</body>
+</html>
