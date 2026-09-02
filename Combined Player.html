@@ -247,6 +247,137 @@
   .file-group {
     margin-bottom: 10px;
   }
+
+  /* NEW: Repeat slider styles */
+  .repeat-slider-container {
+    position: relative;
+    width: 90%;
+    max-width: 600px;
+    margin: 10px auto;
+    background: #1a1a1a;
+    border-radius: 8px;
+    padding: 15px;
+    border: 1px solid #333;
+  }
+
+  .repeat-slider-container label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 0.9em;
+    color: #88ff88;
+  }
+
+  .repeat-slider-wrapper {
+    position: relative;
+    height: 30px;
+    background: #2a2a2a;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 5px 0;
+  }
+
+  .repeat-slider-wrapper .progress-track {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 4px;
+    width: 100%;
+    background: #444;
+    border-radius: 2px;
+  }
+
+  .repeat-slider-wrapper .progress-fill {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 4px;
+    background: #0f0;
+    border-radius: 2px;
+    width: 0%;
+  }
+
+  .repeat-slider-wrapper .repeat-range {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 20px;
+    background: rgba(0, 255, 0, 0.2);
+    border: 2px solid #0f0;
+    border-radius: 4px;
+    pointer-events: none;
+    display: none;
+  }
+
+  .repeat-slider-wrapper .handle {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 16px;
+    height: 16px;
+    background: #0f0;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10;
+    display: none;
+    border: 2px solid #fff;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+  }
+
+  .repeat-slider-wrapper .handle.start-handle {
+    background: #00ff88;
+    display: block;
+  }
+
+  .repeat-slider-wrapper .handle.end-handle {
+    background: #ff8800;
+    display: block;
+  }
+
+  .repeat-slider-wrapper .handle.active {
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
+  }
+
+  .repeat-time-display {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 0.8em;
+    color: #aaa;
+  }
+
+  .repeat-time-display span {
+    background: #222;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .repeat-controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .repeat-controls button {
+    padding: 6px 14px;
+    font-size: 0.85em;
+    margin: 0;
+  }
+
+  .btn-enabled {
+    background: #0f0;
+    color: #000;
+  }
+
+  .btn-disabled {
+    background: #444;
+    color: #888;
+  }
 </style>
 </head>
 <body>
@@ -279,6 +410,34 @@
     </div>
 
     <audio id="audio" controls></audio><br>
+
+    <!-- NEW: Repeat Slider Section -->
+    <div class="repeat-slider-container" id="repeatSliderContainer">
+      <label>
+        <span>🔁 A-B Repeat</span>
+        <span>
+          <span id="repeatStartDisplay">0.0</span>s → <span id="repeatEndDisplay">0.0</span>s
+        </span>
+      </label>
+      
+      <div class="repeat-slider-wrapper" id="repeatSliderWrapper">
+        <div class="progress-track"></div>
+        <div class="progress-fill" id="repeatProgressFill"></div>
+        <div class="repeat-range" id="repeatRange"></div>
+        <div class="handle start-handle" id="startHandle"></div>
+        <div class="handle end-handle" id="endHandle"></div>
+      </div>
+      
+      <div class="repeat-time-display">
+        <span id="currentTimeDisplay">0:00</span>
+        <span id="totalTimeDisplay">0:00</span>
+      </div>
+      
+      <div class="repeat-controls">
+        <button id="toggleRepeatSliderBtn" class="btn-disabled">⏸ A-B Repeat Off</button>
+        <button id="clearRepeatBtn" class="btn-disabled" style="background:#555; color:#aaa;">✖ Clear Points</button>
+      </div>
+    </div>
 
     <div id="sliders">
       <label>Playback Speed</label>
@@ -361,6 +520,24 @@
   let loopEnabled = false;
   let repeatEnabled = false;
   let audioCtx, sourceNode, bassEQ, midEQ, trebleEQ, gainNode, compressor, panner, convolver, dryGain, wetGain;
+
+  // ==================== NEW REPEAT SLIDER VARIABLES ====================
+  let repeatStartTime = 0;
+  let repeatEndTime = 0;
+  let repeatSliderEnabled = false;
+  let isDraggingStart = false;
+  let isDraggingEnd = false;
+  const repeatSliderWrapper = document.getElementById('repeatSliderWrapper');
+  const startHandle = document.getElementById('startHandle');
+  const endHandle = document.getElementById('endHandle');
+  const repeatRange = document.getElementById('repeatRange');
+  const repeatStartDisplay = document.getElementById('repeatStartDisplay');
+  const repeatEndDisplay = document.getElementById('repeatEndDisplay');
+  const currentTimeDisplay = document.getElementById('currentTimeDisplay');
+  const totalTimeDisplay = document.getElementById('totalTimeDisplay');
+  const toggleRepeatSliderBtn = document.getElementById('toggleRepeatSliderBtn');
+  const clearRepeatBtn = document.getElementById('clearRepeatBtn');
+  const repeatProgressFill = document.getElementById('repeatProgressFill');
 
   // ==================== NEW PLAYLIST VARIABLES ====================
   let playlist = [];           // Array of {name, url, file}
@@ -728,7 +905,271 @@
   
   // Initialize auto-advance handler
   setupPlaylistAutoAdvance();
+
+  // ==================== NEW REPEAT SLIDER FUNCTIONALITY ====================
   
+  // Format time as MM:SS
+  function formatTime(seconds) {
+    if (isNaN(seconds) || !isFinite(seconds)) return "0:00";
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  // Get position percentage from time
+  function getPositionPercentage(time) {
+    if (!audio.duration || isNaN(audio.duration) || audio.duration === 0) return 0;
+    return Math.min(100, Math.max(0, (time / audio.duration) * 100));
+  }
+
+  // Update repeat slider UI
+  function updateRepeatSlider() {
+    if (!audio.duration || isNaN(audio.duration) || audio.duration === 0) return;
+    
+    const startPercent = getPositionPercentage(repeatStartTime);
+    const endPercent = getPositionPercentage(repeatEndTime);
+    
+    // Update handles
+    startHandle.style.left = startPercent + '%';
+    endHandle.style.left = endPercent + '%';
+    
+    // Update range highlight
+    if (repeatSliderEnabled && repeatStartTime < repeatEndTime) {
+      repeatRange.style.display = 'block';
+      repeatRange.style.left = startPercent + '%';
+      repeatRange.style.width = (endPercent - startPercent) + '%';
+    } else {
+      repeatRange.style.display = 'none';
+    }
+    
+    // Update time displays
+    repeatStartDisplay.textContent = repeatStartTime.toFixed(1);
+    repeatEndDisplay.textContent = repeatEndTime.toFixed(1);
+    
+    // Update current time display
+    const currentTime = audio.currentTime || 0;
+    currentTimeDisplay.textContent = formatTime(currentTime);
+    totalTimeDisplay.textContent = formatTime(audio.duration);
+    
+    // Update progress fill
+    const progressPercent = getPositionPercentage(currentTime);
+    repeatProgressFill.style.width = progressPercent + '%';
+  }
+
+  // Enable/disable repeat slider
+  function setRepeatSliderEnabled(enabled) {
+    repeatSliderEnabled = enabled;
+    if (enabled && repeatStartTime < repeatEndTime) {
+      toggleRepeatSliderBtn.textContent = '▶ A-B Repeat On';
+      toggleRepeatSliderBtn.className = 'btn-enabled';
+      repeatRange.style.display = 'block';
+    } else {
+      toggleRepeatSliderBtn.textContent = '⏸ A-B Repeat Off';
+      toggleRepeatSliderBtn.className = 'btn-disabled';
+      repeatRange.style.display = 'none';
+      repeatSliderEnabled = false;
+    }
+    updateRepeatSlider();
+  }
+
+  // Toggle repeat slider on/off
+  toggleRepeatSliderBtn.addEventListener('click', () => {
+    if (repeatStartTime >= repeatEndTime || repeatStartTime === 0 && repeatEndTime === 0) {
+      alert('Please set valid start and end points first!');
+      return;
+    }
+    setRepeatSliderEnabled(!repeatSliderEnabled);
+    if (repeatSliderEnabled) {
+      // If currently playing, jump to start
+      if (!audio.paused) {
+        audio.currentTime = repeatStartTime;
+      }
+    }
+  });
+
+  // Clear repeat points
+  clearRepeatBtn.addEventListener('click', () => {
+    repeatStartTime = 0;
+    repeatEndTime = 0;
+    repeatSliderEnabled = false;
+    toggleRepeatSliderBtn.textContent = '⏸ A-B Repeat Off';
+    toggleRepeatSliderBtn.className = 'btn-disabled';
+    repeatRange.style.display = 'none';
+    updateRepeatSlider();
+    // Also clear the loop inputs for compatibility
+    loopStart.value = 0;
+    loopEnd.value = 0;
+    loopEnabled = false;
+  });
+
+  // Handle mouse/touch events on the slider wrapper
+  function getSliderPosition(e) {
+    const rect = repeatSliderWrapper.getBoundingClientRect();
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+    if (!clientX) return 0;
+    const pos = (clientX - rect.left) / rect.width;
+    return Math.min(1, Math.max(0, pos));
+  }
+
+  function getTimeFromPosition(pos) {
+    if (!audio.duration || isNaN(audio.duration) || audio.duration === 0) return 0;
+    return pos * audio.duration;
+  }
+
+  function handleSliderClick(e) {
+    if (!audio.duration || isNaN(audio.duration) || audio.duration === 0) return;
+    const pos = getSliderPosition(e);
+    const time = getTimeFromPosition(pos);
+    
+    // Check which handle is closer
+    const startDist = Math.abs(pos - getPositionPercentage(repeatStartTime));
+    const endDist = Math.abs(pos - getPositionPercentage(repeatEndTime));
+    
+    if (startDist < endDist) {
+      repeatStartTime = Math.min(time, repeatEndTime - 0.1);
+      if (repeatStartTime < 0) repeatStartTime = 0;
+    } else {
+      repeatEndTime = Math.max(time, repeatStartTime + 0.1);
+      if (repeatEndTime > audio.duration) repeatEndTime = audio.duration;
+    }
+    
+    // Clear loop enabled if points change
+    if (repeatSliderEnabled) {
+      repeatSliderEnabled = false;
+      toggleRepeatSliderBtn.textContent = '⏸ A-B Repeat Off';
+      toggleRepeatSliderBtn.className = 'btn-disabled';
+      repeatRange.style.display = 'none';
+    }
+    
+    // Update loop inputs for compatibility
+    loopStart.value = repeatStartTime;
+    loopEnd.value = repeatEndTime;
+    
+    updateRepeatSlider();
+  }
+
+  // Mouse events
+  repeatSliderWrapper.addEventListener('mousedown', (e) => {
+    if (e.target === startHandle || e.target === endHandle) {
+      if (e.target === startHandle) isDraggingStart = true;
+      else isDraggingEnd = true;
+      return;
+    }
+    handleSliderClick(e);
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDraggingStart && !isDraggingEnd) return;
+    if (!audio.duration || isNaN(audio.duration) || audio.duration === 0) return;
+    
+    const pos = getSliderPosition(e);
+    const time = getTimeFromPosition(pos);
+    
+    if (isDraggingStart) {
+      repeatStartTime = Math.min(Math.max(0, time), repeatEndTime - 0.1);
+      if (repeatStartTime < 0) repeatStartTime = 0;
+    } else if (isDraggingEnd) {
+      repeatEndTime = Math.max(Math.min(time, audio.duration), repeatStartTime + 0.1);
+      if (repeatEndTime > audio.duration) repeatEndTime = audio.duration;
+    }
+    
+    // Clear loop enabled if dragging
+    if (repeatSliderEnabled) {
+      repeatSliderEnabled = false;
+      toggleRepeatSliderBtn.textContent = '⏸ A-B Repeat Off';
+      toggleRepeatSliderBtn.className = 'btn-disabled';
+      repeatRange.style.display = 'none';
+    }
+    
+    // Update loop inputs
+    loopStart.value = repeatStartTime;
+    loopEnd.value = repeatEndTime;
+    
+    updateRepeatSlider();
+  });
+
+  document.addEventListener('mouseup', () => {
+    isDraggingStart = false;
+    isDraggingEnd = false;
+  });
+
+  // Touch events for mobile
+  repeatSliderWrapper.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    if (e.target === startHandle || e.target === endHandle) {
+      if (e.target === startHandle) isDraggingStart = true;
+      else isDraggingEnd = true;
+      return;
+    }
+    handleSliderClick(e);
+  });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!isDraggingStart && !isDraggingEnd) return;
+    e.preventDefault();
+    if (!audio.duration || isNaN(audio.duration) || audio.duration === 0) return;
+    
+    const pos = getSliderPosition(e);
+    const time = getTimeFromPosition(pos);
+    
+    if (isDraggingStart) {
+      repeatStartTime = Math.min(Math.max(0, time), repeatEndTime - 0.1);
+      if (repeatStartTime < 0) repeatStartTime = 0;
+    } else if (isDraggingEnd) {
+      repeatEndTime = Math.max(Math.min(time, audio.duration), repeatStartTime + 0.1);
+      if (repeatEndTime > audio.duration) repeatEndTime = audio.duration;
+    }
+    
+    if (repeatSliderEnabled) {
+      repeatSliderEnabled = false;
+      toggleRepeatSliderBtn.textContent = '⏸ A-B Repeat Off';
+      toggleRepeatSliderBtn.className = 'btn-disabled';
+      repeatRange.style.display = 'none';
+    }
+    
+    loopStart.value = repeatStartTime;
+    loopEnd.value = repeatEndTime;
+    
+    updateRepeatSlider();
+  });
+
+  document.addEventListener('touchend', () => {
+    isDraggingStart = false;
+    isDraggingEnd = false;
+  });
+
+  // Override the existing ontimeupdate to include repeat slider functionality
+  const originalTimeUpdate = audio.ontimeupdate;
+  audio.ontimeupdate = function() {
+    // Call original if exists
+    if (originalTimeUpdate) originalTimeUpdate.call(audio);
+    
+    // Update slider UI
+    updateRepeatSlider();
+    
+    // Handle repeat slider loop
+    if (repeatSliderEnabled && repeatStartTime < repeatEndTime) {
+      const currentTime = audio.currentTime;
+      if (currentTime >= repeatEndTime) {
+        audio.currentTime = repeatStartTime;
+        audio.play();
+      }
+    }
+  };
+
+  // Update total time when audio metadata loads
+  audio.addEventListener('loadedmetadata', () => {
+    updateRepeatSlider();
+  });
+
+  // Auto-update when time updates
+  audio.addEventListener('timeupdate', () => {
+    updateRepeatSlider();
+  });
+
+  // Initialize repeat slider
+  setTimeout(updateRepeatSlider, 100);
+
   /* ---------------- VIDEO PLAYER JS (Unchanged) ---------------- */
   const MAX_VIDEOS = 10;
   const selectorsDiv = document.getElementById("selectors");
