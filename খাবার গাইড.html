@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>খাবার গাইড · ইউরিক অ্যাসিড & স্বাস্থ্য</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f6f4f0;
+            font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+            padding: 2rem 1rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .card {
+            max-width: 1200px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 36px;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.2);
+            padding: 2.2rem 2rem;
+            transition: all 0.2s;
+        }
+
+        /* header */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            background: linear-gradient(145deg, #1e3c2c, #2b5a3a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.3px;
+        }
+
+        .badge {
+            background: #e7f0e5;
+            padding: 0.4rem 1rem;
+            border-radius: 40px;
+            color: #1b4b2a;
+            font-weight: 500;
+            font-size: 0.9rem;
+            border: 1px solid #b9d3b8;
+        }
+
+        .section-title {
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin: 2rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px dashed #d0dcd0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #1a3a26;
+        }
+
+        .section-title span {
+            background: #d9e8d9;
+            padding: 0.2rem 0.8rem;
+            border-radius: 40px;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #1e4a2a;
+        }
+
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.8rem 2.5rem;
+        }
+
+        @media (max-width: 700px) {
+            .grid-2col {
+                grid-template-columns: 1fr;
+                gap: 1.2rem;
+            }
+            .card {
+                padding: 1.5rem 1rem;
+            }
+            .header h1 {
+                font-size: 1.7rem;
+            }
+        }
+
+        .list-block {
+            background: #fafbf9;
+            border-radius: 24px;
+            padding: 1.4rem 1.8rem;
+            box-shadow: inset 0 1px 4px rgba(0,0,0,0.02), 0 4px 10px rgba(0, 20, 10, 0.04);
+            border: 1px solid #ecefea;
+        }
+
+        .list-block h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1e3e2a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 0.8rem;
+        }
+
+        .list-block h3 i {
+            font-style: normal;
+            font-size: 1.2rem;
+        }
+
+        .list-block ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .list-block li {
+            padding: 0.3rem 0 0.3rem 1.8rem;
+            position: relative;
+            font-size: 0.98rem;
+            line-height: 1.5;
+            color: #1d2f21;
+            border-bottom: 1px dashed #e4ece4;
+        }
+
+        .list-block li:last-child {
+            border-bottom: none;
+        }
+
+        .list-block li::before {
+            content: "•";
+            position: absolute;
+            left: 0.2rem;
+            color: #3b7a4b;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .good li::before { color: #2b7a4b; }
+        .caution li::before { color: #b16f3a; }
+        .avoid li::before { color: #b1433a; }
+
+        .inline-tag {
+            display: inline-block;
+            background: #e4efe4;
+            padding: 0.1rem 0.6rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #1c512c;
+            margin-left: 4px;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-warn {
+            background: #f7e3d8;
+            color: #8f4a2e;
+        }
+
+        .badge-danger {
+            background: #f3dbd8;
+            color: #a33d30;
+        }
+
+        .rule-box {
+            background: #e7f2e6;
+            border-radius: 28px;
+            padding: 1.6rem 2rem;
+            margin: 2rem 0 1.2rem 0;
+            border-left: 8px solid #2b6e3b;
+        }
+
+        .rule-box p {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #15331e;
+        }
+
+        .rule-box small {
+            font-weight: 400;
+            font-size: 1rem;
+            color: #2a4d33;
+        }
+
+        .footnote {
+            margin-top: 2.2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #dce6dc;
+            font-size: 0.95rem;
+            color: #2a4a33;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pill-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 12px;
+        }
+
+        .pill {
+            background: #f0f5ef;
+            padding: 0.25rem 1rem;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #1d4629;
+        }
+
+        .highlight {
+            background: #f5fbf3;
+            border-radius: 16px;
+            padding: 0.3rem 0.8rem;
+        }
+
+        .subnote {
+            font-size: 0.9rem;
+            color: #3a5843;
+            background: #f1f7f0;
+            padding: 0.6rem 1.2rem;
+            border-radius: 40px;
+            display: inline-block;
+        }
+
+        hr {
+            border: 1px solid #e1ebe0;
+            margin: 1.8rem 0 0.8rem 0;
+        }
+
+        .emoji-big {
+            font-size: 1.3rem;
+            line-height: 1;
+        }
+
+        .flex-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem 1rem;
+            align-items: baseline;
+        }
+
+        .mt-1 { margin-top: 0.8rem; }
+        .mb-1 { margin-bottom: 0.8rem; }
+    </style>
+</head>
+<body>
+<div class="card">
+
+    <!-- HEADER -->
+    <div class="header">
+        <h1>✅ কি খাবেন ·  খাওয়া ভালো</h1>
+        <span class="badge">🍃 ইউরিক অ্যাসিড & স্বাস্থ্য</span>
+    </div>
+
+    <!-- SECTION 1: খাবার ভালো -->
+    <div class="section-title">
+        🌾 প্রধান খাবার
+        <span>ভালো</span>
+    </div>
+    <div class="grid-2col">
+        <div class="list-block good">
+            <h3>🍚 শর্করা (সঠিক)</h3>
+            <ul>
+                <li>লাল চাল / ব্রাউন রাইস (অল্প)</li>
+                <li>আটা রুটি / জোয়ার রুটি / বাজরা রুটি</li>
+                <li>ওটস / ডালিয়া / মিলেটস</li>
+            </ul>
+        </div>
+        <div class="list-block good">
+            <h3>🥗 সবজি (প্রচুর)</h3>
+            <ul>
+                <li>লাউ, ঝিঙে, পটল, করলা</li>
+                <li>কুমড়ো, চালকুমড়ো, ঢেঁড়স, শসা</li>
+                <li>গাজর, মুলো, বাঁধাকপি, বেগুন</li>
+                <li>শিম, বরবটি</li>
+            </ul>
+            <div style="margin-top: 8px;"><span class="inline-tag">👉 শাক</span> মেথি শাক, লাউ শাক, সরষে শাক <span style="background:#f1e9d6;padding:0 6px;border-radius:20px;font-size:0.75rem;">❌ পালং শাক কম</span></div>
+        </div>
+    </div>
+
+    <!-- ফল + প্রোটিন -->
+    <div class="grid-2col">
+        <div class="list-block good">
+            <h3>🍎 ফল (দিনে ১–২ বেলা)</h3>
+            <ul>
+                <li>আপেল, পেয়ারা, কমলা, মৌসুমি</li>
+                <li>পেঁপে, তরমুজ, খরমুজ, ডালিম</li>
+                <li>আনারস, চেরি <span class="inline-tag">ইউরিক অ্যাসিড কমায়</span></li>
+            </ul>
+        </div>
+        <div class="list-block good">
+            <h3>🥛 প্রোটিন / অন্যান্য</h3>
+            <ul>
+                <li>ডিমের সাদা অংশ</li>
+                <li>পাতলা ডাল (ঘন নয়)</li>
+                <li>কম ফ্যাট দই, স্কিমড দুধ</li>
+                <li>অল্প আখরোট, ফ্ল্যাক্স সিড</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- পানীয় -->
+    <div class="list-block good" style="margin: 0.8rem 0 0.2rem 0;">
+        <h3>💧 পানীয়</h3>
+        <ul style="display: flex; flex-wrap: wrap; gap: 0.2rem 1.2rem;">
+            <li style="border: none; padding: 0.2rem 0;">সারাদিনে অনেক জল</li>
+            <li style="border: none; padding: 0.2rem 0;">লেবু জল (চিনি ছাড়া)</li>
+            <li style="border: none; padding: 0.2rem 0;">গ্রিন টি</li>
+            <li style="border: none; padding: 0.2rem 0;">আমলকীর রস</li>
+        </ul>
+    </div>
+
+    <!-- ❌ কি খাবেন না / কম -->
+    <div class="section-title" style="margin-top: 2rem;">
+        ❌ এড়িয়ে চলুন / কম খাবেন
+        <span>সাবধান</span>
+    </div>
+
+    <div class="grid-2col">
+        <div class="list-block avoid">
+            <h3>🍚 শর্করা ও মিষ্টি</h3>
+            <ul>
+                <li>সাদা ভাত, সাদা পাউরুটি</li>
+                <li>ময়দা, পাস্তা, নুডলস</li>
+                <li>চিনি, মিষ্টি</li>
+            </ul>
+            <h3 style="margin-top: 1.2rem;">🍌 বেশি মিষ্টি ফল (কম)</h3>
+            <ul>
+                <li>কলা, আম, আঙুর, চিকু</li>
+                <li>কাস্টার্ড আপেল, কাঁঠাল</li>
+            </ul>
+        </div>
+        <div class="list-block avoid">
+            <h3>🍟 তেল-চর্বি & বাড়তি</h3>
+            <ul>
+                <li>ভাজাভুজি, ফাস্ট ফুড</li>
+                <li>বেকারি আইটেম</li>
+                <li>অতিরিক্ত ঘি, মাখন</li>
+            </ul>
+            <h3 style="margin-top: 1.2rem;">🥩 ইউরিক অ্যাসিড বাড়ায়</h3>
+            <ul>
+                <li>লাল মাংস, কলিজা, ভুড়ি</li>
+                <li>চিংড়ি, শেলফিশ, মাশরুম</li>
+                <li>সয়াবিন, ফুলকপি, সবুজ মটর</li>
+                <li>পালং শাক, রাজমা, ছোলা, চানা (অল্প)</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- মাছের অংশ -->
+    <div class="section-title" style="margin-top: 2.2rem;">
+        🐟 মাছ · নিরাপদ ও এড়িয়ে চলা
+        <span>গাইড</span>
+    </div>
+
+    <div class="grid-2col">
+        <div class="list-block good">
+            <h3>✅ ছোট দেশি মাছ (সপ্তাহে ২–৩ দিন, অল্প)</h3>
+            <ul>
+                <li>পুঁটি, মৌরলা, টেংরা</li>
+                <li>শিঙি, মাগুর, কৈ</li>
+            </ul>
+            <div style="margin-top: 10px; background: #e2efe2; padding: 6px 12px; border-radius: 30px; font-size:0.9rem;">
+                ⚡ ভালো প্রোটিন · চর্বি কম · ইউরিক অ্যাসিড কম বাড়ায়
+            </div>
+            <div style="margin-top: 12px;"><span class="inline-tag" style="background:#d9d9d9;">⚠️ মাঝারি মাছ (না খাওয়াই ভালো)</span> রুই, কাতলা, মৃগেল</div>
+        </div>
+        <div class="list-block avoid">
+            <h3>❌ এড়িয়ে চলা মাছ / সামুদ্রিক</h3>
+            <ul>
+                <li><strong>চিংড়ি, কাঁকড়া, লবস্টার</strong> <span class="inline-tag badge-danger">ইউরিক অ্যাসিড বাড়ায়</span></li>
+                <li>শুঁটকি (ড্রাই ফিশ)</li>
+                <li>ইলিশ (মাসে ১ বার), টুনা, ম্যাকারেল, সার্ডিন (অল্প)</li>
+            </ul>
+            <div style="margin-top: 10px; background: #f5e3e0; padding: 8px 12px; border-radius: 20px;">
+                🍳 রান্না: ঝোল / সেদ্ধ / ভাপা — ❌ ভাজা, বেশি তেল-মশলা, ঘন গ্রেভি
+            </div>
+        </div>
+    </div>
+
+    <!-- সময় + দৈনন্দিন নিয়ম -->
+    <div class="section-title" style="margin-top: 2.2rem;">
+        ⏰ সময় ও দৈনন্দিন নিয়ম
+        <span>সবচেয়ে গুরুত্বপূর্ণ</span>
+    </div>
+
+    <div class="grid-2col">
+        <div class="list-block" style="background: #f4faf3;">
+            <h3>🕒 সময় সংক্রান্ত</h3>
+            <ul>
+                <li>বিকেল ৪টার পর ফল বা মিষ্টি খাবেন না</li>
+                <li>রাতের খাবার খুব দেরিতে নয় (হালকা ও তাড়াতাড়ি)</li>
+            </ul>
+        </div>
+        <div class="list-block" style="background: #f4faf3;">
+            <h3>🌿 সহজ দৈনন্দিন নিয়ম</h3>
+            <ul>
+                <li>প্রতিদিন ৩০ মিনিট হাঁটা</li>
+                <li>৬–৮ ঘণ্টা ঘুম</li>
+                <li>স্ট্রেস কমানো (হালকা যোগা / শ্বাস ব্যায়াম)</li>
+                <li>নিয়মিত সময়ে খাবার</li>
+                <li>বেশি জল পান</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- সারাংশ + মাছের লাইন -->
+    <div class="rule-box">
+        <p>🧠 <strong>এক লাইনে সারাংশ (মনে রাখার জন্য)</strong><br>
+        <span style="font-size: 1.3rem; font-weight: 500;">সাদামাটা ঘরোয়া খাবার, কম তেল-মশলা, কম চিনি, বেশি সবজি-ফল, বেশি জল — এটাই মূল চাবিকাঠি।</span></p>
+    </div>
+
+    <div style="background: #e6efe4; border-radius: 30px; padding: 0.8rem 1.8rem; margin: 0.6rem 0 0.2rem 0;">
+        <p style="font-size: 1.1rem; font-weight: 500;">🐟 <strong>মাছের লাইন:</strong> ছোট দেশি মাছ ভালো, ভাজা নয়, চিংড়ি নয়, পরিমাণ কম।</p>
+    </div>
+
+    <!-- ফুটার -->
+    <div class="footnote">
+        <div class="pill-group">
+            <span class="pill">✅ ভালো</span>
+            <span class="pill" style="background:#f5e7d6;">⚠️ সতর্ক</span>
+            <span class="pill" style="background:#f3d8d6;">❌ এড়িয়ে চলুন</span>
+        </div>
+        <div><span class="subnote">🍽️ পরিমাণ ও সময় মেনে চলুন</span></div>
+    </div>
+
+    <hr>
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; font-size:0.9rem; color:#2a4f33; padding-top: 0.4rem;">
+        <span>💧 সারাদিনে প্রচুর জল পান করুন</span>
+        <span>🌙 রাতে হালকা খাবার</span>
+        <span>🧘 স্ট্রেস ফ্রি থাকুন</span>
+    </div>
+
+</div>
+</body>
+</html>
