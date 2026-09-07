@@ -1,0 +1,95 @@
+{
+  "1": {
+    "day1": { "start": 0, "end": 100 },
+    "day2": { "start": 101, "end": 120 },
+    "day3": { "start": 387, "end": 457 }
+  },
+  "2": {
+    "day1": { "start": 10, "end": 60 },
+    "day2": { "start": 70, "end": 90 },
+    "day3": { "start": 200, "end": 280 }
+  },
+   "3": {
+    "day1": { "start": 10, "end": 60 },
+    "day2": { "start": 70, "end": 90 },
+    "day3": { "start": 200, "end": 280 }
+  },
+    "4": {
+    "day1": { "start": 10, "end": 60 },
+    "day2": { "start": 70, "end": 90 },
+    "day3": { "start": 200, "end": 280 }
+  },
+    "5": {
+    "day1": { "start": 10, "end": 60 },
+    "day2": { "start": 70, "end": 90 },
+    "day3": { "start": 200, "end": 280 }
+  },
+    "6": {
+    "day1": { "start": 10, "end": 60 },
+    "day2": { "start": 70, "end": 90 },
+    "day3": { "start": 200, "end": 280 }
+  },
+    "7": {
+    "day1": { "start": 10, "end": 60 },
+    "day2": { "start": 70, "end": 90 },
+    "day3": { "start": 200, "end": 280 }
+  },
+    "8": {
+    "day1": { "start": 10, "end": 60 },
+    "day2": { "start": 70, "end": 90 },
+    "day3": { "start": 200, "end": 280 }
+  },
+    "9": {
+    "day1": { "start": 10, "end": 60 },
+    "day2": { "start": 70, "end": 90 },
+    "day3": { "start": 200, "end": 280 }
+  },
+    "10": {
+    "day1": { "start": 10, "end": 60 },
+    "day2": { "start": 70, "end": 90 },
+    "day3": { "start": 200, "end": 280 }
+  },
+    "11": {
+    "day1": { "start": 10, "end": 60 },
+    "day2": { "start": 70, "end": 90 },
+    "day3": { "start": 200, "end": 280 }
+  },
+    "12": {
+    "day1": { "start": 10, "end": 60 },
+    "day2": { "start": 70, "end": 90 },
+    "day3": { "start": 200, "end": 280 }
+  },
+    "13": {
+    "day1": { "start": 10, "end": 60 },
+    "day2": { "start": 70, "end": 90 },
+    "day3": { "start": 200, "end": 280 }
+  },
+    "14": {
+    "day1": { "start": 10, "end": 60 },
+    "day2": { "start": 70, "end": 90 },
+    "day3": { "start": 200, "end": 280 }
+  },
+    "15": {
+    "day1": { "start": 10, "end": 60 },
+    "day2": { "start": 70, "end": 90 },
+    "day3": { "start": 200, "end": 280 }
+  },
+    "16": {
+    "day1": { "start": 10, "end": 60 },
+    "day2": { "start": 70, "end": 90 },
+    "day3": { "start": 200, "end": 280 }
+  },
+    "17": {
+    "day1": { "start": 10, "end": 60 },
+    "day2": { "start": 70, "end": 90 },
+    "day3": { "start": 200, "end": 280 }
+  },
+  
+"18": {
+    "day1": { "start": 10, "end": 60 },
+    "day2": { "start": 70, "end": 90 },
+    "day3": { "start": 200, "end": 280 }
+  }
+
+
+}
