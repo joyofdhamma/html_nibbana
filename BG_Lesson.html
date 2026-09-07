@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>Gita · Chapter Player</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: #12121f;
+      min-height: 100vh;
+      color: #e5e2f7;
+      padding: 0;
+      margin: 0;
+    }
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    /* ---------- SIDEBAR (top tabs for mobile) ---------- */
+    .sidebar {
+      background: #1c1c2e;
+      border-bottom: 1px solid #3a3a55;
+      padding: 0.6rem 0.4rem;
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      gap: 0.3rem;
+      flex-shrink: 0;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+    }
+    .sidebar::-webkit-scrollbar {
+      height: 3px;
+    }
+    .sidebar::-webkit-scrollbar-thumb {
+      background: #4b4b6e;
+      border-radius: 10px;
+    }
+    .chapter-tab {
+      background: #26263b;
+      border: none;
+      border-radius: 2rem;
+      padding: 0.4rem 0.9rem;
+      color: #cdcbe5;
+      font-weight: 500;
+      font-size: 0.7rem;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: 0.15s;
+      border: 1px solid transparent;
+      flex-shrink: 0;
+    }
+    .chapter-tab:hover {
+      background: #353550;
+      border-color: #7c6df0;
+    }
+    .chapter-tab.active-tab {
+      background: #7c6df0;
+      color: white;
+      border-color: #9a8cf5;
+      box-shadow: 0 0 12px #6b5cdb;
+    }
+    .sidebar-title {
+      display: none;
+    }
+
+    /* ---------- MAIN CONTENT ---------- */
+    .main {
+      flex: 1;
+      padding: 0.8rem;
+      overflow-y: auto;
+      background: #1a1a2c;
+      -webkit-overflow-scrolling: touch;
+    }
+    .player-container {
+      max-width: 100%;
+      margin: 0 auto;
+    }
+
+    /* JSON upload banner */
+    .json-upload-banner {
+      background: #2a2a48;
+      border-radius: 1.5rem;
+      padding: 0.8rem 1.2rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      border: 1px solid #4b4b6e;
+    }
+    .json-upload-banner .label {
+      font-size: 0.8rem;
+      color: #b7b4d6;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .json-upload-banner .label strong {
+      color: #f0eef7;
+    }
+    .json-upload-btn {
+      background: #7c6df0;
+      border: none;
+      padding: 0.3rem 1.2rem;
+      border-radius: 3rem;
+      color: white;
+      font-weight: 500;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .json-upload-btn:hover {
+      background: #9689f5;
+    }
+    .json-status {
+      font-size: 0.7rem;
+      color: #6b6b8a;
+    }
+    .json-status.loaded {
+      color: #7cdf7c;
+    }
+
+    /* player card */
+    .player-card {
+      background: #24243a;
+      border-radius: 1.8rem;
+      padding: 1.2rem 1rem 1.4rem;
+      border: 1px solid #3e3e5e;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+      margin-bottom: 0.8rem;
+    }
+    .player-card.hidden {
+      display: none;
+    }
+
+    .player-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.8rem;
+      flex-wrap: wrap;
+    }
+    .player-header h3 {
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #f0eef7;
+      background: #2f2f4e;
+      padding: 0.1rem 1rem;
+      border-radius: 3rem;
+      border-left: 4px solid #7c6df0;
+    }
+    .chapter-badge {
+      background: #3a3a58;
+      padding: 0.1rem 0.8rem;
+      border-radius: 2rem;
+      font-size: 0.65rem;
+      color: #b7b4d6;
+    }
+
+    .upload-area {
+      background: #2d2d48;
+      border-radius: 2rem;
+      padding: 0.5rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.8rem;
+      border: 1px dashed #5b5b7a;
+    }
+    .upload-label {
+      background: #4c4c6e;
+      padding: 0.3rem 1rem;
+      border-radius: 3rem;
+      color: white;
+      font-weight: 500;
+      font-size: 0.7rem;
+      cursor: pointer;
+      transition: 0.15s;
+      border: none;
+      white-space: nowrap;
+    }
+    .upload-label:hover {
+      background: #625f8b;
+    }
+    .file-name {
+      color: #b7b4d6;
+      font-size: 0.7rem;
+      word-break: break-all;
+      flex: 1;
+      min-width: 60px;
+    }
+    input[type="file"] {
+      display: none;
+    }
+
+    .player-bar {
+      background: #1c1c30;
+      border-radius: 3rem;
+      padding: 0.1rem 0.1rem 0.1rem 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.8rem;
+      border: 1px solid #3f3f5e;
+    }
+    .play-btn {
+      background: #7c6df0;
+      border: none;
+      width: 34px;
+      height: 34px;
+      border-radius: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: 0.15s;
+      flex-shrink: 0;
+    }
+    .play-btn:hover {
+      background: #9689f5;
+      transform: scale(1.02);
+    }
+    .play-btn.playing {
+      background: #f07c6d;
+    }
+    .time-indicator {
+      color: #cfcce6;
+      font-variant-numeric: tabular-nums;
+      font-size: 0.7rem;
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+      flex: 1;
+      min-width: 80px;
+    }
+    .progress-range {
+      flex: 2;
+      min-width: 60px;
+      accent-color: #7c6df0;
+      height: 3px;
+      cursor: pointer;
+    }
+
+    .day-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin: 0.5rem 0 0.4rem;
+    }
+    .day-btn {
+      background: #32324e;
+      border: none;
+      border-radius: 3rem;
+      padding: 0.3rem 0.8rem;
+      font-weight: 500;
+      color: #e5e2f7;
+      font-size: 0.65rem;
+      cursor: pointer;
+      transition: 0.12s;
+      border: 1px solid #4a4a6a;
+      flex: 1 0 auto;
+      min-width: 60px;
+    }
+    .day-btn:hover {
+      background: #4a4a6e;
+      color: white;
+      border-color: #7c6df0;
+    }
+    .day-btn.active-segment {
+      background: #7c6df0;
+      border-color: #9a8cf5;
+      color: white;
+      box-shadow: 0 0 10px #5b4cdb;
+    }
+
+    .footer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+    }
+    .repeat-toggle {
+      background: #2a2a44;
+      border-radius: 30px;
+      padding: 0.1rem 0.8rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      color: #b7b4d6;
+      font-size: 0.65rem;
+      border: 1px solid #4a4a6a;
+    }
+    .repeat-toggle input {
+      accent-color: #7c6df0;
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+    }
+    .day-badge {
+      background: #32324e;
+      border-radius: 20px;
+      padding: 0.1rem 0.6rem;
+      font-size: 0.6rem;
+      color: #b7b4d6;
+    }
+    .meta-note {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      margin-top: 0.4rem;
+      font-size: 0.6rem;
+      color: #6b6b8a;
+    }
+    .meta-note span {
+      background: #22223a;
+      padding: 0.1rem 0.6rem;
+      border-radius: 2rem;
+    }
+
+    /* scrollbar */
+    .main::-webkit-scrollbar {
+      width: 3px;
+    }
+    .main::-webkit-scrollbar-track {
+      background: #1a1a2e;
+    }
+    .main::-webkit-scrollbar-thumb {
+      background: #4b4b6e;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR: horizontal scroll for mobile -->
+  <nav class="sidebar" id="chapterTabs">
+    <!-- tabs will be injected here -->
+  </nav>
+
+  <!-- MAIN: player cards -->
+  <main class="main" id="mainContent">
+    <div class="player-container" id="playerContainer">
+      <!-- JSON upload banner -->
+      <div class="json-upload-banner" id="jsonBanner">
+        <div class="label">
+          <span>📄</span>
+          <strong>Upload JSON config</strong>
+          <span class="json-status" id="jsonStatus">(default times loaded)</span>
+        </div>
+        <div>
+          <button class="json-upload-btn" id="jsonUploadBtn">📁 Choose JSON</button>
+          <input type="file" id="jsonFileInput" accept=".json" style="display:none">
+        </div>
+      </div>
+      <!-- player cards will be injected here -->
+    </div>
+  </main>
+</div>
+
+<script>
+  (function() {
+    // ============================================================
+    //  DEFAULT CONFIG (used if no JSON uploaded)
+    // ============================================================
+    const DEFAULT_DATA = {
+      1: { day1: { start: 0, end: 100 }, day2: { start: 101, end: 120 }, day3: { start: 387, end: 457 } },
+      2: { day1: { start: 10, end: 60 }, day2: { start: 70, end: 90 }, day3: { start: 200, end: 280 } },
+      3: { day1: { start: 5, end: 45 }, day2: { start: 50, end: 75 }, day3: { start: 300, end: 380 } },
+      4: { day1: { start: 0, end: 30 }, day2: { start: 40, end: 70 }, day3: { start: 150, end: 220 } },
+      5: { day1: { start: 20, end: 80 }, day2: { start: 90, end: 120 }, day3: { start: 400, end: 500 } },
+      6: { day1: { start: 0, end: 50 }, day2: { start: 60, end: 100 }, day3: { start: 250, end: 320 } },
+      7: { day1: { start: 15, end: 55 }, day2: { start: 60, end: 85 }, day3: { start: 180, end: 240 } },
+      8: { day1: { start: 5, end: 40 }, day2: { start: 50, end: 80 }, day3: { start: 350, end: 420 } },
+      9: { day1: { start: 0, end: 35 }, day2: { start: 40, end: 65 }, day3: { start: 120, end: 190 } },
+      10: { day1: { start: 10, end: 70 }, day2: { start: 80, end: 110 }, day3: { start: 280, end: 360 } },
+      11: { day1: { start: 0, end: 60 }, day2: { start: 70, end: 95 }, day3: { start: 200, end: 270 } },
+      12: { day1: { start: 5, end: 45 }, day2: { start: 50, end: 75 }, day3: { start: 330, end: 400 } },
+      13: { day1: { start: 0, end: 25 }, day2: { start: 30, end: 55 }, day3: { start: 160, end: 230 } },
+      14: { day1: { start: 10, end: 50 }, day2: { start: 60, end: 90 }, day3: { start: 380, end: 460 } },
+      15: { day1: { start: 0, end: 40 }, day2: { start: 50, end: 80 }, day3: { start: 220, end: 300 } },
+      16: { day1: { start: 5, end: 55 }, day2: { start: 60, end: 85 }, day3: { start: 310, end: 390 } },
+      17: { day1: { start: 0, end: 30 }, day2: { start: 40, end: 70 }, day3: { start: 140, end: 210 } },
+      18: { day1: { start: 10, end: 65 }, day2: { start: 70, end: 100 }, day3: { start: 250, end: 330 } }
+    };
+ const JSON_URL = 'https://raw.githubusercontent.com/joyofdhamma/html_nibbana/refs/heads/main/chapter_time.json';
+
+// Auto-load JSON on page load
+async function loadJSONFromURL() {
+  try {
+    const response = await fetch(JSON_URL);
+    if (!response.ok) throw new Error('Network response was not ok');
+    const data = await response.json();
+    // Validate and apply
+    let valid = true;
+    for (let i = 1; i <= CHAPTERS; i++) {
+      if (!data[i] || !data[i].day1 || !data[i].day2 || !data[i].day3) {
+        valid = false;
+        break;
+      }
+    }
+    if (valid) {
+      CHAPTER_DATA = data;
+      jsonStatus.textContent = '✅ JSON loaded from GitHub!';
+      jsonStatus.className = 'json-status loaded';
+      rebuildAllPlayers();
+    }
+  } catch (err) {
+    console.warn('Could not load JSON from GitHub, using defaults:', err);
+    jsonStatus.textContent = '⚠️ Using defaults (GitHub load failed)';
+  }
+}
+
+// Call this after init
+loadJSONFromURL();
+    // ============================================================
+    //  STATE
+    // ============================================================
+    let CHAPTER_DATA = JSON.parse(JSON.stringify(DEFAULT_DATA)); // deep copy
+    const CHAPTERS = 18;
+    const chapterTabs = document.getElementById('chapterTabs');
+    const playerContainer = document.getElementById('playerContainer');
+    const jsonFileInput = document.getElementById('jsonFileInput');
+    const jsonStatus = document.getElementById('jsonStatus');
+
+    // Store player state per chapter
+    const players = {};
+
+    // ============================================================
+    //  JSON UPLOAD HANDLER
+    // ============================================================
+    document.getElementById('jsonUploadBtn').addEventListener('click', function() {
+      jsonFileInput.click();
+    });
+
+    jsonFileInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        try {
+          const data = JSON.parse(event.target.result);
+          // Validate: must have keys 1-18 with day1, day2, day3
+          let valid = true;
+          for (let i = 1; i <= CHAPTERS; i++) {
+            if (!data[i] || !data[i].day1 || !data[i].day2 || !data[i].day3) {
+              valid = false;
+              break;
+            }
+          }
+          if (!valid) {
+            alert('Invalid JSON format. Must have chapters 1-18 with day1, day2, day3 each having start and end.');
+            return;
+          }
+          CHAPTER_DATA = data;
+          jsonStatus.textContent = '✅ JSON loaded!';
+          jsonStatus.className = 'json-status loaded';
+          // Rebuild all players with new data
+          rebuildAllPlayers();
+        } catch (err) {
+          alert('Error parsing JSON: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    // ============================================================
+    //  BUILD APP
+    // ============================================================
+
+    // ----- get day label with times -----
+    function getDayLabel(day, data) {
+      const d = data[`day${day}`];
+      if (!d) return `Day ${day}`;
+      return `Day ${day} · ${d.start}s–${d.end}s`;
+    }
+
+    // ----- create player card -----
+    function createPlayerCard(chapterNum) {
+      const data = CHAPTER_DATA[chapterNum] || { day1: { start: 0, end: 100 }, day2: { start: 101, end: 120 }, day3: { start: 387, end: 457 } };
+      const card = document.createElement('div');
+      card.className = 'player-card';
+      card.dataset.chapter = chapterNum;
+      const uid = `ch${chapterNum}`;
+      card.innerHTML = `
+        <div class="player-header">
+          <h3>📀 Ch. ${chapterNum}</h3>
+          <span class="chapter-badge">MP3</span>
+        </div>
+        <div class="upload-area">
+          <label for="${uid}-upload" class="upload-label">📁 MP3</label>
+          <input type="file" id="${uid}-upload" accept=".mp3,audio/mpeg">
+          <span class="file-name" id="${uid}-filename">no file</span>
+        </div>
+        <div class="player-bar">
+          <button class="play-btn" id="${uid}-play" aria-label="play/pause">▶</button>
+          <div class="time-indicator">
+            <span id="${uid}-current">0:00</span>
+            <span style="color:#6b6b8f;">/</span>
+            <span id="${uid}-duration">0:00</span>
+          </div>
+          <input type="range" class="progress-range" id="${uid}-progress" min="0" max="1000" value="0">
+        </div>
+        <div class="day-grid">
+          <button class="day-btn" data-day="1" data-chapter="${chapterNum}">${getDayLabel(1, data)}</button>
+          <button class="day-btn" data-day="2" data-chapter="${chapterNum}">${getDayLabel(2, data)}</button>
+          <button class="day-btn" data-day="3" data-chapter="${chapterNum}">${getDayLabel(3, data)}</button>
+        </div>
+        <div class="footer-row">
+          <div class="repeat-toggle">
+            <span>🔁</span>
+            <input type="checkbox" class="repeat-check" id="${uid}-repeat" checked>
+          </div>
+          <span class="day-badge" id="${uid}-badge">⏸️ idle</span>
+        </div>
+        <div class="meta-note">
+          <span>⏱️ ${getDayLabel(1, data)}</span>
+          <span>⏱️ ${getDayLabel(2, data)}</span>
+          <span>⏱️ ${getDayLabel(3, data)}</span>
+        </div>
+      `;
+      return card;
+    }
+
+    // ----- rebuild all players (after JSON load) -----
+    function rebuildAllPlayers() {
+      // Clear existing players
+      const existingCards = document.querySelectorAll('.player-card');
+      existingCards.forEach(c => c.remove());
+
+      // Recreate
+      for (let i = 1; i <= CHAPTERS; i++) {
+        const card = createPlayerCard(i);
+        playerContainer.appendChild(card);
+        if (!players[i]) {
+          players[i] = { card, audio: null, isPlaying: false, activeDay: null, repeatEnabled: true };
+        } else {
+          players[i].card = card;
+          players[i].audio = null;
+          players[i].isPlaying = false;
+          players[i].activeDay = null;
+          players[i].repeatEnabled = true;
+        }
+      }
+      for (let i = 1; i <= CHAPTERS; i++) {
+        setupPlayer(i);
+      }
+      // Rebuild tabs (to update labels)
+      buildSidebar();
+      showChapter(1);
+    }
+
+    // ----- setup a single player -----
+    function setupPlayer(chapter) {
+      const uid = `ch${chapter}`;
+      const card = document.querySelector(`.player-card[data-chapter="${chapter}"]`);
+      if (!card) return;
+      const p = players[chapter];
+      const data = CHAPTER_DATA[chapter] || { day1: { start: 0, end: 100 }, day2: { start: 101, end: 120 }, day3: { start: 387, end: 457 } };
+
+      // DOM refs
+      const fileInput = document.getElementById(`${uid}-upload`);
+      const fileNameSpan = document.getElementById(`${uid}-filename`);
+      const playBtn = document.getElementById(`${uid}-play`);
+      const progressRange = document.getElementById(`${uid}-progress`);
+      const currentDisplay = document.getElementById(`${uid}-current`);
+      const durationDisplay = document.getElementById(`${uid}-duration`);
+      const badge = document.getElementById(`${uid}-badge`);
+      const repeatCheck = document.getElementById(`${uid}-repeat`);
+      const dayBtns = card.querySelectorAll('.day-btn');
+
+      let audio = null;
+
+      function formatTime(sec) {
+        if (!isFinite(sec) || sec < 0) sec = 0;
+        const mins = Math.floor(sec / 60);
+        const seconds = Math.floor(sec % 60);
+        return `${mins}:${seconds.toString().padStart(2, '0')}`;
+      }
+
+      function updateUI() {
+        if (!audio) return;
+        const current = audio.currentTime || 0;
+        const duration = audio.duration || 0;
+        if (duration > 0) {
+          const percent = (current / duration) * 1000;
+          progressRange.value = Math.min(1000, Math.max(0, percent));
+        } else {
+          progressRange.value = 0;
+        }
+        currentDisplay.textContent = formatTime(current);
+        durationDisplay.textContent = formatTime(duration);
+      }
+
+      function getSeg(day) {
+        const key = `day${day}`;
+        return data[key] || { start: 0, end: 100 };
+      }
+
+      function enforceSegmentAndRepeat() {
+        if (!audio || p.activeDay === null) return;
+        const seg = getSeg(p.activeDay);
+        if (!seg) return;
+        const { start, end } = seg;
+        let current = audio.currentTime;
+
+        if (current > end) {
+          if (p.repeatEnabled) {
+            audio.currentTime = start;
+            if (audio.paused) {
+              audio.play().catch(() => {});
+              p.isPlaying = true;
+              playBtn.textContent = '⏸';
+              playBtn.classList.add('playing');
+            }
+          } else {
+            if (!audio.paused) {
+              audio.pause();
+              p.isPlaying = false;
+              playBtn.textContent = '▶';
+              playBtn.classList.remove('playing');
+            }
+            audio.currentTime = end;
+          }
+          updateUI();
+          return;
+        }
+        if (current < start) {
+          audio.currentTime = start;
+          updateUI();
+        }
+      }
+
+      function playSegment(day) {
+        if (!audio) {
+          alert(`Chapter ${chapter}: Please upload an MP3 file first.`);
+          return false;
+        }
+        const seg = getSeg(day);
+        if (!seg) {
+          alert(`Day ${day} not defined for Chapter ${chapter}.`);
+          return false;
+        }
+        const duration = audio.duration;
+        if (!duration || duration === 0) {
+          alert('Audio not loaded yet.');
+          return false;
+        }
+        const safeStart = Math.min(seg.start, duration - 0.5);
+        if (safeStart < 0) return false;
+
+        p.activeDay = day;
+        dayBtns.forEach(btn => {
+          const d = parseInt(btn.dataset.day, 10);
+          btn.classList.toggle('active-segment', d === day);
+        });
+        badge.textContent = `📌 Day ${day} ${p.repeatEnabled ? '🔁' : ''}`;
+
+        audio.currentTime = safeStart;
+        audio.play().catch(() => {});
+        p.isPlaying = true;
+        playBtn.textContent = '⏸';
+        playBtn.classList.add('playing');
+        updateUI();
+        return true;
+      }
+
+      // ----- load file -----
+      function loadAudioFile(file) {
+        if (!file) return;
+        if (audio) {
+          audio.pause();
+          audio.src = '';
+          URL.revokeObjectURL(audio.src);
+          audio = null;
+        }
+        const url = URL.createObjectURL(file);
+        audio = new Audio(url);
+        audio.preload = 'metadata';
+
+        p.audio = audio;
+        p.isPlaying = false;
+        p.activeDay = null;
+        p.repeatEnabled = repeatCheck.checked;
+        playBtn.textContent = '▶';
+        playBtn.classList.remove('playing');
+        dayBtns.forEach(btn => btn.classList.remove('active-segment'));
+        badge.textContent = '⏸️ idle';
+        progressRange.value = 0;
+        currentDisplay.textContent = '0:00';
+        durationDisplay.textContent = '0:00';
+        fileNameSpan.textContent = file.name;
+
+        audio.addEventListener('loadedmetadata', function() {
+          durationDisplay.textContent = formatTime(audio.duration);
+          updateUI();
+        });
+
+        audio.addEventListener('timeupdate', function() {
+          updateUI();
+          if (p.activeDay !== null) {
+            enforceSegmentAndRepeat();
+          }
+        });
+
+        audio.addEventListener('ended', function() {
+          if (p.activeDay !== null && p.repeatEnabled) {
+            const seg = getSeg(p.activeDay);
+            if (seg) {
+              audio.currentTime = seg.start;
+              audio.play().catch(() => {});
+              p.isPlaying = true;
+              playBtn.textContent = '⏸';
+              playBtn.classList.add('playing');
+              updateUI();
+            }
+          } else {
+            p.isPlaying = false;
+            playBtn.textContent = '▶';
+            playBtn.classList.remove('playing');
+            if (p.activeDay !== null) {
+              const seg = getSeg(p.activeDay);
+              if (seg) audio.currentTime = seg.end;
+            }
+            updateUI();
+          }
+        });
+
+        audio.addEventListener('error', function(e) {
+          console.warn('audio error', e);
+          alert('Error loading audio. Try another file.');
+        });
+      }
+
+      // ----- events -----
+      fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          loadAudioFile(file);
+        } else {
+          fileNameSpan.textContent = 'no file';
+        }
+      });
+
+      playBtn.addEventListener('click', function() {
+        if (!audio) {
+          alert(`Chapter ${chapter}: Please upload an MP3 file.`);
+          return;
+        }
+        if (audio.paused) {
+          if (p.activeDay !== null) {
+            const seg = getSeg(p.activeDay);
+            if (seg) {
+              const current = audio.currentTime;
+              if (current < seg.start || current > seg.end) {
+                audio.currentTime = seg.start;
+              }
+            }
+          }
+          audio.play().catch(() => {});
+          p.isPlaying = true;
+          playBtn.textContent = '⏸';
+          playBtn.classList.add('playing');
+        } else {
+          audio.pause();
+          p.isPlaying = false;
+          playBtn.textContent = '▶';
+          playBtn.classList.remove('playing');
+        }
+      });
+
+      progressRange.addEventListener('input', function() {
+        if (!audio) return;
+        const duration = audio.duration;
+        if (!duration || duration === 0) return;
+        const percent = parseFloat(progressRange.value) / 1000;
+        const newTime = percent * duration;
+        audio.currentTime = newTime;
+        updateUI();
+        if (p.activeDay !== null) {
+          enforceSegmentAndRepeat();
+        }
+      });
+
+      dayBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          const day = parseInt(this.dataset.day, 10);
+          if (!day) return;
+          if (!audio) {
+            alert(`Chapter ${chapter}: Please upload an MP3 file first.`);
+            return;
+          }
+          playSegment(day);
+        });
+      });
+
+      repeatCheck.addEventListener('change', function() {
+        p.repeatEnabled = this.checked;
+        if (p.activeDay !== null) {
+          badge.textContent = `📌 Day ${p.activeDay} ${p.repeatEnabled ? '🔁' : ''}`;
+          if (!p.repeatEnabled && audio) {
+            const seg = getSeg(p.activeDay);
+            if (seg && audio.currentTime >= seg.end) {
+              audio.pause();
+              p.isPlaying = false;
+              playBtn.textContent = '▶';
+              playBtn.classList.remove('playing');
+              audio.currentTime = seg.end;
+              updateUI();
+            }
+          }
+        }
+      });
+
+      p.audio = audio;
+      p.repeatEnabled = repeatCheck.checked;
+    }
+
+    // ----- show chapter (hide others) -----
+    function showChapter(chapter) {
+      const allCards = document.querySelectorAll('.player-card');
+      allCards.forEach(c => c.classList.add('hidden'));
+      const target = document.querySelector(`.player-card[data-chapter="${chapter}"]`);
+      if (target) target.classList.remove('hidden');
+
+      document.querySelectorAll('.chapter-tab').forEach(tab => {
+        const num = parseInt(tab.dataset.chapter, 10);
+        tab.classList.toggle('active-tab', num === chapter);
+      });
+    }
+
+    // ----- build sidebar tabs (horizontal) -----
+    function buildSidebar() {
+      chapterTabs.innerHTML = '';
+      for (let i = 1; i <= CHAPTERS; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'chapter-tab';
+        btn.dataset.chapter = i;
+        btn.textContent = `📘 ${i}`;
+        btn.addEventListener('click', function() {
+          const ch = parseInt(this.dataset.chapter, 10);
+          showChapter(ch);
+          this.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        });
+        chapterTabs.appendChild(btn);
+      }
+    }
+
+    // ----- init -----
+    buildSidebar();
+
+    // Build initial players
+    for (let i = 1; i <= CHAPTERS; i++) {
+      const card = createPlayerCard(i);
+      playerContainer.appendChild(card);
+      players[i] = { card, audio: null, isPlaying: false, activeDay: null, repeatEnabled: true };
+    }
+    for (let i = 1; i <= CHAPTERS; i++) {
+      setupPlayer(i);
+    }
+    showChapter(1);
+  })();
+</script>
+</body>
+</html>
