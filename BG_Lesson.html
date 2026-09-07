@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-  <title>Gita · Chapter Player</title>
+  <title>Gita · Dynamic Chapter Player</title>
   <style>
     * {
       box-sizing: border-box;
@@ -68,9 +68,6 @@
       border-color: #9a8cf5;
       box-shadow: 0 0 12px #6b5cdb;
     }
-    .sidebar-title {
-      display: none;
-    }
 
     /* ---------- MAIN CONTENT ---------- */
     .main {
@@ -128,6 +125,9 @@
     }
     .json-status.loaded {
       color: #7cdf7c;
+    }
+    .json-status.error {
+      color: #f07c6d;
     }
 
     /* player card */
@@ -361,11 +361,11 @@
       <div class="json-upload-banner" id="jsonBanner">
         <div class="label">
           <span>📄</span>
-          <strong>Upload JSON config</strong>
-          <span class="json-status" id="jsonStatus">(default times loaded)</span>
+          <strong>JSON Config</strong>
+          <span class="json-status" id="jsonStatus">⏳ Loading from GitHub...</span>
         </div>
         <div>
-          <button class="json-upload-btn" id="jsonUploadBtn">📁 Choose JSON</button>
+          <button class="json-upload-btn" id="jsonUploadBtn">📁 Manual Upload</button>
           <input type="file" id="jsonFileInput" accept=".json" style="display:none">
         </div>
       </div>
@@ -377,12 +377,17 @@
 <script>
   (function() {
     // ============================================================
-    //  DEFAULT CONFIG (used if no JSON uploaded)
+    //  GITHUB JSON URL - EDIT THIS TO CHANGE THE SOURCE
+    // ============================================================
+    const GITHUB_JSON_URL = 'https://raw.githubusercontent.com/joyofdhamma/html_nibbana/refs/heads/main/chapter_time.json';
+
+    // ============================================================
+    //  DEFAULT CONFIG (used if GitHub load fails)
     // ============================================================
     const DEFAULT_DATA = {
       1: { day1: { start: 0, end: 100 }, day2: { start: 101, end: 120 }, day3: { start: 387, end: 457 } },
       2: { day1: { start: 10, end: 60 }, day2: { start: 70, end: 90 }, day3: { start: 200, end: 280 } },
-      3: { day1: { start: 5, end: 45 }, day2: { start: 50, end: 75 }, day3: { start: 300, end: 380 } },
+      3: { day1: { start: 5, end: 45 }, day2: { start: 50, end: 75 }, day3: { start: 300, end: 380 }, day4: { start: 500, end: 600 } },
       4: { day1: { start: 0, end: 30 }, day2: { start: 40, end: 70 }, day3: { start: 150, end: 220 } },
       5: { day1: { start: 20, end: 80 }, day2: { start: 90, end: 120 }, day3: { start: 400, end: 500 } },
       6: { day1: { start: 0, end: 50 }, day2: { start: 60, end: 100 }, day3: { start: 250, end: 320 } },
@@ -399,40 +404,11 @@
       17: { day1: { start: 0, end: 30 }, day2: { start: 40, end: 70 }, day3: { start: 140, end: 210 } },
       18: { day1: { start: 10, end: 65 }, day2: { start: 70, end: 100 }, day3: { start: 250, end: 330 } }
     };
- const JSON_URL = 'https://raw.githubusercontent.com/joyofdhamma/html_nibbana/refs/heads/main/chapter_time.json';
 
-// Auto-load JSON on page load
-async function loadJSONFromURL() {
-  try {
-    const response = await fetch(JSON_URL);
-    if (!response.ok) throw new Error('Network response was not ok');
-    const data = await response.json();
-    // Validate and apply
-    let valid = true;
-    for (let i = 1; i <= CHAPTERS; i++) {
-      if (!data[i] || !data[i].day1 || !data[i].day2 || !data[i].day3) {
-        valid = false;
-        break;
-      }
-    }
-    if (valid) {
-      CHAPTER_DATA = data;
-      jsonStatus.textContent = '✅ JSON loaded from GitHub!';
-      jsonStatus.className = 'json-status loaded';
-      rebuildAllPlayers();
-    }
-  } catch (err) {
-    console.warn('Could not load JSON from GitHub, using defaults:', err);
-    jsonStatus.textContent = '⚠️ Using defaults (GitHub load failed)';
-  }
-}
-
-// Call this after init
-loadJSONFromURL();
     // ============================================================
     //  STATE
     // ============================================================
-    let CHAPTER_DATA = JSON.parse(JSON.stringify(DEFAULT_DATA)); // deep copy
+    let CHAPTER_DATA = JSON.parse(JSON.stringify(DEFAULT_DATA));
     const CHAPTERS = 18;
     const chapterTabs = document.getElementById('chapterTabs');
     const playerContainer = document.getElementById('playerContainer');
@@ -443,7 +419,59 @@ loadJSONFromURL();
     const players = {};
 
     // ============================================================
-    //  JSON UPLOAD HANDLER
+    //  HELPER: Get all day keys from a chapter data
+    // ============================================================
+    function getDayKeys(data) {
+      if (!data) return [];
+      return Object.keys(data)
+        .filter(key => key.startsWith('day'))
+        .sort((a, b) => {
+          const numA = parseInt(a.replace('day', ''));
+          const numB = parseInt(b.replace('day', ''));
+          return numA - numB;
+        });
+    }
+
+    // ============================================================
+    //  LOAD JSON FROM GITHUB
+    // ============================================================
+    async function loadJSONFromGitHub() {
+      try {
+        jsonStatus.textContent = '⏳ Loading from GitHub...';
+        jsonStatus.className = 'json-status';
+        
+        const response = await fetch(GITHUB_JSON_URL);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        
+        // Validate: must have keys 1-18 with at least day1
+        let valid = true;
+        for (let i = 1; i <= CHAPTERS; i++) {
+          if (!data[i] || !data[i].day1) {
+            valid = false;
+            break;
+          }
+        }
+        
+        if (valid) {
+          CHAPTER_DATA = data;
+          jsonStatus.textContent = '✅ Loaded from GitHub!';
+          jsonStatus.className = 'json-status loaded';
+          rebuildAllPlayers();
+          return true;
+        } else {
+          throw new Error('Invalid JSON format: missing chapters or day1');
+        }
+      } catch (err) {
+        console.warn('Could not load JSON from GitHub:', err);
+        jsonStatus.textContent = '⚠️ Using defaults (GitHub load failed)';
+        jsonStatus.className = 'json-status error';
+        return false;
+      }
+    }
+
+    // ============================================================
+    //  JSON MANUAL UPLOAD HANDLER
     // ============================================================
     document.getElementById('jsonUploadBtn').addEventListener('click', function() {
       jsonFileInput.click();
@@ -457,22 +485,21 @@ loadJSONFromURL();
       reader.onload = function(event) {
         try {
           const data = JSON.parse(event.target.result);
-          // Validate: must have keys 1-18 with day1, day2, day3
+          // Validate: must have keys 1-18 with at least day1
           let valid = true;
           for (let i = 1; i <= CHAPTERS; i++) {
-            if (!data[i] || !data[i].day1 || !data[i].day2 || !data[i].day3) {
+            if (!data[i] || !data[i].day1) {
               valid = false;
               break;
             }
           }
           if (!valid) {
-            alert('Invalid JSON format. Must have chapters 1-18 with day1, day2, day3 each having start and end.');
+            alert('Invalid JSON format. Must have chapters 1-18 with at least day1 having start and end.');
             return;
           }
           CHAPTER_DATA = data;
-          jsonStatus.textContent = '✅ JSON loaded!';
+          jsonStatus.textContent = '✅ Manual JSON loaded!';
           jsonStatus.className = 'json-status loaded';
-          // Rebuild all players with new data
           rebuildAllPlayers();
         } catch (err) {
           alert('Error parsing JSON: ' + err.message);
@@ -486,23 +513,35 @@ loadJSONFromURL();
     // ============================================================
 
     // ----- get day label with times -----
-    function getDayLabel(day, data) {
-      const d = data[`day${day}`];
-      if (!d) return `Day ${day}`;
-      return `Day ${day} · ${d.start}s–${d.end}s`;
+    function getDayLabel(dayKey, data) {
+      const d = data[dayKey];
+      if (!d) return dayKey;
+      const dayNum = dayKey.replace('day', '');
+      return `Day ${dayNum} · ${d.start}s–${d.end}s`;
     }
 
     // ----- create player card -----
     function createPlayerCard(chapterNum) {
-      const data = CHAPTER_DATA[chapterNum] || { day1: { start: 0, end: 100 }, day2: { start: 101, end: 120 }, day3: { start: 387, end: 457 } };
+      const data = CHAPTER_DATA[chapterNum] || { day1: { start: 0, end: 100 } };
+      const dayKeys = getDayKeys(data);
+      
       const card = document.createElement('div');
       card.className = 'player-card';
       card.dataset.chapter = chapterNum;
       const uid = `ch${chapterNum}`;
+      
+      // Build day buttons dynamically
+      let dayButtonsHTML = '';
+      let metaNotesHTML = '';
+      dayKeys.forEach(key => {
+        dayButtonsHTML += `<button class="day-btn" data-day="${key}" data-chapter="${chapterNum}">${getDayLabel(key, data)}</button>`;
+        metaNotesHTML += `<span>⏱️ ${getDayLabel(key, data)}</span>`;
+      });
+      
       card.innerHTML = `
         <div class="player-header">
           <h3>📀 Ch. ${chapterNum}</h3>
-          <span class="chapter-badge">MP3</span>
+          <span class="chapter-badge">${dayKeys.length} days</span>
         </div>
         <div class="upload-area">
           <label for="${uid}-upload" class="upload-label">📁 MP3</label>
@@ -519,9 +558,7 @@ loadJSONFromURL();
           <input type="range" class="progress-range" id="${uid}-progress" min="0" max="1000" value="0">
         </div>
         <div class="day-grid">
-          <button class="day-btn" data-day="1" data-chapter="${chapterNum}">${getDayLabel(1, data)}</button>
-          <button class="day-btn" data-day="2" data-chapter="${chapterNum}">${getDayLabel(2, data)}</button>
-          <button class="day-btn" data-day="3" data-chapter="${chapterNum}">${getDayLabel(3, data)}</button>
+          ${dayButtonsHTML}
         </div>
         <div class="footer-row">
           <div class="repeat-toggle">
@@ -531,9 +568,7 @@ loadJSONFromURL();
           <span class="day-badge" id="${uid}-badge">⏸️ idle</span>
         </div>
         <div class="meta-note">
-          <span>⏱️ ${getDayLabel(1, data)}</span>
-          <span>⏱️ ${getDayLabel(2, data)}</span>
-          <span>⏱️ ${getDayLabel(3, data)}</span>
+          ${metaNotesHTML}
         </div>
       `;
       return card;
@@ -573,7 +608,8 @@ loadJSONFromURL();
       const card = document.querySelector(`.player-card[data-chapter="${chapter}"]`);
       if (!card) return;
       const p = players[chapter];
-      const data = CHAPTER_DATA[chapter] || { day1: { start: 0, end: 100 }, day2: { start: 101, end: 120 }, day3: { start: 387, end: 457 } };
+      const data = CHAPTER_DATA[chapter] || { day1: { start: 0, end: 100 } };
+      const dayKeys = getDayKeys(data);
 
       // DOM refs
       const fileInput = document.getElementById(`${uid}-upload`);
@@ -609,9 +645,8 @@ loadJSONFromURL();
         durationDisplay.textContent = formatTime(duration);
       }
 
-      function getSeg(day) {
-        const key = `day${day}`;
-        return data[key] || { start: 0, end: 100 };
+      function getSeg(dayKey) {
+        return data[dayKey] || { start: 0, end: 100 };
       }
 
       function enforceSegmentAndRepeat() {
@@ -648,14 +683,14 @@ loadJSONFromURL();
         }
       }
 
-      function playSegment(day) {
+      function playSegment(dayKey) {
         if (!audio) {
           alert(`Chapter ${chapter}: Please upload an MP3 file first.`);
           return false;
         }
-        const seg = getSeg(day);
+        const seg = getSeg(dayKey);
         if (!seg) {
-          alert(`Day ${day} not defined for Chapter ${chapter}.`);
+          alert(`${dayKey} not defined for Chapter ${chapter}.`);
           return false;
         }
         const duration = audio.duration;
@@ -666,12 +701,13 @@ loadJSONFromURL();
         const safeStart = Math.min(seg.start, duration - 0.5);
         if (safeStart < 0) return false;
 
-        p.activeDay = day;
+        p.activeDay = dayKey;
         dayBtns.forEach(btn => {
-          const d = parseInt(btn.dataset.day, 10);
-          btn.classList.toggle('active-segment', d === day);
+          const d = btn.dataset.day;
+          btn.classList.toggle('active-segment', d === dayKey);
         });
-        badge.textContent = `📌 Day ${day} ${p.repeatEnabled ? '🔁' : ''}`;
+        const dayNum = dayKey.replace('day', '');
+        badge.textContent = `📌 Day ${dayNum} ${p.repeatEnabled ? '🔁' : ''}`;
 
         audio.currentTime = safeStart;
         audio.play().catch(() => {});
@@ -801,20 +837,21 @@ loadJSONFromURL();
 
       dayBtns.forEach(btn => {
         btn.addEventListener('click', function() {
-          const day = parseInt(this.dataset.day, 10);
-          if (!day) return;
+          const dayKey = this.dataset.day;
+          if (!dayKey) return;
           if (!audio) {
             alert(`Chapter ${chapter}: Please upload an MP3 file first.`);
             return;
           }
-          playSegment(day);
+          playSegment(dayKey);
         });
       });
 
       repeatCheck.addEventListener('change', function() {
         p.repeatEnabled = this.checked;
         if (p.activeDay !== null) {
-          badge.textContent = `📌 Day ${p.activeDay} ${p.repeatEnabled ? '🔁' : ''}`;
+          const dayNum = p.activeDay.replace('day', '');
+          badge.textContent = `📌 Day ${dayNum} ${p.repeatEnabled ? '🔁' : ''}`;
           if (!p.repeatEnabled && audio) {
             const seg = getSeg(p.activeDay);
             if (seg && audio.currentTime >= seg.end) {
@@ -863,10 +900,12 @@ loadJSONFromURL();
       }
     }
 
-    // ----- init -----
+    // ============================================================
+    //  INITIALIZATION
+    // ============================================================
     buildSidebar();
 
-    // Build initial players
+    // Build initial players with defaults
     for (let i = 1; i <= CHAPTERS; i++) {
       const card = createPlayerCard(i);
       playerContainer.appendChild(card);
@@ -876,6 +915,9 @@ loadJSONFromURL();
       setupPlayer(i);
     }
     showChapter(1);
+
+    // Try to load JSON from GitHub
+    loadJSONFromGitHub();
   })();
 </script>
 </body>
