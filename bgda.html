@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gita · Chapter 2, 18 Days</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<style>
+  :root{
+    --paper:#FBF8F2;
+    --ink:#2E2A22;
+    --ink-soft:#84796A;
+    --line:#E5DCC9;
+    --saffron:#BF6B3D;
+    --saffron-deep:#9A4E27;
+    --gold:#C9A24B;
+    --card:#FFFFFF;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  header{
+    text-align:center;
+    padding:34px 20px 22px;
+    border-bottom:1px solid var(--line);
+    background:
+      radial-gradient(circle at 50% 0%, rgba(191,107,61,0.06), transparent 60%),
+      var(--paper);
+  }
+  header .eyebrow{
+    font-family:var(--serif);
+    font-style:italic;
+    color:var(--saffron-deep);
+    font-size:14px;
+    letter-spacing:0.02em;
+  }
+  header h1{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:30px;
+    margin:6px 0 4px;
+  }
+  header .sub{
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+
+  /* Day selector strip */
+  .day-strip-wrap{
+    position:sticky;
+    top:0;
+    z-index:10;
+    background:var(--paper);
+    border-bottom:1px solid var(--line);
+    padding:14px 0;
+  }
+  .day-strip{
+    max-width:760px;
+    margin:0 auto;
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding:0 20px 4px;
+    scrollbar-width:thin;
+  }
+  .day-strip::-webkit-scrollbar{ height:5px; }
+  .day-strip::-webkit-scrollbar-thumb{ background:var(--line); border-radius:6px; }
+  .day-btn{
+    flex-shrink:0;
+    font-family:var(--serif);
+    font-size:14px;
+    border:1px solid var(--line);
+    background:var(--card);
+    color:var(--ink-soft);
+    padding:8px 15px;
+    border-radius:20px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .day-btn:hover{ border-color:var(--saffron); }
+  .day-btn.active{
+    background:var(--saffron);
+    border-color:var(--saffron);
+    color:#fff;
+    font-weight:600;
+  }
+  .day-btn .verses-tag{
+    font-family:var(--sans);
+    font-size:10px;
+    opacity:0.75;
+    display:block;
+    margin-top:1px;
+  }
+
+  .nav-arrows{
+    max-width:760px;
+    margin:0 auto;
+    display:flex;
+    justify-content:space-between;
+    padding:6px 20px 0;
+  }
+  .arrow-btn{
+    font-family:var(--sans);
+    font-size:13px;
+    background:none;
+    border:none;
+    color:var(--saffron-deep);
+    cursor:pointer;
+    padding:4px 6px;
+  }
+  .arrow-btn:disabled{ color:var(--ink-soft); opacity:0.4; cursor:default; }
+
+  main{
+    max-width:760px;
+    margin:0 auto;
+    padding:30px 20px 80px;
+  }
+
+  #status{
+    text-align:center;
+    color:var(--ink-soft);
+    font-style:italic;
+    font-family:var(--serif);
+    padding:50px 20px;
+  }
+  #status.error{ color:var(--saffron-deep); }
+
+  .content-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:36px 32px;
+  }
+
+  /* Markdown rendering inside content-card */
+  .content-card h1{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:24px;
+    margin-top:0;
+  }
+  .content-card h3{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:19px;
+    color:var(--saffron-deep);
+    margin:30px 0 10px;
+    padding-top:22px;
+    border-top:1px solid var(--line);
+  }
+  .content-card h3:first-of-type{ border-top:none; padding-top:0; margin-top:8px; }
+  .content-card p{
+    line-height:1.75;
+    font-size:15.5px;
+    margin:0 0 14px;
+  }
+  .content-card p em{ color:var(--saffron-deep); font-style:italic; }
+  .content-card strong{ color:var(--ink); }
+  .content-card ul, .content-card ol{
+    padding-left:22px;
+    margin:0 0 16px;
+  }
+  .content-card li{
+    line-height:1.7;
+    font-size:15.5px;
+    margin-bottom:8px;
+  }
+  .content-card hr{
+    border:none;
+    border-top:1px solid var(--line);
+    margin:0;
+    display:none; /* we render section breaks via h3 border instead */
+  }
+  .content-card blockquote{
+    margin:0 0 16px;
+    padding:4px 0 4px 16px;
+    border-left:3px solid var(--gold);
+    color:var(--ink-soft);
+    font-style:italic;
+  }
+
+  footer{
+    text-align:center;
+    padding:24px 20px 40px;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+
+  @media (max-width:600px){
+    .content-card{ padding:26px 20px; }
+    header h1{ font-size:24px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">भगवद्गीता · Chapter Two</div>
+  <h1>Eighteen Days, Four Verses</h1>
+  <div class="sub" id="day-heading">Loading…</div>
+</header>
+
+<div class="day-strip-wrap">
+  <div class="day-strip" id="day-strip"></div>
+  <div class="nav-arrows">
+    <button class="arrow-btn" id="prev-btn" onclick="shiftDay(-1)">‹ Previous day</button>
+    <button class="arrow-btn" id="next-btn" onclick="shiftDay(1)">Next day ›</button>
+  </div>
+</div>
+
+<main>
+  <div id="status">Loading Day 1…</div>
+  <div class="content-card" id="content" style="display:none;"></div>
+</main>
+
+<footer>Chapter 2 · Sāṅkhya Yoga · 18 days · 4 verses per day</footer>
+
+<script>
+/* ====== CONFIG ====== */
+const GH_OWNER = "joyofdhamma";
+const GH_REPO  = "bgda";
+const GH_BRANCH = "main";
+/* ===================== */
+
+const TOTAL_DAYS = 18;
+const VERSES_START = 1; // Chapter 2 verses begin at 1
+
+let currentDay = 1;
+
+function verseRangeForDay(day){
+  const start = VERSES_START + (day - 1) * 4;
+  const end = start + 3;
+  return `${start}–${end}`;
+}
+
+function buildDayStrip(){
+  const strip = document.getElementById('day-strip');
+  strip.innerHTML = '';
+  for(let d=1; d<=TOTAL_DAYS; d++){
+    const btn = document.createElement('button');
+    btn.className = 'day-btn';
+    btn.id = 'day-btn-' + d;
+    btn.innerHTML = `Day ${d}<span class="verses-tag">v.${verseRangeForDay(d)}</span>`;
+    btn.onclick = () => loadDay(d);
+    strip.appendChild(btn);
+  }
+}
+
+function setActiveButton(day){
+  document.querySelectorAll('.day-btn').forEach(b=>b.classList.remove('active'));
+  const btn = document.getElementById('day-btn-' + day);
+  if(btn){
+    btn.classList.add('active');
+    btn.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
+  }
+  document.getElementById('prev-btn').disabled = day <= 1;
+  document.getElementById('next-btn').disabled = day >= TOTAL_DAYS;
+}
+
+function shiftDay(n){
+  const next = currentDay + n;
+  if(next < 1 || next > TOTAL_DAYS) return;
+  loadDay(next);
+}
+
+async function loadDay(day){
+  currentDay = day;
+  setActiveButton(day);
+  history.replaceState(null, '', '#day-' + day);
+
+  const statusEl = document.getElementById('status');
+  const contentEl = document.getElementById('content');
+  contentEl.style.display = 'none';
+  statusEl.style.display = 'block';
+  statusEl.className = '';
+  statusEl.textContent = `Loading Day ${day}…`;
+  document.getElementById('day-heading').textContent = `Day ${day} of 18 · Verses ${verseRangeForDay(day)}`;
+
+  const filename = `Ch2_D${day}.md`;
+  const url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${filename}`;
+  const cacheKey = 'gita_cache_' + filename;
+
+  // Try network first, fall back to cache if offline
+  try{
+    const res = await fetch(url, { cache: 'no-store' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const md = await res.text();
+    localStorage.setItem(cacheKey, md);
+    renderMarkdown(md, day, false);
+  }catch(e){
+    console.warn('Network fetch failed, trying cache:', e);
+    const cached = localStorage.getItem(cacheKey);
+    if(cached){
+      renderMarkdown(cached, day, true);
+    }else{
+      statusEl.className = 'error';
+      statusEl.textContent = `Couldn't load Day ${day} — no internet connection and no offline copy saved yet for ${filename}. Connect once to cache it, then it will work offline.`;
+    }
+  }
+}
+
+function renderMarkdown(md, day, fromCache){
+  const statusEl = document.getElementById('status');
+  const contentEl = document.getElementById('content');
+  contentEl.innerHTML = marked.parse(md);
+  if(fromCache){
+    const note = document.createElement('div');
+    note.style.cssText = 'font-size:12px;color:var(--ink-soft);margin-bottom:18px;font-style:italic;';
+    note.textContent = '(Showing offline copy saved earlier — not connected right now)';
+    contentEl.insertBefore(note, contentEl.firstChild);
+  }
+  statusEl.style.display = 'none';
+  contentEl.style.display = 'block';
+}
+
+async function precacheAllDays(){
+  for(let d=1; d<=TOTAL_DAYS; d++){
+    const filename = `Ch2_D${d}.md`;
+    const cacheKey = 'gita_cache_' + filename;
+    if(localStorage.getItem(cacheKey)) continue; // already cached
+    try{
+      const url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${filename}`;
+      const res = await fetch(url, { cache: 'no-store' });
+      if(res.ok){
+        const md = await res.text();
+        localStorage.setItem(cacheKey, md);
+      }
+    }catch(e){ /* silent — will just retry next visit */ }
+  }
+}
+
+/* ====== INIT ====== */
+buildDayStrip();
+const hashMatch = location.hash.match(/day-(\d+)/);
+const startDay = hashMatch ? Math.min(TOTAL_DAYS, Math.max(1, parseInt(hashMatch[1]))) : 1;
+loadDay(startDay);
+precacheAllDays();
+</script>
+</body>
+</html>
