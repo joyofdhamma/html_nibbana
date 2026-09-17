@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Voice to text</title>
+<style>
+  :root {
+    --text-primary: #1a1a1a;
+    --text-secondary: #666;
+    --border: #ddd;
+    --surface-1: #f7f7f5;
+    --surface-2: #ffffff;
+    --accent: #2f6fed;
+    --danger: #d64545;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --text-primary: #f0f0f0;
+      --text-secondary: #aaa;
+      --border: #3a3a3a;
+      --surface-1: #1c1c1c;
+      --surface-2: #262626;
+      --accent: #6ea1ff;
+      --danger: #ff7a7a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --text-primary: #f0f0f0;
+    --text-secondary: #aaa;
+    --border: #3a3a3a;
+    --surface-1: #1c1c1c;
+    --surface-2: #262626;
+    --accent: #6ea1ff;
+    --danger: #ff7a7a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--surface-1);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+  .wrap { width: 100%; max-width: 640px; }
+  h1 { font-size: 20px; font-weight: 500; margin: 0 0 4px; }
+  p.sub { color: var(--text-secondary); font-size: 14px; margin: 0 0 20px; }
+  .controls { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  button {
+    font-size: 14px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+  button#mic { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 500; }
+  button#mic.recording { background: var(--danger); border-color: var(--danger); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  textarea {
+    width: 100%;
+    min-height: 260px;
+    resize: vertical;
+    padding: 14px;
+    font-size: 15px;
+    line-height: 1.6;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-primary);
+  }
+  .status { font-size: 13px; color: var(--text-secondary); margin: 10px 0 0; min-height: 18px; }
+  .status.live { color: var(--accent); }
+  #copyMsg { font-size: 13px; color: var(--accent); margin-left: 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Voice to text</h1>
+  <p class="sub">Tap the mic, speak, then copy the text for use anywhere else.</p>
+
+  <div class="controls">
+    <button id="mic">Start recording</button>
+    <button id="clear">Clear</button>
+    <button id="copy">Copy text</button>
+    <span id="copyMsg"></span>
+  </div>
+
+  <textarea id="output" placeholder="Your speech will appear here..."></textarea>
+  <p class="status" id="status"></p>
+</div>
+
+<script>
+const micBtn = document.getElementById('mic');
+const clearBtn = document.getElementById('clear');
+const copyBtn = document.getElementById('copy');
+const copyMsg = document.getElementById('copyMsg');
+const output = document.getElementById('output');
+const statusEl = document.getElementById('status');
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+let recording = false;
+let finalText = '';
+
+if (!SpeechRecognition) {
+  statusEl.textContent = 'Speech recognition is not supported in this browser. Try Chrome or Edge on desktop or Android.';
+  micBtn.disabled = true;
+} else {
+  recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
+
+  recognition.onresult = (event) => {
+    let interim = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        finalText += transcript + ' ';
+      } else {
+        interim += transcript;
+      }
+    }
+    output.value = (finalText + interim).trim();
+  };
+
+  recognition.onerror = (event) => {
+    statusEl.textContent = 'Error: ' + event.error;
+    statusEl.classList.remove('live');
+    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+      stopRecording();
+    }
+  };
+
+  recognition.onend = () => {
+    if (recording) {
+      try { recognition.start(); } catch (e) {}
+    }
+  };
+}
+
+function startRecording() {
+  if (!recognition) return;
+  try {
+    recognition.start();
+    recording = true;
+    micBtn.textContent = 'Stop recording';
+    micBtn.classList.add('recording');
+    statusEl.textContent = 'Listening...';
+    statusEl.classList.add('live');
+  } catch (e) {}
+}
+
+function stopRecording() {
+  if (!recognition) return;
+  recording = false;
+  recognition.stop();
+  micBtn.textContent = 'Start recording';
+  micBtn.classList.remove('recording');
+  statusEl.textContent = 'Stopped.';
+  statusEl.classList.remove('live');
+}
+
+micBtn.addEventListener('click', () => {
+  if (recording) stopRecording();
+  else startRecording();
+});
+
+clearBtn.addEventListener('click', () => {
+  finalText = '';
+  output.value = '';
+  statusEl.textContent = '';
+});
+
+copyBtn.addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(output.value);
+    copyMsg.textContent = 'Copied!';
+  } catch (e) {
+    output.select();
+    document.execCommand('copy');
+    copyMsg.textContent = 'Copied!';
+  }
+  setTimeout(() => { copyMsg.textContent = ''; }, 1500);
+});
+</script>
+</body>
+</html>
