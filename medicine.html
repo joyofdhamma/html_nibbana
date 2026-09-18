@@ -391,7 +391,7 @@ phoneInput.addEventListener("input", () => {
 function validatePhoneUI(){
     const v = phoneInput.value;
     if (!v){
-        phoneHint.innerText = "দেশের কোড সহ নম্বর দিন, যেমন 91 দিয়ে শুরু (ভারত)";
+        phoneHint.innerText = "91 দিয়ে শুরু (ভারত)";
         phoneHint.classList.remove("err");
         return false;
     }
@@ -487,9 +487,9 @@ sendBtn.addEventListener("click", () => {
         return;
     }
 
-    let messageText = `মাসিক মুদিখানা তালিকা\n`;
+    let messageText = `*Medicine List*\n`;
     selected.forEach((item, idx) => { messageText += `${idx+1}. ${item}\n`; });
-    messageText += `\n📅 তারিখ: ${new Date().toLocaleDateString('bn-BD')}`;
+    //messageText += `\n📅 Date: ${new Date().toLocaleDateString('bn-BD')}`;
 
     const encoded = encodeURIComponent(messageText);
     const phone = phoneInput.value;
