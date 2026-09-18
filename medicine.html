@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-<title>Medicine Requisition List + 9594716320</title>
+<title>Medicine Requisition List</title>
 <style>
     :root{
         --green-dark:#1f7a3d;
@@ -45,7 +45,7 @@
         position:relative;
     }
     .header h1{
-        font-size:1.7rem; font-weight:700; letter-spacing:.3px;
+        font-size:1.6rem; font-weight:700; letter-spacing:.3px;
         display:flex; align-items:center; justify-content:center; gap:10px;
     }
     .header .sub{
@@ -142,27 +142,55 @@
         letter-spacing:.6px; color:#8a967a; margin:14px 4px 6px;
     }
     .grocery-list{
-        list-style:none; display:flex; flex-direction:column; gap:6px;
-        max-height:400px; overflow-y:auto; padding-right:4px; scrollbar-width:thin;
+        list-style:none; display:flex; flex-direction:column; gap:8px;
+        max-height:460px; overflow-y:auto; padding-right:4px; scrollbar-width:thin;
     }
     .grocery-list::-webkit-scrollbar{ width:6px; }
     .grocery-list::-webkit-scrollbar-thumb{ background:#c3cdb2; border-radius:10px; }
 
     .list-item{
-        display:flex; align-items:center; justify-content:space-between;
-        background:#fff; border-radius:50px; padding:10px 16px;
+        display:flex; flex-direction:column; gap:8px;
+        background:#fff; border-radius:20px; padding:12px 16px;
         border:1px solid var(--border); transition:.15s;
     }
     .list-item.checked{
         background:#eefbf1; border-color:#bfe6c8;
     }
+    .item-top-row{
+        display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
     .item-name{
-        font-size:1.05rem; font-weight:500; color:var(--text);
+        font-size:1.02rem; font-weight:500; color:var(--text);
         font-family:'Noto Sans Bengali',inherit; word-break:break-word;
     }
     .checkbox-wrapper input[type="checkbox"]{
         width:24px; height:24px; cursor:pointer; accent-color:var(--green-dark);
+        user-select:auto; -webkit-user-select:auto; flex-shrink:0;
+    }
+    .qty-row{
+        display:flex; align-items:center; gap:8px;
+        max-height:0; opacity:0; overflow:hidden;
+        transition:max-height .2s ease, opacity .2s ease, margin .2s ease;
+    }
+    .list-item.checked .qty-row{
+        max-height:60px; opacity:1; margin-top:2px;
+    }
+    .qty-field{
+        display:flex; align-items:center; gap:6px;
+        background:#f4f6ec; border:1px solid var(--border);
+        border-radius:14px; padding:6px 10px;
+    }
+    .qty-field label{
+        font-size:.7rem; color:var(--muted); font-weight:600; white-space:nowrap;
+    }
+    .qty-field input{
+        width:44px; border:none; outline:none; background:transparent;
+        font-size:.9rem; font-family:inherit; color:var(--text);
+        text-align:center; font-weight:600;
         user-select:auto; -webkit-user-select:auto;
+    }
+    .qty-x{
+        font-size:.85rem; color:var(--muted); font-weight:700;
     }
     .no-results{
         text-align:center; padding:30px 10px; color:var(--muted); font-size:.9rem;
@@ -216,9 +244,9 @@
 
     @media (max-width:480px){
         .app{ border-radius:22px; }
-        .header h1{ font-size:1.4rem; }
-        .item-name{ font-size:.95rem; }
-        .grocery-list{ max-height:340px; }
+        .header h1{ font-size:1.3rem; }
+        .item-name{ font-size:.92rem; }
+        .grocery-list{ max-height:400px; }
     }
 </style>
 </head>
@@ -227,8 +255,8 @@
 <div class="app">
     <div class="header">
         <div class="badge-count" id="badgeCount">0 নির্বাচিত</div>
-        <h1>🛒 Medicine Requisition List 🧾</h1>
-        <div class="sub">Medicine বেছে নিন এবং নম্বর দিয়ে হোয়াটসঅ্যাপে পাঠান</div>
+        <h1>💊 Medicine Requisition List 🧾</h1>
+        <div class="sub">Medicine বেছে নিন, Qty x Tab লিখুন এবং হোয়াটসঅ্যাপে পাঠান</div>
     </div>
 
     <div class="phone-panel">
@@ -247,7 +275,7 @@
     <div class="toolbar">
         <div class="search-wrap">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="searchBox" placeholder="আইটেম খুঁজুন...">
+            <input type="text" id="searchBox" placeholder="Medicine খুঁজুন...">
         </div>
     </div>
 
@@ -261,7 +289,7 @@
     </div>
 
     <div class="add-item-row">
-        <input type="text" id="newItemInput" placeholder="নতুন আইটেম যোগ করুন...">
+        <input type="text" id="newItemInput" placeholder="নতুন Medicine যোগ করুন...">
         <button id="addItemBtn">+</button>
     </div>
 
@@ -270,23 +298,33 @@
             <span class="ic">📲</span> হোয়াটসঅ্যাপে পাঠান
         </button>
         <div class="status-msg" id="statusMessage">
-            ✔️ পণ্য নির্বাচন করুন, নম্বর দিন এবং বাটন চাপুন
+            ✔️ Medicine নির্বাচন করুন, Qty x Tab দিন, নম্বর দিন এবং বাটন চাপুন
         </div>
     </div>
 
-    <footer>তৈরি হয়েছে দ্রুত মাসিক বাজারের তালিকার জন্য · ডেটা শুধু আপনার ব্রাউজারে থাকে</footer>
+    <footer>Medicine Requisition List · ডেটা শুধু আপনার ব্রাউজারে থাকে</footer>
 </div>
 
 <script>
 // ------------------------------
-// itemswith category grouping (category kept internal, doesn't change item names)
+// medicine list (category kept internal, doesn't change item names)
 // ------------------------------
 const groceryData = [
-    {cat:"ঔষুধ", items:["Amlopress AT 50 mg","Amaryl 1 mg","Febutaz 40 Tablet","Storvas 10","Calcimax P","Complinine D","C Nac Eye Drop","Ursocol 300","Banadryl","Paracetamol","Dr. Ortho oil","ETOSHINE MR TABLET","PAN 40 TABLET "]}
+    {cat:"ঔষুধ", items:[
+        "Amlopress AT 50 mg","Amaryl 1 mg","Febutaz 40 Tablet","Storvas 10",
+        "Calcimax P","Complinine D","C Nac Eye Drop","Ursocol 300",
+        "Banadryl","Paracetamol","Dr. Ortho oil","ETOSHINE MR TABLET","PAN 40 TABLET"
+    ]}
 ];
 
 let extraItems = [];   // user-added items (session only)
-let checkedState = {}; // itemName -> bool
+// state per item: { checked: bool, qty: string, tabs: string }
+let itemState = {};
+
+function getState(item){
+    if (!itemState[item]) itemState[item] = { checked:false, qty:"1", tabs:"" };
+    return itemState[item];
+}
 
 const listEl = document.getElementById("groceryListContainer");
 const statusDiv = document.getElementById("statusMessage");
@@ -301,9 +339,8 @@ const selectAllBtn = document.getElementById("selectAllBtn");
 const clearAllBtn = document.getElementById("clearAllBtn");
 const newItemInput = document.getElementById("newItemInput");
 const addItemBtn = document.getElementById("addItemBtn");
-const clearPhoneBtnEl = clearPhoneBtn;
 
-// in-memory "saved numbers" (session only — no localStorage per platform rules)
+// in-memory "saved numbers" (session only)
 let savedNumbers = [];
 
 function allGroups(){
@@ -328,8 +365,14 @@ function renderList(){
         listEl.appendChild(label);
 
         filtered.forEach(item => {
+            const st = getState(item);
+
             const li = document.createElement("li");
-            li.className = "list-item" + (checkedState[item] ? " checked" : "");
+            li.className = "list-item" + (st.checked ? " checked" : "");
+
+            // top row: name + checkbox
+            const topRow = document.createElement("div");
+            topRow.className = "item-top-row";
 
             const nameSpan = document.createElement("span");
             nameSpan.className = "item-name";
@@ -339,16 +382,58 @@ function renderList(){
             wrap.className = "checkbox-wrapper";
             const cb = document.createElement("input");
             cb.type = "checkbox";
-            cb.checked = !!checkedState[item];
+            cb.checked = st.checked;
             cb.addEventListener("change", () => {
-                checkedState[item] = cb.checked;
+                st.checked = cb.checked;
                 li.classList.toggle("checked", cb.checked);
                 updateStatus();
             });
-
             wrap.appendChild(cb);
-            li.appendChild(nameSpan);
-            li.appendChild(wrap);
+
+            topRow.appendChild(nameSpan);
+            topRow.appendChild(wrap);
+
+            // qty row: Qty x Tabs
+            const qtyRow = document.createElement("div");
+            qtyRow.className = "qty-row";
+
+            const qtyField = document.createElement("div");
+            qtyField.className = "qty-field";
+            const qtyLabel = document.createElement("label");
+            qtyLabel.innerText = "Qty";
+            const qtyInput = document.createElement("input");
+            qtyInput.type = "number";
+            qtyInput.min = "0";
+            qtyInput.inputMode = "numeric";
+            qtyInput.value = st.qty;
+            qtyInput.addEventListener("input", () => { st.qty = qtyInput.value; });
+            qtyField.appendChild(qtyLabel);
+            qtyField.appendChild(qtyInput);
+
+            const xSign = document.createElement("span");
+            xSign.className = "qty-x";
+            xSign.innerText = "X";
+
+            const tabField = document.createElement("div");
+            tabField.className = "qty-field";
+            const tabLabel = document.createElement("label");
+            tabLabel.innerText = "Tabs";
+            const tabInput = document.createElement("input");
+            tabInput.type = "number";
+            tabInput.min = "0";
+            tabInput.inputMode = "numeric";
+            tabInput.placeholder = "15";
+            tabInput.value = st.tabs;
+            tabInput.addEventListener("input", () => { st.tabs = tabInput.value; });
+            tabField.appendChild(tabLabel);
+            tabField.appendChild(tabInput);
+
+            qtyRow.appendChild(qtyField);
+            qtyRow.appendChild(xSign);
+            qtyRow.appendChild(tabField);
+
+            li.appendChild(topRow);
+            li.appendChild(qtyRow);
             listEl.appendChild(li);
         });
     });
@@ -356,23 +441,23 @@ function renderList(){
     if (!anyShown){
         const msg = document.createElement("div");
         msg.className = "no-results";
-        msg.innerText = "কোনো আইটেম পাওয়া যায়নি";
+        msg.innerText = "কোনো Medicine পাওয়া যায়নি";
         listEl.appendChild(msg);
     }
 }
 
 function getSelectedItems(){
-    return Object.keys(checkedState).filter(k => checkedState[k]);
+    return Object.keys(itemState).filter(k => itemState[k].checked);
 }
 
 function updateStatus(){
     const n = getSelectedItems().length;
     badgeCount.innerText = `${n} নির্বাচিত`;
     if (n > 0){
-        statusDiv.innerHTML = `✔️ ${n} টি আইটেম নির্বাচিত। নম্বর দিয়ে পাঠান।`;
+        statusDiv.innerHTML = `✔️ ${n} টি Medicine নির্বাচিত। Qty x Tab দিয়ে পাঠান।`;
         statusDiv.style.background = "#e3f0da";
     } else {
-        statusDiv.innerHTML = "☑️ কোনো আইটেম নির্বাচিত নেই। টিক দিন।";
+        statusDiv.innerHTML = "☑️ কোনো Medicine নির্বাচিত নেই। টিক দিন।";
         statusDiv.style.background = "#edeedf";
     }
 }
@@ -391,7 +476,7 @@ phoneInput.addEventListener("input", () => {
 function validatePhoneUI(){
     const v = phoneInput.value;
     if (!v){
-        phoneHint.innerText = "91 দিয়ে শুরু (ভারত)";
+        phoneHint.innerText = "দেশের কোড সহ নম্বর দিন, যেমন 91 দিয়ে শুরু (ভারত)";
         phoneHint.classList.remove("err");
         return false;
     }
@@ -447,14 +532,14 @@ searchBox.addEventListener("input", renderList);
 selectAllBtn.addEventListener("click", () => {
     const query = searchBox.value.trim().toLowerCase();
     allGroups().forEach(g => g.items.forEach(it => {
-        if (it.toLowerCase().includes(query)) checkedState[it] = true;
+        if (it.toLowerCase().includes(query)) getState(it).checked = true;
     }));
     renderList();
     updateStatus();
 });
 
 clearAllBtn.addEventListener("click", () => {
-    checkedState = {};
+    itemState = {};
     renderList();
     updateStatus();
 });
@@ -464,7 +549,7 @@ function addNewItem(){
     const val = newItemInput.value.trim();
     if (!val) return;
     extraItems.push(val);
-    checkedState[val] = true;
+    getState(val).checked = true;
     newItemInput.value = "";
     renderList();
     updateStatus();
@@ -483,13 +568,19 @@ sendBtn.addEventListener("click", () => {
         return;
     }
     if (!selected.length){
-        flashStatus("⚠️ অন্তত একটি আইটেম নির্বাচন করুন।", "#ffe1cf");
+        flashStatus("⚠️ অন্তত একটি Medicine নির্বাচন করুন।", "#ffe1cf");
         return;
     }
 
-    let messageText = `*Medicine List*\n`;
-    selected.forEach((item, idx) => { messageText += `${idx+1}. ${item}\n`; });
-    //messageText += `\n📅 Date: ${new Date().toLocaleDateString('bn-BD')}`;
+    let messageText = `Medicine Requisition List\n`;
+    selected.forEach((item, idx) => {
+        const st = itemState[item];
+        const qty = (st.qty || "1").trim();
+        const tabs = (st.tabs || "").trim();
+        const qtyPart = tabs ? `${qty} qty. X ${tabs} tabs` : `${qty} qty.`;
+        messageText += `${idx+1}. ${item} — ${qtyPart}\n`;
+    });
+    messageText += `\n📅 তারিখ: ${new Date().toLocaleDateString('bn-BD')}`;
 
     const encoded = encodeURIComponent(messageText);
     const phone = phoneInput.value;
@@ -497,7 +588,7 @@ sendBtn.addEventListener("click", () => {
     window.open(url, '_blank');
 
     rememberNumber(phone);
-    flashStatus(`📤 ${selected.length} টি আইটেম নিয়ে হোয়াটসঅ্যাপ প্রস্তুত!`, "#dcfce7");
+    flashStatus(`📤 ${selected.length} টি Medicine নিয়ে হোয়াটসঅ্যাপ প্রস্তুত!`, "#dcfce7");
 });
 
 function flashStatus(msg, bg){
