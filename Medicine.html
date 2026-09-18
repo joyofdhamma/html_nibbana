@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>Medicine Requisition List + 9594716320</title>
+<style>
+    :root{
+        --green-dark:#1f7a3d;
+        --green:#25D366;
+        --green-deep:#128C7E;
+        --bg1:#f4f8ef;
+        --bg2:#eef2e0;
+        --card:#ffffff;
+        --text:#1f3b1a;
+        --muted:#5c6b52;
+        --border:#e2e6d9;
+        --accent:#ffb347;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    *:not(input):not(button):not(textarea){
+        -webkit-user-select:none; user-select:none;
+    }
+    body{
+        background:linear-gradient(150deg,var(--bg1),var(--bg2));
+        font-family:'Segoe UI','Noto Sans Bengali','Roboto',sans-serif;
+        min-height:100vh;
+        display:flex; justify-content:center; align-items:flex-start;
+        padding:24px 14px;
+    }
+    .app{
+        max-width:560px; width:100%;
+        background:var(--card);
+        border-radius:32px;
+        box-shadow:0 25px 50px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.05);
+        overflow:hidden;
+        display:flex; flex-direction:column;
+    }
+    /* ---------- header ---------- */
+    .header{
+        background:linear-gradient(135deg,var(--green-dark),#164d27);
+        padding:26px 22px 22px;
+        color:#fff;
+        text-align:center;
+        position:relative;
+    }
+    .header h1{
+        font-size:1.7rem; font-weight:700; letter-spacing:.3px;
+        display:flex; align-items:center; justify-content:center; gap:10px;
+    }
+    .header .sub{
+        font-size:.82rem; opacity:.85; margin-top:6px;
+    }
+    .badge-count{
+        position:absolute; top:16px; right:18px;
+        background:rgba(255,255,255,.18);
+        border:1px solid rgba(255,255,255,.35);
+        border-radius:30px;
+        padding:5px 12px;
+        font-size:.75rem;
+        font-weight:600;
+    }
+
+    /* ---------- phone input ---------- */
+    .phone-panel{
+        padding:16px 20px;
+        background:#fbfaf2;
+        border-bottom:1px solid var(--border);
+    }
+    .phone-row{
+        display:flex; gap:8px; align-items:center;
+    }
+    .phone-row label{
+        font-size:.8rem; font-weight:600; color:var(--muted);
+        white-space:nowrap;
+    }
+    .phone-input-wrap{
+        flex:1; display:flex; align-items:center;
+        background:#fff; border:1.5px solid var(--border);
+        border-radius:40px; padding:4px 6px 4px 16px;
+        transition:.15s;
+    }
+    .phone-input-wrap:focus-within{
+        border-color:var(--green); box-shadow:0 0 0 3px rgba(37,211,102,.15);
+    }
+    .phone-input-wrap span{ font-size:.95rem; color:var(--muted); font-weight:600;}
+    #phoneInput{
+        flex:1; border:none; outline:none; font-size:1rem;
+        padding:8px 6px; font-family:inherit; background:transparent;
+        color:var(--text); letter-spacing:.5px;
+    }
+    .clear-phone{
+        background:none; border:none; color:#aab29a; font-size:1.1rem;
+        cursor:pointer; padding:6px 8px; display:none;
+    }
+    .phone-hint{
+        font-size:.72rem; color:var(--muted); margin-top:6px; padding-left:4px;
+    }
+    .phone-hint.err{ color:#c0392b; font-weight:600; }
+    .saved-numbers{
+        display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;
+    }
+    .chip{
+        background:#eaf3e2; border:1px solid #d3e3c4; color:#2c5e2e;
+        font-size:.75rem; font-weight:600; padding:6px 12px;
+        border-radius:20px; cursor:pointer; display:flex; align-items:center; gap:6px;
+    }
+    .chip:active{ background:#d9e8c8; }
+    .chip .x{ opacity:.55; font-size:.8rem; }
+
+    /* ---------- search/filter ---------- */
+    .toolbar{
+        padding:14px 20px 6px;
+        display:flex; gap:10px; align-items:center;
+    }
+    .search-wrap{
+        flex:1; display:flex; align-items:center;
+        background:#f4f6ec; border-radius:30px; padding:8px 16px;
+        border:1px solid var(--border);
+    }
+    .search-wrap input{
+        border:none; outline:none; background:transparent; flex:1;
+        font-size:.95rem; font-family:inherit; color:var(--text);
+    }
+    .search-wrap svg{ flex-shrink:0; opacity:.5; }
+
+    .select-all-row{
+        display:flex; justify-content:flex-end; gap:8px;
+        padding:10px 20px 4px;
+    }
+    .mini-btn{
+        background:#eef1e4; border:none; padding:6px 14px;
+        border-radius:30px; font-size:.75rem; font-weight:600;
+        color:#375130; cursor:pointer; font-family:inherit;
+    }
+    .mini-btn:active{ background:#dde3cc; }
+
+    /* ---------- list ---------- */
+    .list-panel{ padding:6px 20px 8px; background:#fffef9; }
+    .category-label{
+        font-size:.72rem; font-weight:700; text-transform:uppercase;
+        letter-spacing:.6px; color:#8a967a; margin:14px 4px 6px;
+    }
+    .grocery-list{
+        list-style:none; display:flex; flex-direction:column; gap:6px;
+        max-height:400px; overflow-y:auto; padding-right:4px; scrollbar-width:thin;
+    }
+    .grocery-list::-webkit-scrollbar{ width:6px; }
+    .grocery-list::-webkit-scrollbar-thumb{ background:#c3cdb2; border-radius:10px; }
+
+    .list-item{
+        display:flex; align-items:center; justify-content:space-between;
+        background:#fff; border-radius:50px; padding:10px 16px;
+        border:1px solid var(--border); transition:.15s;
+    }
+    .list-item.checked{
+        background:#eefbf1; border-color:#bfe6c8;
+    }
+    .item-name{
+        font-size:1.05rem; font-weight:500; color:var(--text);
+        font-family:'Noto Sans Bengali',inherit; word-break:break-word;
+    }
+    .checkbox-wrapper input[type="checkbox"]{
+        width:24px; height:24px; cursor:pointer; accent-color:var(--green-dark);
+        user-select:auto; -webkit-user-select:auto;
+    }
+    .no-results{
+        text-align:center; padding:30px 10px; color:var(--muted); font-size:.9rem;
+    }
+
+    /* ---------- add-item ---------- */
+    .add-item-row{
+        display:flex; gap:8px; padding:12px 20px 4px;
+    }
+    .add-item-row input{
+        flex:1; border:1.5px solid var(--border); border-radius:30px;
+        padding:9px 16px; font-size:.9rem; font-family:inherit; outline:none;
+    }
+    .add-item-row input:focus{ border-color:var(--green); }
+    .add-item-row button{
+        background:var(--green-dark); color:#fff; border:none;
+        border-radius:30px; padding:0 18px; font-size:1.1rem; cursor:pointer;
+        font-weight:700;
+    }
+
+    /* ---------- action area ---------- */
+    .action-area{
+        padding:16px 20px 26px; background:#fffef9;
+        border-top:1px solid #e9ecd9;
+        display:flex; flex-direction:column; align-items:center; gap:14px;
+    }
+    .send-btn{
+        width:100%; border:none; background:var(--green);
+        box-shadow:0 6px 0 var(--green-deep);
+        color:#fff; font-size:1.25rem; font-weight:700;
+        border-radius:50px; padding:15px 12px;
+        display:flex; align-items:center; justify-content:center; gap:10px;
+        cursor:pointer; transition:.08s linear; font-family:inherit;
+    }
+    .send-btn:active{ transform:translateY(3px); box-shadow:0 3px 0 var(--green-deep); }
+    .send-btn:disabled{
+        background:#c9cfc0; box-shadow:0 6px 0 #a9b09c; cursor:not-allowed;
+    }
+    .send-btn span.ic{ font-size:1.3rem; }
+
+    .status-msg{
+        font-size:.83rem; background:#edeedf; padding:9px 14px;
+        border-radius:40px; color:#2d4a22; text-align:center; font-weight:500;
+        width:100%; transition:background .2s; word-break:break-word;
+    }
+
+    footer{
+        font-size:.68rem; text-align:center; background:#f3f4ea;
+        padding:12px; color:#7a8468; border-top:1px solid var(--border);
+    }
+
+    @media (max-width:480px){
+        .app{ border-radius:22px; }
+        .header h1{ font-size:1.4rem; }
+        .item-name{ font-size:.95rem; }
+        .grocery-list{ max-height:340px; }
+    }
+</style>
+</head>
+<body>
+
+<div class="app">
+    <div class="header">
+        <div class="badge-count" id="badgeCount">0 নির্বাচিত</div>
+        <h1>🛒 Medicine Requisition List 🧾</h1>
+        <div class="sub">Medicine বেছে নিন এবং নম্বর দিয়ে হোয়াটসঅ্যাপে পাঠান</div>
+    </div>
+
+    <div class="phone-panel">
+        <div class="phone-row">
+            <label for="phoneInput">📱 নম্বর:</label>
+            <div class="phone-input-wrap">
+                <span>+</span>
+                <input type="tel" id="phoneInput" placeholder="৯১XXXXXXXXXX (দেশের কোড সহ)" inputmode="numeric" maxlength="15">
+                <button class="clear-phone" id="clearPhoneBtn">✕</button>
+            </div>
+        </div>
+        <div class="phone-hint" id="phoneHint">দেশের কোড সহ নম্বর দিন, যেমন 91 দিয়ে শুরু (ভারত)</div>
+        <div class="saved-numbers" id="savedNumbers"></div>
+    </div>
+
+    <div class="toolbar">
+        <div class="search-wrap">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="searchBox" placeholder="আইটেম খুঁজুন...">
+        </div>
+    </div>
+
+    <div class="select-all-row">
+        <button class="mini-btn" id="selectAllBtn">সব নির্বাচন</button>
+        <button class="mini-btn" id="clearAllBtn">সব বাতিল</button>
+    </div>
+
+    <div class="list-panel">
+        <ul class="grocery-list" id="groceryListContainer"></ul>
+    </div>
+
+    <div class="add-item-row">
+        <input type="text" id="newItemInput" placeholder="নতুন আইটেম যোগ করুন...">
+        <button id="addItemBtn">+</button>
+    </div>
+
+    <div class="action-area">
+        <button class="send-btn" id="sendBtn">
+            <span class="ic">📲</span> হোয়াটসঅ্যাপে পাঠান
+        </button>
+        <div class="status-msg" id="statusMessage">
+            ✔️ পণ্য নির্বাচন করুন, নম্বর দিন এবং বাটন চাপুন
+        </div>
+    </div>
+
+    <footer>তৈরি হয়েছে দ্রুত মাসিক বাজারের তালিকার জন্য · ডেটা শুধু আপনার ব্রাউজারে থাকে</footer>
+</div>
+
+<script>
+// ------------------------------
+// itemswith category grouping (category kept internal, doesn't change item names)
+// ------------------------------
+const groceryData = [
+    {cat:"ঔষুধ", items:["Amlopress AT 50 mg","Amaryl 1 mg","Febutaz 40 Tablet","Storvas 10","Calcimax P","Complinine D","C Nac Eye Drop","Ursocol 300","Banadryl","Paracetamol","Dr. Ortho oil","ETOSHINE MR TABLET","PAN 40 TABLET "]}
+];
+
+let extraItems = [];   // user-added items (session only)
+let checkedState = {}; // itemName -> bool
+
+const listEl = document.getElementById("groceryListContainer");
+const statusDiv = document.getElementById("statusMessage");
+const badgeCount = document.getElementById("badgeCount");
+const phoneInput = document.getElementById("phoneInput");
+const phoneHint = document.getElementById("phoneHint");
+const clearPhoneBtn = document.getElementById("clearPhoneBtn");
+const savedNumbersEl = document.getElementById("savedNumbers");
+const searchBox = document.getElementById("searchBox");
+const sendBtn = document.getElementById("sendBtn");
+const selectAllBtn = document.getElementById("selectAllBtn");
+const clearAllBtn = document.getElementById("clearAllBtn");
+const newItemInput = document.getElementById("newItemInput");
+const addItemBtn = document.getElementById("addItemBtn");
+const clearPhoneBtnEl = clearPhoneBtn;
+
+// in-memory "saved numbers" (session only — no localStorage per platform rules)
+let savedNumbers = [];
+
+function allGroups(){
+    const groups = groceryData.map(g => ({cat:g.cat, items:[...g.items]}));
+    if (extraItems.length) groups.push({cat:"নতুন যোগ করা", items:[...extraItems]});
+    return groups;
+}
+
+function renderList(){
+    const query = searchBox.value.trim().toLowerCase();
+    listEl.innerHTML = "";
+    let anyShown = false;
+
+    allGroups().forEach(group => {
+        const filtered = group.items.filter(it => it.toLowerCase().includes(query));
+        if (!filtered.length) return;
+        anyShown = true;
+
+        const label = document.createElement("div");
+        label.className = "category-label";
+        label.innerText = group.cat;
+        listEl.appendChild(label);
+
+        filtered.forEach(item => {
+            const li = document.createElement("li");
+            li.className = "list-item" + (checkedState[item] ? " checked" : "");
+
+            const nameSpan = document.createElement("span");
+            nameSpan.className = "item-name";
+            nameSpan.innerText = item;
+
+            const wrap = document.createElement("div");
+            wrap.className = "checkbox-wrapper";
+            const cb = document.createElement("input");
+            cb.type = "checkbox";
+            cb.checked = !!checkedState[item];
+            cb.addEventListener("change", () => {
+                checkedState[item] = cb.checked;
+                li.classList.toggle("checked", cb.checked);
+                updateStatus();
+            });
+
+            wrap.appendChild(cb);
+            li.appendChild(nameSpan);
+            li.appendChild(wrap);
+            listEl.appendChild(li);
+        });
+    });
+
+    if (!anyShown){
+        const msg = document.createElement("div");
+        msg.className = "no-results";
+        msg.innerText = "কোনো আইটেম পাওয়া যায়নি";
+        listEl.appendChild(msg);
+    }
+}
+
+function getSelectedItems(){
+    return Object.keys(checkedState).filter(k => checkedState[k]);
+}
+
+function updateStatus(){
+    const n = getSelectedItems().length;
+    badgeCount.innerText = `${n} নির্বাচিত`;
+    if (n > 0){
+        statusDiv.innerHTML = `✔️ ${n} টি আইটেম নির্বাচিত। নম্বর দিয়ে পাঠান।`;
+        statusDiv.style.background = "#e3f0da";
+    } else {
+        statusDiv.innerHTML = "☑️ কোনো আইটেম নির্বাচিত নেই। টিক দিন।";
+        statusDiv.style.background = "#edeedf";
+    }
+}
+
+// ---------- phone handling ----------
+function cleanPhone(v){
+    return v.replace(/[^\d]/g, "");
+}
+
+phoneInput.addEventListener("input", () => {
+    phoneInput.value = cleanPhone(phoneInput.value);
+    clearPhoneBtn.style.display = phoneInput.value ? "block" : "none";
+    validatePhoneUI();
+});
+
+function validatePhoneUI(){
+    const v = phoneInput.value;
+    if (!v){
+        phoneHint.innerText = "দেশের কোড সহ নম্বর দিন, যেমন 91 দিয়ে শুরু (ভারত)";
+        phoneHint.classList.remove("err");
+        return false;
+    }
+    if (v.length < 10){
+        phoneHint.innerText = "নম্বরটি সম্পূর্ণ মনে হচ্ছে না — দেশের কোড সহ দিন";
+        phoneHint.classList.add("err");
+        return false;
+    }
+    phoneHint.innerText = "✓ নম্বর ঠিক আছে";
+    phoneHint.classList.remove("err");
+    return true;
+}
+
+clearPhoneBtn.addEventListener("click", () => {
+    phoneInput.value = "";
+    clearPhoneBtn.style.display = "none";
+    validatePhoneUI();
+    phoneInput.focus();
+});
+
+function renderSavedChips(){
+    savedNumbersEl.innerHTML = "";
+    savedNumbers.forEach(num => {
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.innerHTML = `<span>📞 ${num}</span><span class="x">✕</span>`;
+        chip.querySelector("span:first-child").addEventListener("click", () => {
+            phoneInput.value = num;
+            clearPhoneBtn.style.display = "block";
+            validatePhoneUI();
+        });
+        chip.querySelector(".x").addEventListener("click", (e) => {
+            e.stopPropagation();
+            savedNumbers = savedNumbers.filter(n => n !== num);
+            renderSavedChips();
+        });
+        savedNumbersEl.appendChild(chip);
+    });
+}
+
+function rememberNumber(num){
+    if (!savedNumbers.includes(num)){
+        savedNumbers.unshift(num);
+        savedNumbers = savedNumbers.slice(0, 4);
+        renderSavedChips();
+    }
+}
+
+// ---------- search ----------
+searchBox.addEventListener("input", renderList);
+
+// ---------- select all / clear ----------
+selectAllBtn.addEventListener("click", () => {
+    const query = searchBox.value.trim().toLowerCase();
+    allGroups().forEach(g => g.items.forEach(it => {
+        if (it.toLowerCase().includes(query)) checkedState[it] = true;
+    }));
+    renderList();
+    updateStatus();
+});
+
+clearAllBtn.addEventListener("click", () => {
+    checkedState = {};
+    renderList();
+    updateStatus();
+});
+
+// ---------- add new item ----------
+function addNewItem(){
+    const val = newItemInput.value.trim();
+    if (!val) return;
+    extraItems.push(val);
+    checkedState[val] = true;
+    newItemInput.value = "";
+    renderList();
+    updateStatus();
+}
+addItemBtn.addEventListener("click", addNewItem);
+newItemInput.addEventListener("keydown", (e) => { if (e.key === "Enter") addNewItem(); });
+
+// ---------- send ----------
+sendBtn.addEventListener("click", () => {
+    const selected = getSelectedItems();
+    const phoneOk = validatePhoneUI();
+
+    if (!phoneOk){
+        flashStatus("⚠️ সঠিক ফোন নম্বর দিন (দেশের কোড সহ)।", "#ffe1cf");
+        phoneInput.focus();
+        return;
+    }
+    if (!selected.length){
+        flashStatus("⚠️ অন্তত একটি আইটেম নির্বাচন করুন।", "#ffe1cf");
+        return;
+    }
+
+    let messageText = `মাসিক মুদিখানা তালিকা\n`;
+    selected.forEach((item, idx) => { messageText += `${idx+1}. ${item}\n`; });
+    messageText += `\n📅 তারিখ: ${new Date().toLocaleDateString('bn-BD')}`;
+
+    const encoded = encodeURIComponent(messageText);
+    const phone = phoneInput.value;
+    const url = `https://wa.me/${phone}?text=${encoded}`;
+    window.open(url, '_blank');
+
+    rememberNumber(phone);
+    flashStatus(`📤 ${selected.length} টি আইটেম নিয়ে হোয়াটসঅ্যাপ প্রস্তুত!`, "#dcfce7");
+});
+
+function flashStatus(msg, bg){
+    statusDiv.innerHTML = msg;
+    statusDiv.style.background = bg;
+    setTimeout(updateStatus, 2500);
+}
+
+// ---------- init ----------
+function init(){
+    renderList();
+    updateStatus();
+    validatePhoneUI();
+}
+init();
+</script>
+</body>
+</html>
