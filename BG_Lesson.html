@@ -1046,6 +1046,9 @@ async function loadChapterTimeJSON(){
 let ttsUtterance = null;
 let ttsVoices = [];
 let ttsPaused = false;
+let ttsQueue = [];
+let ttsQueueIndex = 0;
+let ttsStoppedByUser = false;
 
 function toggleTtsPanel(){
   const panel = document.getElementById('tts-panel');
@@ -1129,7 +1132,6 @@ function ttsPlay(){
     document.getElementById('tts-status').textContent = 'Speech synthesis is not supported in this browser.';
     return;
   }
-  // If something is already speaking/paused, stop it first for a clean start
   window.speechSynthesis.cancel();
 
   const text = getReaderPlainText().trim();
@@ -1138,19 +1140,92 @@ function ttsPlay(){
     return;
   }
 
-  ttsUtterance = new SpeechSynthesisUtterance(text);
+  // Android often hasn't populated voices yet on first tap; refresh and retry once.
+  if(!ttsVoices || ttsVoices.length === 0){
+    populateTtsVoices();
+    if(!ttsVoices || ttsVoices.length === 0){
+      // still empty — proceed anyway (device default voice will be used), but try again shortly
+      setTimeout(populateTtsVoices, 300);
+    }
+  }
+
+  // Android Chrome/WebView frequently cuts off or silently drops long utterances.
+  // Break the text into sentence-ish chunks and speak them one after another.
+  ttsQueue = chunkTextForTts(text);
+  ttsQueueIndex = 0;
+  ttsStoppedByUser = false;
+  speakNextTtsChunk();
+}
+
+function chunkTextForTts(text){
+  // Split on sentence boundaries, then group into chunks under ~180 chars
+  // (Android's speech engine is unreliable well above this length).
+  const sentences = text.match(/[^.!?\n]+[.!?\n]+|[^.!?\n]+$/g) || [text];
+  const chunks = [];
+  let current = '';
+  for(const s of sentences){
+    if((current + s).length > 180 && current.length > 0){
+      chunks.push(current.trim());
+      current = s;
+    }else{
+      current += s;
+    }
+  }
+  if(current.trim()) chunks.push(current.trim());
+  return chunks.length ? chunks : [text];
+}
+
+function speakNextTtsChunk(){
+  if(ttsStoppedByUser) return;
+  if(ttsQueueIndex >= ttsQueue.length){
+    ttsPaused = false;
+    setTtsButtonsState('idle');
+    return;
+  }
+  const chunk = ttsQueue[ttsQueueIndex];
+  ttsUtterance = new SpeechSynthesisUtterance(chunk);
   const voice = getSelectedTtsVoice();
   if(voice) ttsUtterance.voice = voice;
   ttsUtterance.rate = parseFloat(document.getElementById('tts-rate').value) / 100;
   ttsUtterance.pitch = parseFloat(document.getElementById('tts-pitch').value) / 100;
 
   ttsUtterance.onstart = () => { ttsPaused = false; setTtsButtonsState('playing'); };
-  ttsUtterance.onend = () => { ttsPaused = false; setTtsButtonsState('idle'); };
-  ttsUtterance.onerror = () => { ttsPaused = false; setTtsButtonsState('idle'); };
+  ttsUtterance.onend = () => {
+    if(ttsStoppedByUser) return;
+    ttsQueueIndex++;
+    speakNextTtsChunk();
+  };
+  ttsUtterance.onerror = (e) => {
+    console.warn('TTS chunk error, skipping:', e);
+    if(ttsStoppedByUser) return;
+    ttsQueueIndex++;
+    speakNextTtsChunk();
+  };
   ttsUtterance.onpause = () => { ttsPaused = true; setTtsButtonsState('paused'); };
   ttsUtterance.onresume = () => { ttsPaused = false; setTtsButtonsState('playing'); };
 
   window.speechSynthesis.speak(ttsUtterance);
+
+  // Android Chrome sometimes silently stalls speechSynthesis after ~15s on a single
+  // utterance if the tab loses focus etc. A periodic resume() nudge keeps it alive.
+  keepTtsAliveOnAndroid();
+}
+
+let ttsKeepAliveTimer = null;
+function keepTtsAliveOnAndroid(){
+  clearInterval(ttsKeepAliveTimer);
+  ttsKeepAliveTimer = setInterval(()=>{
+    if(!window.speechSynthesis) { clearInterval(ttsKeepAliveTimer); return; }
+    if(ttsStoppedByUser || (!window.speechSynthesis.speaking && !window.speechSynthesis.paused)){
+      clearInterval(ttsKeepAliveTimer);
+      return;
+    }
+    if(window.speechSynthesis.paused === false && window.speechSynthesis.speaking){
+      // nudge: some Android builds need pause+resume to avoid stalling
+      window.speechSynthesis.pause();
+      window.speechSynthesis.resume();
+    }
+  }, 12000);
 }
 
 function ttsPauseResume(){
@@ -1164,8 +1239,12 @@ function ttsPauseResume(){
 
 function ttsStop(){
   if(!window.speechSynthesis) return;
+  ttsStoppedByUser = true;
+  clearInterval(ttsKeepAliveTimer);
   window.speechSynthesis.cancel();
   ttsPaused = false;
+  ttsQueue = [];
+  ttsQueueIndex = 0;
   setTtsButtonsState('idle');
 }
 
@@ -1189,6 +1268,17 @@ document.getElementById('tts-pitch').addEventListener('input', function(){
 if(window.speechSynthesis){
   populateTtsVoices();
   window.speechSynthesis.onvoiceschanged = populateTtsVoices;
+  // Android often only exposes voices after a genuine user gesture — prime it on first touch.
+  const primeTtsOnce = () => {
+    populateTtsVoices();
+    document.removeEventListener('touchstart', primeTtsOnce);
+    document.removeEventListener('click', primeTtsOnce);
+  };
+  document.addEventListener('touchstart', primeTtsOnce, { once:true });
+  document.addEventListener('click', primeTtsOnce, { once:true });
+}else{
+  const statusEl = document.getElementById('tts-status');
+  if(statusEl) statusEl.textContent = 'Speech synthesis is not supported on this device/browser.';
 }
 
 /* ====================================================================
