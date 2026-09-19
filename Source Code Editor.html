@@ -85,6 +85,7 @@
                 <option value="sql">SQL</option>
                 <option value="dax">DAX</option>
                 <option value="excel">Excel Formula</option>
+                <option value="markdown">Markdown</option>
                 <option value="epub">epub</option>
             </select>
 
@@ -97,7 +98,7 @@
             </div>
 
             <input type="file" id="file-input" class="file-input"
-                accept=".txt,.dat,.js,.ts,.html,.css,.py,.java,.c,.cpp,.php,.sql,.dax,.xlsx,.xls,.epub">
+                accept=".txt,.dat,.js,.ts,.html,.css,.py,.java,.c,.cpp,.php,.sql,.dax,.xlsx,.xls,.epub,.md,.markdown">
         </div>
 
         <div id="container"></div>
@@ -294,6 +295,8 @@
                     txt: 'plaintext',
                     xls: 'excel',
                     xlsx: 'excel',
+                    md: 'markdown',
+                    markdown: 'markdown',
                     epub: 'epub'
                 };
 
@@ -320,6 +323,7 @@
                     sql: 'sql',
                     dax: 'dax',
                     excel: 'xlsx',
+                    markdown: 'md',
                     epub: 'epub'
 
                 };
