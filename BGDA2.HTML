@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gita · Chapter 2, 18 Days</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<style>
+  :root{
+    --paper:#FBF8F2;
+    --ink:#2E2A22;
+    --ink-soft:#84796A;
+    --line:#E5DCC9;
+    --saffron:#BF6B3D;
+    --saffron-deep:#9A4E27;
+    --gold:#C9A24B;
+    --card:#FFFFFF;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  header{
+    text-align:center;
+    padding:34px 20px 22px;
+    border-bottom:1px solid var(--line);
+    background:
+      radial-gradient(circle at 50% 0%, rgba(191,107,61,0.06), transparent 60%),
+      var(--paper);
+    position:relative;
+  }
+  header .eyebrow{
+    font-family:var(--serif);
+    font-style:italic;
+    color:var(--saffron-deep);
+    font-size:14px;
+    letter-spacing:0.02em;
+  }
+  header h1{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:30px;
+    margin:6px 0 4px;
+  }
+  header .sub{
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  #music-fab{
+    position:absolute;
+    top:20px;
+    right:20px;
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:var(--card);
+    font-size:18px;
+    cursor:pointer;
+    color:var(--saffron-deep);
+    box-shadow:0 2px 8px rgba(0,0,0,0.06);
+  }
+  #music-fab.active{
+    background:var(--saffron);
+    color:#fff;
+    border-color:var(--saffron);
+  }
+  #datetime-display{
+    margin-top:8px;
+    font-size:13px;
+    color:var(--ink-soft);
+    font-variant-numeric:tabular-nums;
+  }
+
+  /* Day selector strip */
+  /* Chapter selector strip */
+  .chapter-strip-wrap{
+    background:#F3ECDD;
+    border-bottom:1px solid var(--line);
+    padding:12px 0;
+  }
+  .chapter-strip{
+    max-width:760px;
+    margin:0 auto;
+    display:flex;
+    gap:7px;
+    overflow-x:auto;
+    padding:0 20px 4px;
+    scrollbar-width:thin;
+  }
+  .chapter-strip::-webkit-scrollbar{ height:5px; }
+  .chapter-strip::-webkit-scrollbar-thumb{ background:var(--line); border-radius:6px; }
+  .chapter-btn{
+    flex-shrink:0;
+    font-family:var(--sans);
+    font-size:12.5px;
+    font-weight:600;
+    border:1px solid var(--gold);
+    background:var(--card);
+    color:var(--saffron-deep);
+    padding:6px 13px;
+    border-radius:16px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .chapter-btn:hover{ background:#F9F1DE; }
+  .chapter-btn.active{
+    background:var(--gold);
+    border-color:var(--gold);
+    color:#fff;
+  }
+
+  .day-strip-wrap{
+    position:sticky;
+    top:0;
+    z-index:10;
+    background:var(--paper);
+    border-bottom:1px solid var(--line);
+    padding:14px 0;
+  }
+  .day-strip{
+    max-width:760px;
+    margin:0 auto;
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding:0 20px 4px;
+    scrollbar-width:thin;
+  }
+  .day-strip::-webkit-scrollbar{ height:5px; }
+  .day-strip::-webkit-scrollbar-thumb{ background:var(--line); border-radius:6px; }
+  .day-btn{
+    flex-shrink:0;
+    font-family:var(--serif);
+    font-size:14px;
+    border:1px solid var(--line);
+    background:var(--card);
+    color:var(--ink-soft);
+    padding:8px 15px;
+    border-radius:20px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .day-btn:hover{ border-color:var(--saffron); }
+  .day-btn.active{
+    background:var(--saffron);
+    border-color:var(--saffron);
+    color:#fff;
+    font-weight:600;
+  }
+  .day-btn .verses-tag{
+    font-family:var(--sans);
+    font-size:10px;
+    opacity:0.75;
+    display:block;
+    margin-top:1px;
+  }
+
+  .nav-arrows{
+    max-width:760px;
+    margin:0 auto;
+    display:flex;
+    justify-content:space-between;
+    padding:6px 20px 0;
+  }
+  .arrow-btn{
+    font-family:var(--sans);
+    font-size:13px;
+    background:none;
+    border:none;
+    color:var(--saffron-deep);
+    cursor:pointer;
+    padding:4px 6px;
+  }
+  .arrow-btn:disabled{ color:var(--ink-soft); opacity:0.4; cursor:default; }
+
+  main{
+    max-width:760px;
+    margin:0 auto;
+    padding:30px 20px 80px;
+  }
+
+  #status{
+    text-align:center;
+    color:var(--ink-soft);
+    font-style:italic;
+    font-family:var(--serif);
+    padding:50px 20px;
+  }
+  #status.error{ color:var(--saffron-deep); }
+
+  .content-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:36px 32px;
+  }
+
+  .content-card h1{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:24px;
+    margin-top:0;
+  }
+  .content-card h3{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:19px;
+    color:var(--saffron-deep);
+    margin:30px 0 10px;
+    padding-top:22px;
+    border-top:1px solid var(--line);
+  }
+  .content-card h3:first-of-type{ border-top:none; padding-top:0; margin-top:8px; }
+  .content-card p{
+    line-height:1.75;
+    font-size:15.5px;
+    margin:0 0 14px;
+  }
+  .content-card p em{ color:var(--saffron-deep); font-style:italic; }
+  .content-card strong{ color:var(--ink); }
+  .content-card ul, .content-card ol{
+    padding-left:22px;
+    margin:0 0 16px;
+  }
+  .content-card li{
+    line-height:1.7;
+    font-size:15.5px;
+    margin-bottom:8px;
+  }
+  .content-card blockquote{
+    margin:0 0 16px;
+    padding:4px 0 4px 16px;
+    border-left:3px solid var(--gold);
+    color:var(--ink-soft);
+    font-style:italic;
+  }
+
+  footer{
+    text-align:center;
+    padding:24px 20px 40px;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+
+  /* ============ MUSIC PLAYER PANEL ============ */
+  #player-panel{
+    max-width:760px;
+    margin:0 auto;
+    padding:0 20px;
+    max-height:0;
+    overflow:hidden;
+    transition:max-height 0.3s ease;
+  }
+  #player-panel.open{
+    max-height:2000px;
+  }
+  .player-card{
+    background:#1c1c2e;
+    border-radius:18px;
+    padding:20px 18px 22px;
+    margin:14px 0 6px;
+    color:#e5e2f7;
+    font-family:var(--sans);
+  }
+  .player-card h3{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:17px;
+    margin:0 0 14px;
+    color:#f0eef7;
+  }
+  .upload-area{
+    background:#2d2d48;
+    border-radius:14px;
+    padding:10px 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:12px;
+    border:1px dashed #5b5b7a;
+    flex-wrap:wrap;
+  }
+  .upload-label{
+    background:#4c4c6e;
+    padding:7px 16px;
+    border-radius:20px;
+    color:#fff;
+    font-weight:500;
+    font-size:12.5px;
+    cursor:pointer;
+    border:none;
+    white-space:nowrap;
+  }
+  .upload-label:hover{ background:#625f8b; }
+  .file-name{ color:#b7b4d6; font-size:12px; word-break:break-all; flex:1; min-width:60px; }
+  input[type=file]{ display:none; }
+
+  .player-bar{
+    background:#14141f;
+    border-radius:30px;
+    padding:4px 4px 4px 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:14px;
+    border:1px solid #3f3f5e;
+  }
+  .play-btn{
+    background:#7c6df0;
+    border:none;
+    width:36px; height:36px;
+    border-radius:36px;
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-size:15px; cursor:pointer;
+    flex-shrink:0;
+  }
+  .play-btn.playing{ background:#f07c6d; }
+  .time-indicator{
+    color:#cfcce6; font-variant-numeric:tabular-nums; font-size:12px;
+    display:flex; align-items:center; gap:4px; flex:1; min-width:80px;
+  }
+  .progress-range{
+    flex:2; min-width:70px; accent-color:#7c6df0; height:3px; cursor:pointer;
+  }
+  .stop-btn{
+    background:#32324e; border:1px solid #4a4a6a;
+    width:32px; height:32px; border-radius:32px;
+    color:#e5e2f7; font-size:13px; cursor:pointer; flex-shrink:0;
+  }
+  .stop-btn:hover{ background:#4a4a6e; }
+
+  .crop-inputs{
+    display:flex; gap:12px; margin-bottom:12px;
+  }
+  .crop-input-group{ flex:1; }
+  .crop-input-group label{
+    display:block; font-size:11px; color:#8a86ad; margin-bottom:4px;
+  }
+  .crop-input-group input[type=number]{
+    width:100%; font-family:var(--sans); font-size:13px;
+    padding:7px 10px; border:1px solid #4a4a6a; border-radius:8px;
+    background:#14141f; color:#e5e2f7;
+  }
+  .crop-track{
+    position:relative;
+    height:34px;
+    margin:6px 2px 4px;
+  }
+  .crop-track-bg{
+    position:absolute; top:14px; left:0; right:0; height:6px;
+    background:#14141f; border-radius:4px;
+  }
+  .crop-range-fill{
+    position:absolute; top:14px; height:6px;
+    background:#7c6df0; border-radius:4px;
+  }
+  .crop-handle{
+    position:absolute; top:4px;
+    width:18px; height:18px; margin-left:-9px;
+    background:#f0eef7; border:2px solid #7c6df0; border-radius:50%;
+    cursor:grab; touch-action:none;
+  }
+  .crop-handle:active{ cursor:grabbing; background:#7c6df0; }
+
+  .fx-section{ margin-top:6px; }
+  .fx-section-title{
+    font-size:11px; text-transform:uppercase; letter-spacing:0.06em;
+    color:#8a86ad; margin:16px 0 8px;
+  }
+  .fx-row{
+    display:flex; align-items:center; gap:12px; margin-bottom:10px;
+  }
+  .fx-row label{
+    font-size:12.5px; color:#cfcce6; width:96px; flex-shrink:0;
+  }
+  .fx-row input[type=range]{
+    flex:1; accent-color:#7c6df0; height:3px;
+  }
+  .fx-row .fx-val{
+    font-size:11px; color:#8a86ad; width:40px; text-align:right; flex-shrink:0;
+    font-variant-numeric:tabular-nums;
+  }
+  .footer-row{
+    display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap; gap:8px; margin-top:14px;
+  }
+  .repeat-toggle{
+    background:#2a2a44; border-radius:30px; padding:5px 12px;
+    display:inline-flex; align-items:center; gap:6px;
+    color:#b7b4d6; font-size:12px; border:1px solid #4a4a6a;
+  }
+  .repeat-toggle input{ accent-color:#7c6df0; width:14px; height:14px; cursor:pointer; }
+
+  @media (max-width:600px){
+    .content-card{ padding:26px 20px; }
+    header h1{ font-size:24px; }
+    .fx-row label{ width:78px; font-size:11.5px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="music-fab" onclick="toggleMusicPanel()" title="Audio player">♪</button>
+  <div class="eyebrow">भगवद्गीता · Chapter Two</div>
+  <h1>Eighteen Days, Four Verses</h1>
+  <div class="sub" id="day-heading">Loading…</div>
+  <div id="datetime-display"></div>
+</header>
+
+<!-- MUSIC PLAYER PANEL -->
+<div id="player-panel">
+  <div class="player-card">
+    <h3>MP3 Player</h3>
+
+    <div class="upload-area">
+      <label for="audio-upload" class="upload-label">📁 Load MP3</label>
+      <input type="file" id="audio-upload" accept=".mp3,audio/mpeg">
+      <span class="file-name" id="file-name">no file loaded</span>
+    </div>
+
+    <div class="player-bar">
+      <button class="play-btn" id="play-btn">▶</button>
+      <div class="time-indicator">
+        <span id="time-current">0:00</span><span style="color:#555;">/</span><span id="time-duration">0:00</span>
+      </div>
+      <input type="range" class="progress-range" id="progress-range" min="0" max="1000" value="0">
+      <button class="stop-btn" id="stop-btn" title="Stop">⏹</button>
+    </div>
+
+    <div class="fx-section">
+      <div class="fx-section-title">Crop this verse (start / end)</div>
+      <div class="crop-inputs">
+        <div class="crop-input-group">
+          <label>Start (sec)</label>
+          <input type="number" id="crop-start-input" min="0" step="0.1" value="0.0">
+        </div>
+        <div class="crop-input-group">
+          <label>End (sec)</label>
+          <input type="number" id="crop-end-input" min="0" step="0.1" value="0.0">
+        </div>
+      </div>
+      <div class="crop-track" id="crop-track">
+        <div class="crop-track-bg"></div>
+        <div class="crop-range-fill" id="crop-range-fill"></div>
+        <div class="crop-handle" id="crop-handle-start" title="Drag to set start"></div>
+        <div class="crop-handle" id="crop-handle-end" title="Drag to set end"></div>
+      </div>
+    </div>
+
+    <div class="fx-section">
+      <div class="fx-section-title">Sound</div>
+      <div class="fx-row"><label>Volume</label><input type="range" id="fx-volume" min="0" max="150" value="100"><span class="fx-val" id="val-volume">100%</span></div>
+      <div class="fx-row"><label>Speed</label><input type="range" id="fx-speed" min="50" max="200" value="100"><span class="fx-val" id="val-speed">1.0x</span></div>
+      <div class="fx-row"><label>Stereo Pan</label><input type="range" id="fx-pan" min="-100" max="100" value="0"><span class="fx-val" id="val-pan">C</span></div>
+    </div>
+
+    <div class="fx-section">
+      <div class="fx-section-title">Equalizer</div>
+      <div class="fx-row"><label>Bass</label><input type="range" id="fx-bass" min="-24" max="24" value="0"><span class="fx-val" id="val-bass">0dB</span></div>
+      <div class="fx-row"><label>Mid</label><input type="range" id="fx-mid" min="-24" max="24" value="0"><span class="fx-val" id="val-mid">0dB</span></div>
+      <div class="fx-row"><label>Treble</label><input type="range" id="fx-treble" min="-24" max="24" value="0"><span class="fx-val" id="val-treble">0dB</span></div>
+    </div>
+
+    <div class="fx-section">
+      <div class="fx-section-title">Reverb</div>
+      <div class="fx-row"><label>Wet / Dry</label><input type="range" id="fx-reverb" min="0" max="100" value="0"><span class="fx-val" id="val-reverb">0%</span></div>
+    </div>
+
+    <div class="footer-row">
+      <div class="repeat-toggle">
+        <span>🔁 Loop crop range</span>
+        <input type="checkbox" id="loop-check" checked>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="chapter-strip-wrap">
+  <div class="chapter-strip" id="chapter-strip"></div>
+</div>
+
+<div class="day-strip-wrap">
+  <div class="day-strip" id="day-strip"></div>
+  <div class="nav-arrows">
+    <button class="arrow-btn" id="prev-btn" onclick="shiftDay(-1)">‹ Previous day</button>
+    <button class="arrow-btn" id="next-btn" onclick="shiftDay(1)">Next day ›</button>
+  </div>
+</div>
+
+<main>
+  <div id="status">Loading Day 1…</div>
+  <div class="content-card" id="content" style="display:none;"></div>
+</main>
+
+<footer>Chapter 2 · Sāṅkhya Yoga · 18 days · 4 verses per day</footer>
+
+<script>
+/* ====================================================================
+   READER — text side
+   ==================================================================== */
+const GH_OWNER = "joyofdhamma";
+const GH_REPO  = "bgda";
+const GH_BRANCH = "main";
+
+const TOTAL_CHAPTERS = 18;
+/* ---- Fixed day-count applied to every chapter for now.
+   Edit this single number to change it (Joy: adjust as needed). ---- */
+const TOTAL_DAYS = 18;
+const VERSES_START = 1;
+let currentDay = 1;
+let currentChapter = 2; // Chapter 2 is the original/default chapter
+
+function verseRangeForDay(day){
+  const start = VERSES_START + (day - 1) * 4;
+  const end = start + 3;
+  return `${start}–${end}`;
+}
+
+function buildChapterStrip(){
+  const strip = document.getElementById('chapter-strip');
+  strip.innerHTML = '';
+  for(let c=1; c<=TOTAL_CHAPTERS; c++){
+    const btn = document.createElement('button');
+    btn.className = 'chapter-btn';
+    btn.id = 'chapter-btn-' + c;
+    btn.textContent = `Ch ${c}`;
+    btn.onclick = () => switchChapter(c);
+    strip.appendChild(btn);
+  }
+}
+
+function setActiveChapterButton(chapter){
+  document.querySelectorAll('.chapter-btn').forEach(b=>b.classList.remove('active'));
+  const btn = document.getElementById('chapter-btn-' + chapter);
+  if(btn){
+    btn.classList.add('active');
+    btn.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
+  }
+}
+
+function switchChapter(chapter){
+  currentChapter = chapter;
+  setActiveChapterButton(chapter);
+  history.replaceState(null, '', '#ch-' + chapter + '-day-1');
+  loadDay(1);
+  precacheAllDays();
+}
+
+function buildDayStrip(){
+  const strip = document.getElementById('day-strip');
+  strip.innerHTML = '';
+  for(let d=1; d<=TOTAL_DAYS; d++){
+    const btn = document.createElement('button');
+    btn.className = 'day-btn';
+    btn.id = 'day-btn-' + d;
+    btn.innerHTML = `Day ${d}<span class="verses-tag">v.${verseRangeForDay(d)}</span>`;
+    btn.onclick = () => loadDay(d);
+    strip.appendChild(btn);
+  }
+}
+
+function setActiveButton(day){
+  document.querySelectorAll('.day-btn').forEach(b=>b.classList.remove('active'));
+  const btn = document.getElementById('day-btn-' + day);
+  if(btn){
+    btn.classList.add('active');
+    btn.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
+  }
+  document.getElementById('prev-btn').disabled = day <= 1;
+  document.getElementById('next-btn').disabled = day >= TOTAL_DAYS;
+}
+
+function shiftDay(n){
+  const next = currentDay + n;
+  if(next < 1 || next > TOTAL_DAYS) return;
+  loadDay(next);
+}
+
+async function loadDay(day){
+  currentDay = day;
+  setActiveButton(day);
+  history.replaceState(null, '', '#ch-' + currentChapter + '-day-' + day);
+
+  const statusEl = document.getElementById('status');
+  const contentEl = document.getElementById('content');
+  contentEl.style.display = 'none';
+  statusEl.style.display = 'block';
+  statusEl.className = '';
+  statusEl.textContent = `Loading Chapter ${currentChapter}, Day ${day}…`;
+  document.getElementById('day-heading').textContent = `Chapter ${currentChapter} · Day ${day} of ${TOTAL_DAYS} · Verses ${verseRangeForDay(day)}`;
+
+  const filename = `Ch${currentChapter}_D${day}.md`;
+  const url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${filename}`;
+  const cacheKey = 'gita_cache_' + filename;
+
+  try{
+    const res = await fetch(url, { cache: 'no-store' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const md = await res.text();
+    localStorage.setItem(cacheKey, md);
+    renderMarkdown(md, false);
+  }catch(e){
+    console.warn('Network fetch failed, trying cache:', e);
+    const cached = localStorage.getItem(cacheKey);
+    if(cached){
+      renderMarkdown(cached, true);
+    }else{
+      statusEl.className = 'error';
+      statusEl.textContent = `Couldn't load Chapter ${currentChapter}, Day ${day} — no internet connection and no offline copy saved yet for ${filename}.`;
+    }
+  }
+}
+
+function renderMarkdown(md, fromCache){
+  const statusEl = document.getElementById('status');
+  const contentEl = document.getElementById('content');
+  contentEl.innerHTML = marked.parse(md);
+  if(fromCache){
+    const note = document.createElement('div');
+    note.style.cssText = 'font-size:12px;color:var(--ink-soft);margin-bottom:18px;font-style:italic;';
+    note.textContent = '(Showing offline copy saved earlier — not connected right now)';
+    contentEl.insertBefore(note, contentEl.firstChild);
+  }
+  statusEl.style.display = 'none';
+  contentEl.style.display = 'block';
+}
+
+async function precacheAllDays(){
+  for(let d=1; d<=TOTAL_DAYS; d++){
+    const filename = `Ch${currentChapter}_D${d}.md`;
+    const cacheKey = 'gita_cache_' + filename;
+    if(localStorage.getItem(cacheKey)) continue;
+    try{
+      const url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${filename}`;
+      const res = await fetch(url, { cache: 'no-store' });
+      if(res.ok){
+        const md = await res.text();
+        localStorage.setItem(cacheKey, md);
+      }
+    }catch(e){ /* silent */ }
+  }
+}
+
+/* ====================================================================
+   MUSIC PLAYER — simple MP3 player with manual start/end crop
+   + Web Audio effects (Volume, Speed, Pan, Bass/Mid/Treble, Reverb)
+   No GitHub JSON, no day grid — everything is set manually per file.
+   ==================================================================== */
+let audioEl = null;
+let objectUrl = null;
+let cropStart = 0;
+let cropEnd = 0;
+let audioDuration = 0;
+let loopEnabled = true;
+
+// Web Audio graph nodes
+let actx = null;
+let sourceNode = null;
+let bassFilter, midFilter, trebleFilter;
+let pannerNode, gainNode;
+let convolver, wetGain, dryGain, reverbMixOut;
+
+function ensureAudioGraph(){
+  if(actx) return;
+  actx = new (window.AudioContext || window.webkitAudioContext)();
+
+  bassFilter = actx.createBiquadFilter();
+  bassFilter.type = 'lowshelf';
+  bassFilter.frequency.value = 200;
+
+  midFilter = actx.createBiquadFilter();
+  midFilter.type = 'peaking';
+  midFilter.frequency.value = 1000;
+  midFilter.Q.value = 0.8;
+
+  trebleFilter = actx.createBiquadFilter();
+  trebleFilter.type = 'highshelf';
+  trebleFilter.frequency.value = 3000;
+
+  pannerNode = actx.createStereoPanner();
+  gainNode = actx.createGain();
+
+  convolver = actx.createConvolver();
+  convolver.buffer = makeImpulseResponse(2.5, 2.2);
+  wetGain = actx.createGain();
+  dryGain = actx.createGain();
+  wetGain.gain.value = 0;
+  dryGain.gain.value = 1;
+  reverbMixOut = actx.createGain();
+
+  bassFilter.connect(midFilter);
+  midFilter.connect(trebleFilter);
+  trebleFilter.connect(pannerNode);
+  pannerNode.connect(dryGain);
+  pannerNode.connect(convolver);
+  convolver.connect(wetGain);
+  dryGain.connect(reverbMixOut);
+  wetGain.connect(reverbMixOut);
+  reverbMixOut.connect(gainNode);
+  gainNode.connect(actx.destination);
+}
+
+function makeImpulseResponse(duration, decay){
+  const sampleRate = actx.sampleRate;
+  const length = sampleRate * duration;
+  const impulse = actx.createBuffer(2, length, sampleRate);
+  for(let ch=0; ch<2; ch++){
+    const data = impulse.getChannelData(ch);
+    for(let i=0; i<length; i++){
+      data[i] = (Math.random()*2-1) * Math.pow(1 - i/length, decay);
+    }
+  }
+  return impulse;
+}
+
+function connectSourceToGraph(){
+  ensureAudioGraph();
+  if(sourceNode){ try{ sourceNode.disconnect(); }catch(e){} }
+  sourceNode = actx.createMediaElementSource(audioEl);
+  sourceNode.connect(bassFilter);
+}
+
+function formatTime(sec){
+  if(!isFinite(sec) || sec < 0) sec = 0;
+  const m = Math.floor(sec/60), s = Math.floor(sec%60);
+  return `${m}:${s.toString().padStart(2,'0')}`;
+}
+
+function updateProgressUI(){
+  if(!audioEl) return;
+  const current = audioEl.currentTime || 0;
+  const duration = audioEl.duration || 0;
+  document.getElementById('progress-range').value = duration>0 ? Math.min(1000,(current/duration)*1000) : 0;
+  document.getElementById('time-current').textContent = formatTime(current);
+  document.getElementById('time-duration').textContent = formatTime(duration);
+  updateCropTrackUI();
+}
+
+/* ---------- Crop range (start/end) UI: text boxes + draggable markers ---------- */
+function updateCropTrackUI(){
+  if(!audioDuration) return;
+  const startPct = Math.min(100, Math.max(0, (cropStart/audioDuration)*100));
+  const endPct = Math.min(100, Math.max(0, (cropEnd/audioDuration)*100));
+  document.getElementById('crop-range-fill').style.left = startPct + '%';
+  document.getElementById('crop-range-fill').style.width = Math.max(0, endPct-startPct) + '%';
+  document.getElementById('crop-handle-start').style.left = startPct + '%';
+  document.getElementById('crop-handle-end').style.left = endPct + '%';
+}
+
+function setCropStart(seconds, fromDrag){
+  seconds = Math.max(0, Math.min(seconds, cropEnd - 0.1));
+  cropStart = seconds;
+  document.getElementById('crop-start-input').value = cropStart.toFixed(1);
+  updateCropTrackUI();
+}
+function setCropEnd(seconds, fromDrag){
+  seconds = Math.min(audioDuration || seconds, Math.max(seconds, cropStart + 0.1));
+  cropEnd = seconds;
+  document.getElementById('crop-end-input').value = cropEnd.toFixed(1);
+  updateCropTrackUI();
+}
+
+function wireCropTextInputs(){
+  document.getElementById('crop-start-input').addEventListener('change', function(){
+    setCropStart(parseFloat(this.value) || 0);
+  });
+  document.getElementById('crop-end-input').addEventListener('change', function(){
+    setCropEnd(parseFloat(this.value) || (audioDuration||0));
+  });
+}
+
+function wireCropDragHandles(){
+  const track = document.getElementById('crop-track');
+  const startHandle = document.getElementById('crop-handle-start');
+  const endHandle = document.getElementById('crop-handle-end');
+
+  function posToSeconds(clientX){
+    const rect = track.getBoundingClientRect();
+    const pct = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    return pct * (audioDuration || 0);
+  }
+
+  function startDrag(handle, which){
+    function onMove(e){
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const seconds = posToSeconds(clientX);
+      if(which === 'start') setCropStart(seconds, true);
+      else setCropEnd(seconds, true);
+    }
+    function onUp(){
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onUp);
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchmove', onMove, { passive:true });
+    document.addEventListener('touchend', onUp);
+  }
+
+  startHandle.addEventListener('mousedown', ()=>startDrag(startHandle,'start'));
+  startHandle.addEventListener('touchstart', ()=>startDrag(startHandle,'start'));
+  endHandle.addEventListener('mousedown', ()=>startDrag(endHandle,'end'));
+  endHandle.addEventListener('touchstart', ()=>startDrag(endHandle,'end'));
+}
+
+/* ---------- Loop enforcement within crop range ---------- */
+function enforceCropLoop(){
+  if(!audioEl) return;
+  const current = audioEl.currentTime;
+  const playBtn = document.getElementById('play-btn');
+  if(current > cropEnd){
+    if(loopEnabled){
+      audioEl.currentTime = cropStart;
+    }else{
+      if(!audioEl.paused){ audioEl.pause(); playBtn.textContent='▶'; playBtn.classList.remove('playing'); }
+      audioEl.currentTime = cropEnd;
+    }
+    updateProgressUI();
+    return;
+  }
+  if(current < cropStart){
+    audioEl.currentTime = cropStart;
+    updateProgressUI();
+  }
+}
+
+function loadAudioFile(file){
+  if(!file) return;
+  if(audioEl){ audioEl.pause(); }
+  if(objectUrl) URL.revokeObjectURL(objectUrl);
+  objectUrl = URL.createObjectURL(file);
+
+  audioEl = new Audio(objectUrl);
+  audioEl.preload = 'metadata';
+  audioEl.crossOrigin = 'anonymous';
+  connectSourceToGraph();
+
+  document.getElementById('play-btn').textContent = '▶';
+  document.getElementById('play-btn').classList.remove('playing');
+  document.getElementById('progress-range').value = 0;
+  document.getElementById('time-current').textContent = '0:00';
+  document.getElementById('file-name').textContent = file.name;
+
+  audioEl.addEventListener('loadedmetadata', ()=>{
+    audioDuration = audioEl.duration || 0;
+    document.getElementById('time-duration').textContent = formatTime(audioDuration);
+    cropStart = 0;
+    cropEnd = audioDuration;
+    document.getElementById('crop-start-input').value = '0.0';
+    document.getElementById('crop-end-input').value = audioDuration.toFixed(1);
+    document.getElementById('crop-start-input').max = audioDuration;
+    document.getElementById('crop-end-input').max = audioDuration;
+    updateProgressUI();
+  });
+  audioEl.addEventListener('timeupdate', ()=>{
+    updateProgressUI();
+    enforceCropLoop();
+  });
+  audioEl.addEventListener('ended', ()=>{
+    const playBtn = document.getElementById('play-btn');
+    if(loopEnabled){
+      audioEl.currentTime = cropStart;
+      audioEl.play().catch(()=>{});
+      playBtn.textContent='⏸'; playBtn.classList.add('playing');
+    }else{
+      playBtn.textContent='▶'; playBtn.classList.remove('playing');
+    }
+    updateProgressUI();
+  });
+  audioEl.addEventListener('error', ()=> alert('Error loading audio. Try another file.'));
+
+  applyAllFx();
+}
+
+/* ---------- FX control wiring ---------- */
+function applyAllFx(){
+  if(!actx) return;
+  const vol = parseFloat(document.getElementById('fx-volume').value)/100;
+  gainNode.gain.setTargetAtTime(vol, actx.currentTime, 0.01);
+
+  const pan = parseFloat(document.getElementById('fx-pan').value)/100;
+  pannerNode.pan.setTargetAtTime(pan, actx.currentTime, 0.01);
+
+  const bass = parseFloat(document.getElementById('fx-bass').value);
+  bassFilter.gain.setTargetAtTime(bass, actx.currentTime, 0.01);
+
+  const mid = parseFloat(document.getElementById('fx-mid').value);
+  midFilter.gain.setTargetAtTime(mid, actx.currentTime, 0.01);
+
+  const treble = parseFloat(document.getElementById('fx-treble').value);
+  trebleFilter.gain.setTargetAtTime(treble, actx.currentTime, 0.01);
+
+  const reverbPct = parseFloat(document.getElementById('fx-reverb').value)/100;
+  wetGain.gain.setTargetAtTime(reverbPct, actx.currentTime, 0.01);
+  dryGain.gain.setTargetAtTime(1 - reverbPct*0.6, actx.currentTime, 0.01);
+
+  if(audioEl){
+    const speed = parseFloat(document.getElementById('fx-speed').value)/100;
+    audioEl.playbackRate = speed;
+  }
+}
+
+function wireFxControl(id, valId, formatter){
+  const input = document.getElementById(id);
+  const valEl = document.getElementById(valId);
+  input.addEventListener('input', ()=>{
+    valEl.textContent = formatter(input.value);
+    ensureAudioGraph();
+    applyAllFx();
+  });
+}
+wireFxControl('fx-volume','val-volume', v=>`${v}%`);
+wireFxControl('fx-speed','val-speed', v=>`${(v/100).toFixed(2)}x`);
+wireFxControl('fx-pan','val-pan', v=>{ v=parseInt(v); if(v===0) return 'C'; return v<0 ? `L${Math.abs(v)}` : `R${v}`; });
+wireFxControl('fx-bass','val-bass', v=>`${v>0?'+':''}${v}dB`);
+wireFxControl('fx-mid','val-mid', v=>`${v>0?'+':''}${v}dB`);
+wireFxControl('fx-treble','val-treble', v=>`${v>0?'+':''}${v}dB`);
+wireFxControl('fx-reverb','val-reverb', v=>`${v}%`);
+
+document.getElementById('audio-upload').addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if(file) loadAudioFile(file);
+});
+
+document.getElementById('play-btn').addEventListener('click', ()=>{
+  if(!audioEl){ alert('Load an MP3 first.'); return; }
+  if(actx && actx.state === 'suspended') actx.resume();
+  const playBtn = document.getElementById('play-btn');
+  if(audioEl.paused){
+    if(audioEl.currentTime < cropStart || audioEl.currentTime > cropEnd) audioEl.currentTime = cropStart;
+    audioEl.play().catch(()=>{});
+    playBtn.textContent='⏸'; playBtn.classList.add('playing');
+  }else{
+    audioEl.pause();
+    playBtn.textContent='▶'; playBtn.classList.remove('playing');
+  }
+});
+
+document.getElementById('stop-btn').addEventListener('click', ()=>{
+  if(!audioEl) return;
+  audioEl.pause();
+  audioEl.currentTime = cropStart;
+  const playBtn = document.getElementById('play-btn');
+  playBtn.textContent='▶'; playBtn.classList.remove('playing');
+  updateProgressUI();
+});
+
+document.getElementById('progress-range').addEventListener('input', ()=>{
+  if(!audioEl || !audioEl.duration) return;
+  const pct = parseFloat(document.getElementById('progress-range').value)/1000;
+  audioEl.currentTime = pct * audioEl.duration;
+  updateProgressUI();
+});
+
+document.getElementById('loop-check').addEventListener('change', e=>{
+  loopEnabled = e.target.checked;
+});
+
+wireCropTextInputs();
+wireCropDragHandles();
+
+function toggleMusicPanel(){
+  const panel = document.getElementById('player-panel');
+  const fab = document.getElementById('music-fab');
+  panel.classList.toggle('open');
+  fab.classList.toggle('active');
+}
+
+/* ====================================================================
+   LIVE DATE & TIME DISPLAY
+   ==================================================================== */
+function updateDateTimeDisplay(){
+  const el = document.getElementById('datetime-display');
+  if(!el) return;
+  const now = new Date();
+  const dateStr = now.toLocaleDateString(undefined, { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  const timeStr = now.toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  el.textContent = `${dateStr} · ${timeStr}`;
+}
+updateDateTimeDisplay();
+setInterval(updateDateTimeDisplay, 1000);
+
+/* ====================================================================
+   INIT
+   ==================================================================== */
+buildChapterStrip();
+buildDayStrip();
+
+const hashChapterMatch = location.hash.match(/ch-(\d+)/);
+const hashDayMatch = location.hash.match(/day-(\d+)/);
+currentChapter = hashChapterMatch ? Math.min(TOTAL_CHAPTERS, Math.max(1, parseInt(hashChapterMatch[1]))) : 2;
+const startDay = hashDayMatch ? Math.min(TOTAL_DAYS, Math.max(1, parseInt(hashDayMatch[1]))) : 1;
+
+setActiveChapterButton(currentChapter);
+loadDay(startDay);
+precacheAllDays();
+</script>
+</body>
+</html>
