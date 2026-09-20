@@ -86,6 +86,7 @@
                 <option value="dax">DAX</option>
                 <option value="excel">Excel Formula</option>
                 <option value="markdown">Markdown</option>
+                <option value="rtf">RTF</option>
                 <option value="epub">epub</option>
             </select>
 
@@ -98,7 +99,7 @@
             </div>
 
             <input type="file" id="file-input" class="file-input"
-                accept=".txt,.dat,.js,.ts,.html,.css,.py,.java,.c,.cpp,.php,.sql,.dax,.xlsx,.xls,.epub,.md,.markdown">
+                accept=".txt,.dat,.js,.ts,.html,.css,.py,.java,.c,.cpp,.php,.sql,.dax,.xlsx,.xls,.epub,.md,.markdown,.rtf">
         </div>
 
         <div id="container"></div>
@@ -246,7 +247,11 @@
                 const reader = new FileReader();
 
                 reader.onload = function (ev) {
-                    editor.setValue(ev.target.result);
+                    let text = ev.target.result;
+                    if (file.name.toLowerCase().endsWith('.rtf')) {
+                        text = rtfToPlainText(text);
+                    }
+                    editor.setValue(text);
                     detectLanguageFromFileName(file.name);
                 };
                 reader.readAsText(file);
@@ -254,7 +259,7 @@
 
             /* ------------------- SAVE FILE ------------------------------ */
             saveBtn.addEventListener('click', function () {
-                const content = editor.getValue();
+                let content = editor.getValue();
                 if (!content) return;
 
                 let fileName = currentFile ? currentFile.name : 'untitled.dat';
@@ -264,7 +269,15 @@
                     fileName = `untitled.${ext}`;
                 }
 
-                const blob = new Blob([content], { type: 'text/plain' });
+                let mimeType = 'text/plain';
+
+                // If saving as .rtf, wrap plain text in minimal valid RTF syntax
+                if (fileName.toLowerCase().endsWith('.rtf')) {
+                    content = plainTextToRtf(content);
+                    mimeType = 'application/rtf';
+                }
+
+                const blob = new Blob([content], { type: mimeType });
                 const url = URL.createObjectURL(blob);
 
                 const a = document.createElement('a');
@@ -274,6 +287,30 @@
 
                 URL.revokeObjectURL(url);
             });
+
+            /* ---------------- RTF helpers ------------------------ */
+            function plainTextToRtf(text) {
+                const escaped = text
+                    .replace(/\\/g, '\\\\')
+                    .replace(/\{/g, '\\{')
+                    .replace(/\}/g, '\\}')
+                    .replace(/\r\n/g, '\n')
+                    .split('\n')
+                    .join('\\par\n');
+                return '{\\rtf1\\ansi\\deff0\n{\\fonttbl{\\f0 Courier New;}}\n\\f0\\fs20\n' + escaped + '\n}';
+            }
+
+            function rtfToPlainText(rtf) {
+                // Basic RTF stripper: removes control words/groups, unescapes braces, converts \par to newline
+                let text = rtf
+                    .replace(/\\par[d]?/g, '\n')
+                    .replace(/\\'[0-9a-fA-F]{2}/g, '')
+                    .replace(/\\[a-zA-Z]+-?\d* ?/g, '')
+                    .replace(/[{}]/g, '')
+                    .replace(/\\\\/g, '\\')
+                    .trim();
+                return text;
+            }
 
             /* ---------------- helper functions ------------------------ */
             function detectLanguageFromFileName(name) {
@@ -297,6 +334,7 @@
                     xlsx: 'excel',
                     md: 'markdown',
                     markdown: 'markdown',
+                    rtf: 'plaintext',
                     epub: 'epub'
                 };
 
@@ -324,6 +362,7 @@
                     dax: 'dax',
                     excel: 'xlsx',
                     markdown: 'md',
+                    rtf: 'rtf',
                     epub: 'epub'
 
                 };
