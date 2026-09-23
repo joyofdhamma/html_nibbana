@@ -338,38 +338,16 @@
   }
   .stop-btn:hover{ background:#4a4a6e; }
 
-  .crop-inputs{
-    display:flex; gap:12px; margin-bottom:12px;
+  .player-note{
+    font-size:11px; color:#8a86ad; margin-bottom:12px; line-height:1.5;
   }
-  .crop-input-group{ flex:1; }
-  .crop-input-group label{
-    display:block; font-size:11px; color:#8a86ad; margin-bottom:4px;
+
+  .day-grid{ display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 16px; }
+  .day-seg-btn{
+    background:#32324e; border:1px solid #4a4a6a; border-radius:20px;
+    padding:6px 13px; font-weight:500; color:#e5e2f7; font-size:11.5px; cursor:pointer;
   }
-  .crop-input-group input[type=number]{
-    width:100%; font-family:var(--sans); font-size:13px;
-    padding:7px 10px; border:1px solid #4a4a6a; border-radius:8px;
-    background:#14141f; color:#e5e2f7;
-  }
-  .crop-track{
-    position:relative;
-    height:34px;
-    margin:6px 2px 4px;
-  }
-  .crop-track-bg{
-    position:absolute; top:14px; left:0; right:0; height:6px;
-    background:#14141f; border-radius:4px;
-  }
-  .crop-range-fill{
-    position:absolute; top:14px; height:6px;
-    background:#7c6df0; border-radius:4px;
-  }
-  .crop-handle{
-    position:absolute; top:4px;
-    width:18px; height:18px; margin-left:-9px;
-    background:#f0eef7; border:2px solid #7c6df0; border-radius:50%;
-    cursor:grab; touch-action:none;
-  }
-  .crop-handle:active{ cursor:grabbing; background:#7c6df0; }
+  .day-seg-btn.active-segment{ background:#7c6df0; border-color:#9a8cf5; color:#fff; }
 
   .fx-section{ margin-top:6px; }
   .fx-section-title{
@@ -399,6 +377,10 @@
     color:#b7b4d6; font-size:12px; border:1px solid #4a4a6a;
   }
   .repeat-toggle input{ accent-color:#7c6df0; width:14px; height:14px; cursor:pointer; }
+  .day-badge{
+    background:#32324e; border-radius:20px; padding:5px 12px;
+    font-size:11.5px; color:#b7b4d6;
+  }
 
   @media (max-width:600px){
     .content-card{ padding:26px 20px; }
@@ -411,8 +393,8 @@
 
 <header>
   <button id="music-fab" onclick="toggleMusicPanel()" title="Audio player">♪</button>
-  <div class="eyebrow">भगवद्गीता · Chapter Two</div>
-  <h1>Eighteen Days, Four Verses</h1>
+  <div class="eyebrow">॥ ॐ श्री परमात्मने नमः ॥</div>
+  <h1>॥॥ श्रीमद्भगवद्गीता ॥॥</h1> 
   <div class="sub" id="day-heading">Loading…</div>
   <div id="datetime-display"></div>
 </header>
@@ -420,12 +402,13 @@
 <!-- MUSIC PLAYER PANEL -->
 <div id="player-panel">
   <div class="player-card">
-    <h3>MP3 Player</h3>
+    <h3>Chapter <span id="player-chapter-label">2</span> Recitation</h3>
+    <div class="player-note">One MP3 per chapter — upload each chapter's file once per session; switching chapters remembers the file you loaded for it.</div>
 
     <div class="upload-area">
-      <label for="audio-upload" class="upload-label">📁 Load MP3</label>
+      <label for="audio-upload" class="upload-label">📁 Load MP3 for this chapter</label>
       <input type="file" id="audio-upload" accept=".mp3,audio/mpeg">
-      <span class="file-name" id="file-name">no file loaded</span>
+      <span class="file-name" id="file-name">no file loaded for this chapter</span>
     </div>
 
     <div class="player-bar">
@@ -437,25 +420,7 @@
       <button class="stop-btn" id="stop-btn" title="Stop">⏹</button>
     </div>
 
-    <div class="fx-section">
-      <div class="fx-section-title">Crop this verse (start / end)</div>
-      <div class="crop-inputs">
-        <div class="crop-input-group">
-          <label>Start (sec)</label>
-          <input type="number" id="crop-start-input" min="0" step="0.1" value="0.0">
-        </div>
-        <div class="crop-input-group">
-          <label>End (sec)</label>
-          <input type="number" id="crop-end-input" min="0" step="0.1" value="0.0">
-        </div>
-      </div>
-      <div class="crop-track" id="crop-track">
-        <div class="crop-track-bg"></div>
-        <div class="crop-range-fill" id="crop-range-fill"></div>
-        <div class="crop-handle" id="crop-handle-start" title="Drag to set start"></div>
-        <div class="crop-handle" id="crop-handle-end" title="Drag to set end"></div>
-      </div>
-    </div>
+    <div class="day-grid" id="day-grid"></div>
 
     <div class="fx-section">
       <div class="fx-section-title">Sound</div>
@@ -478,12 +443,14 @@
 
     <div class="footer-row">
       <div class="repeat-toggle">
-        <span>🔁 Loop crop range</span>
-        <input type="checkbox" id="loop-check" checked>
+        <span>🔁 Repeat day</span>
+        <input type="checkbox" id="repeat-check" checked>
       </div>
+      <span class="day-badge" id="day-badge">idle</span>
     </div>
   </div>
 </div>
+
 
 
 <div class="chapter-strip-wrap">
@@ -503,7 +470,10 @@
   <div class="content-card" id="content" style="display:none;"></div>
 </main>
 
-<footer>Chapter 2 · Sāṅkhya Yoga · 18 days · 4 verses per day</footer>
+<footer>शान्ताकारं भुजगशयनं पद्मनाभं सुरेशं
+विश्वाधारं गगनसदृशं मेघवर्णं शुभाङ्गम् ।
+लक्ष्मीकान्तं कमलनयनं योगिभिर्ध्यानगम्यं
+वन्दे विष्णुं भवभयहरं सर्वलोकैकनाथम् ॥</footer>
 
 <script>
 /* ====================================================================
@@ -553,6 +523,8 @@ function switchChapter(chapter){
   currentChapter = chapter;
   setActiveChapterButton(chapter);
   history.replaceState(null, '', '#ch-' + chapter + '-day-1');
+  document.getElementById('player-chapter-label').textContent = chapter;
+  onChapterSwitchedForMusic();
   loadDay(1);
   precacheAllDays();
 }
@@ -620,6 +592,8 @@ async function loadDay(day){
       statusEl.textContent = `Couldn't load Chapter ${currentChapter}, Day ${day} — no internet connection and no offline copy saved yet for ${filename}.`;
     }
   }
+
+  syncMusicToReaderDay(day);
 }
 
 function renderMarkdown(md, fromCache){
@@ -653,20 +627,88 @@ async function precacheAllDays(){
 }
 
 /* ====================================================================
-   MUSIC PLAYER — simple MP3 player with manual start/end crop
-   + Web Audio effects (Volume, Speed, Pan, Bass/Mid/Treble, Reverb)
-   No GitHub JSON, no day grid — everything is set manually per file.
+/* ====================================================================
+   MUSIC PLAYER — per-chapter MP3, day-wise segments, synced with reader
    ==================================================================== */
-let audioEl = null;
-let objectUrl = null;
-let cropStart = 0;
-let cropEnd = 0;
-let audioDuration = 0;
-let loopEnabled = true;
 
-// Web Audio graph nodes
+// Day-wise start/end seconds per chapter. Edit these numbers directly to
+// adjust timings (Joy: this is your DEFAULT_DATA, carried over as-is).
+const CHAPTER_DAY_TIMINGS = {
+  1: { day1: { start: 0, end: 100 }, day2: { start: 101, end: 120 }, day3: { start: 387, end: 457 } },
+  2: {
+    day1: { start: 10.00, end: 88.00 },
+    day2: { start: 88.00, end: 173.00 },
+    day3: { start: 173.00, end: 249.60 },
+    day4: { start: 249.60, end: 318.00 },
+    day5: { start: 318.00, end: 387.00 },
+    
+    
+    
+    day6: { start: 387, end: 457 },
+    day7: { start: 457, end: 526 },
+    day8: { start: 526, end: 595 },
+    day9: { start: 595, end: 662 },
+    day10: { start: 662, end: 727.50 },
+    day11: { start: 727.50, end: 792.00 },
+    day12: { start: 792.00, end: 858.00 },
+    day13: { start: 857.99, end: 923.00 },
+    day14: { start: 923.00, end: 994.00 },
+    day15: { start: 994.00, end: 1060.00 },
+    day16: { start: 1060.00, end: 1128.00 },
+    day17: { start: 1128.00, end: 1195.06 },
+    day18: { start: 1195.06, end: 1267.00 }
+  },
+  3: {
+    day1: { start: 22.49, end: 99.00 },
+    day2: { start: 99.00, end: 168.98 },
+    day3: { start: 168.98, end: 240.00 },
+    day4: { start: 240.00, end: 312.75 },
+    day5: { start: 312.75, end: 380.00 },
+    day6: { start: 380.00, end: 447.00 },
+    day7: { start: 447.00, end: 512.00 },
+    day8: { start: 512.00, end: 581.00 },
+    day9: { start: 581.00, end: 652.00 },
+    day10: { start: 652.00, end: 724.38 },
+    day11: { start: 724.34, end: 778.00 }
+  },
+  4: { day1: { start: 0, end: 30 }, day2: { start: 40, end: 70 }, day3: { start: 150, end: 220 } },
+  5: { day1: { start: 20, end: 80 }, day2: { start: 90, end: 120 }, day3: { start: 400, end: 500 } },
+  6: { day1: { start: 0, end: 50 }, day2: { start: 60, end: 100 }, day3: { start: 250, end: 320 } },
+  7: { day1: { start: 15, end: 55 }, day2: { start: 60, end: 85 }, day3: { start: 180, end: 240 } },
+  8: { day1: { start: 5, end: 40 }, day2: { start: 50, end: 80 }, day3: { start: 350, end: 420 } },
+  9: { day1: { start: 0, end: 35 }, day2: { start: 40, end: 65 }, day3: { start: 120, end: 190 } },
+  10: { day1: { start: 10, end: 70 }, day2: { start: 80, end: 110 }, day3: { start: 280, end: 360 } },
+  11: { day1: { start: 0, end: 60 }, day2: { start: 70, end: 95 }, day3: { start: 200, end: 270 } },
+  12: { day1: { start: 5, end: 45 }, day2: { start: 50, end: 75 }, day3: { start: 330, end: 400 } },
+  13: { day1: { start: 0, end: 25 }, day2: { start: 30, end: 55 }, day3: { start: 160, end: 230 } },
+  14: { day1: { start: 10, end: 50 }, day2: { start: 60, end: 90 }, day3: { start: 380, end: 460 } },
+  15: { day1: { start: 0, end: 40 }, day2: { start: 50, end: 80 }, day3: { start: 220, end: 300 } },
+  16: { day1: { start: 5, end: 55 }, day2: { start: 60, end: 85 }, day3: { start: 310, end: 390 } },
+  17: { day1: { start: 0, end: 30 }, day2: { start: 40, end: 70 }, day3: { start: 140, end: 210 } },
+  18: { day1: { start: 10, end: 65 }, day2: { start: 70, end: 100 }, day3: { start: 250, end: 330 } }
+};
+
+function getCurrentChapterDays(){
+  return CHAPTER_DAY_TIMINGS[currentChapter] || {};
+}
+function getDayKeys(){
+  return Object.keys(getCurrentChapterDays()).sort((a,b)=>{
+    return parseInt(a.replace('day','')) - parseInt(b.replace('day',''));
+  });
+}
+function getSeg(dayKey){ return getCurrentChapterDays()[dayKey]; }
+
+// Per-chapter uploaded audio. Files themselves live only in memory (object URLs) —
+// they are NOT persisted across a page reload, only remembered for the current
+// session so switching chapters back and forth keeps each one's file loaded.
+let chapterAudio = {}; // { [chapterNum]: { objectUrl, fileName, audioEl, duration } }
+let audioEl = null;         // the <audio> element currently attached to the graph
+let activeDayKey = null;
+let repeatEnabled = true;
+
+// Web Audio graph nodes (shared across chapters; reattached per file)
 let actx = null;
-let sourceNode = null;
+let sourceNodes = {}; // one MediaElementSource per chapter's audio element (can't reuse across elements)
 let bassFilter, midFilter, trebleFilter;
 let pannerNode, gainNode;
 let convolver, wetGain, dryGain, reverbMixOut;
@@ -724,11 +766,13 @@ function makeImpulseResponse(duration, decay){
   return impulse;
 }
 
-function connectSourceToGraph(){
+function connectSourceToGraph(chapter, el){
   ensureAudioGraph();
-  if(sourceNode){ try{ sourceNode.disconnect(); }catch(e){} }
-  sourceNode = actx.createMediaElementSource(audioEl);
-  sourceNode.connect(bassFilter);
+  if(!sourceNodes[chapter]){
+    sourceNodes[chapter] = actx.createMediaElementSource(el);
+  }
+  try{ sourceNodes[chapter].disconnect(); }catch(e){}
+  sourceNodes[chapter].connect(bassFilter);
 }
 
 function formatTime(sec){
@@ -737,6 +781,68 @@ function formatTime(sec){
   return `${m}:${s.toString().padStart(2,'0')}`;
 }
 
+/* ---------- Day grid (built from CHAPTER_DAY_TIMINGS for current chapter) ---------- */
+function buildDayGrid(){
+  const grid = document.getElementById('day-grid');
+  grid.innerHTML = '';
+  const chapterDays = getCurrentChapterDays();
+  const keys = getDayKeys();
+  if(keys.length === 0){
+    const note = document.createElement('div');
+    note.style.cssText = 'font-size:12px;color:#8a86ad;font-style:italic;';
+    note.textContent = `No day timings defined for Chapter ${currentChapter}.`;
+    grid.appendChild(note);
+    return;
+  }
+  keys.forEach(key=>{
+    const seg = chapterDays[key];
+    const dayNum = key.replace('day','');
+    const btn = document.createElement('button');
+    btn.className = 'day-seg-btn';
+    btn.dataset.day = key;
+    btn.textContent = `Day ${dayNum}`;
+    btn.title = `${seg.start}s – ${seg.end}s`;
+    btn.onclick = () => {
+      const dNum = parseInt(key.replace('day',''));
+      if(dNum !== currentDay){
+        loadDay(dNum); // triggers syncMusicToReaderDay -> playSegment
+      }else{
+        playSegment(key);
+      }
+    };
+    grid.appendChild(btn);
+  });
+  highlightPlayerDay(currentDay);
+}
+
+function highlightPlayerDay(readerDay){
+  const key = 'day' + readerDay;
+  document.querySelectorAll('.day-seg-btn').forEach(b=>{
+    b.classList.toggle('active-segment', b.dataset.day === key);
+  });
+}
+
+/* ---------- Called by the reader whenever chapter/day changes ---------- */
+function syncMusicToReaderDay(day){
+  const key = 'day' + day;
+  const chapterDays = getCurrentChapterDays();
+  if(!chapterDays[key]){
+    highlightPlayerDay(day);
+    return;
+  }
+  const entry = chapterAudio[currentChapter];
+  if(entry && entry.audioEl){
+    audioEl = entry.audioEl;
+    playSegment(key);
+  }else{
+    activeDayKey = key;
+    document.getElementById('day-badge').textContent =
+      `Day ${day} ${repeatEnabled?'🔁':''} (upload Ch.${currentChapter} MP3 to play)`;
+  }
+  highlightPlayerDay(day);
+}
+
+/* ---------- Playback within a day's segment ---------- */
 function updateProgressUI(){
   if(!audioEl) return;
   const current = audioEl.currentTime || 0;
@@ -744,148 +850,140 @@ function updateProgressUI(){
   document.getElementById('progress-range').value = duration>0 ? Math.min(1000,(current/duration)*1000) : 0;
   document.getElementById('time-current').textContent = formatTime(current);
   document.getElementById('time-duration').textContent = formatTime(duration);
-  updateCropTrackUI();
 }
 
-/* ---------- Crop range (start/end) UI: text boxes + draggable markers ---------- */
-function updateCropTrackUI(){
-  if(!audioDuration) return;
-  const startPct = Math.min(100, Math.max(0, (cropStart/audioDuration)*100));
-  const endPct = Math.min(100, Math.max(0, (cropEnd/audioDuration)*100));
-  document.getElementById('crop-range-fill').style.left = startPct + '%';
-  document.getElementById('crop-range-fill').style.width = Math.max(0, endPct-startPct) + '%';
-  document.getElementById('crop-handle-start').style.left = startPct + '%';
-  document.getElementById('crop-handle-end').style.left = endPct + '%';
-}
-
-function setCropStart(seconds, fromDrag){
-  seconds = Math.max(0, Math.min(seconds, cropEnd - 0.1));
-  cropStart = seconds;
-  document.getElementById('crop-start-input').value = cropStart.toFixed(1);
-  updateCropTrackUI();
-}
-function setCropEnd(seconds, fromDrag){
-  seconds = Math.min(audioDuration || seconds, Math.max(seconds, cropStart + 0.1));
-  cropEnd = seconds;
-  document.getElementById('crop-end-input').value = cropEnd.toFixed(1);
-  updateCropTrackUI();
-}
-
-function wireCropTextInputs(){
-  document.getElementById('crop-start-input').addEventListener('change', function(){
-    setCropStart(parseFloat(this.value) || 0);
-  });
-  document.getElementById('crop-end-input').addEventListener('change', function(){
-    setCropEnd(parseFloat(this.value) || (audioDuration||0));
-  });
-}
-
-function wireCropDragHandles(){
-  const track = document.getElementById('crop-track');
-  const startHandle = document.getElementById('crop-handle-start');
-  const endHandle = document.getElementById('crop-handle-end');
-
-  function posToSeconds(clientX){
-    const rect = track.getBoundingClientRect();
-    const pct = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
-    return pct * (audioDuration || 0);
-  }
-
-  function startDrag(handle, which){
-    function onMove(e){
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const seconds = posToSeconds(clientX);
-      if(which === 'start') setCropStart(seconds, true);
-      else setCropEnd(seconds, true);
-    }
-    function onUp(){
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-      document.removeEventListener('touchmove', onMove);
-      document.removeEventListener('touchend', onUp);
-    }
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-    document.addEventListener('touchmove', onMove, { passive:true });
-    document.addEventListener('touchend', onUp);
-  }
-
-  startHandle.addEventListener('mousedown', ()=>startDrag(startHandle,'start'));
-  startHandle.addEventListener('touchstart', ()=>startDrag(startHandle,'start'));
-  endHandle.addEventListener('mousedown', ()=>startDrag(endHandle,'end'));
-  endHandle.addEventListener('touchstart', ()=>startDrag(endHandle,'end'));
-}
-
-/* ---------- Loop enforcement within crop range ---------- */
-function enforceCropLoop(){
-  if(!audioEl) return;
+function enforceSegment(){
+  if(!audioEl || activeDayKey===null) return;
+  const seg = getSeg(activeDayKey);
+  if(!seg) return;
   const current = audioEl.currentTime;
   const playBtn = document.getElementById('play-btn');
-  if(current > cropEnd){
-    if(loopEnabled){
-      audioEl.currentTime = cropStart;
+  if(current > seg.end){
+    if(repeatEnabled){
+      audioEl.currentTime = seg.start;
     }else{
       if(!audioEl.paused){ audioEl.pause(); playBtn.textContent='▶'; playBtn.classList.remove('playing'); }
-      audioEl.currentTime = cropEnd;
+      audioEl.currentTime = seg.end;
     }
     updateProgressUI();
     return;
   }
-  if(current < cropStart){
-    audioEl.currentTime = cropStart;
+  if(current < seg.start){
+    audioEl.currentTime = seg.start;
     updateProgressUI();
   }
 }
 
+function playSegment(dayKey){
+  const entry = chapterAudio[currentChapter];
+  if(!entry || !entry.audioEl){
+    document.getElementById('day-badge').textContent = `Upload Ch.${currentChapter} MP3 first`;
+    return;
+  }
+  audioEl = entry.audioEl;
+  const seg = getSeg(dayKey);
+  if(!seg) return;
+  const duration = audioEl.duration;
+  if(!duration){ return; }
+
+  activeDayKey = dayKey;
+  document.querySelectorAll('.day-seg-btn').forEach(btn=>{
+    btn.classList.toggle('active-segment', btn.dataset.day === dayKey);
+  });
+  const dayNum = dayKey.replace('day','');
+  document.getElementById('day-badge').textContent = `Day ${dayNum} ${repeatEnabled?'🔁':''}`;
+
+  if(actx && actx.state === 'suspended') actx.resume();
+  audioEl.currentTime = Math.min(seg.start, duration-0.5);
+  audioEl.play().catch(()=>{});
+  const playBtn = document.getElementById('play-btn');
+  playBtn.textContent = '⏸';
+  playBtn.classList.add('playing');
+  updateProgressUI();
+}
+
+/* ---------- Loading an MP3 for the CURRENT chapter ---------- */
 function loadAudioFile(file){
   if(!file) return;
+
+  // Pause/release whichever chapter's file was previously attached to the graph
   if(audioEl){ audioEl.pause(); }
-  if(objectUrl) URL.revokeObjectURL(objectUrl);
-  objectUrl = URL.createObjectURL(file);
 
-  audioEl = new Audio(objectUrl);
-  audioEl.preload = 'metadata';
-  audioEl.crossOrigin = 'anonymous';
-  connectSourceToGraph();
+  const url = URL.createObjectURL(file);
+  const el = new Audio(url);
+  el.preload = 'metadata';
+  el.crossOrigin = 'anonymous';
 
+  chapterAudio[currentChapter] = { objectUrl: url, fileName: file.name, audioEl: el, duration: 0 };
+  audioEl = el;
+  connectSourceToGraph(currentChapter, el);
+
+  activeDayKey = null;
   document.getElementById('play-btn').textContent = '▶';
   document.getElementById('play-btn').classList.remove('playing');
+  document.querySelectorAll('.day-seg-btn').forEach(b=>b.classList.remove('active-segment'));
+  document.getElementById('day-badge').textContent = 'idle';
   document.getElementById('progress-range').value = 0;
   document.getElementById('time-current').textContent = '0:00';
   document.getElementById('file-name').textContent = file.name;
 
-  audioEl.addEventListener('loadedmetadata', ()=>{
-    audioDuration = audioEl.duration || 0;
-    document.getElementById('time-duration').textContent = formatTime(audioDuration);
-    cropStart = 0;
-    cropEnd = audioDuration;
-    document.getElementById('crop-start-input').value = '0.0';
-    document.getElementById('crop-end-input').value = audioDuration.toFixed(1);
-    document.getElementById('crop-start-input').max = audioDuration;
-    document.getElementById('crop-end-input').max = audioDuration;
+  el.addEventListener('loadedmetadata', ()=>{
+    chapterAudio[currentChapter].duration = el.duration;
+    document.getElementById('time-duration').textContent = formatTime(el.duration);
     updateProgressUI();
   });
-  audioEl.addEventListener('timeupdate', ()=>{
-    updateProgressUI();
-    enforceCropLoop();
+  el.addEventListener('timeupdate', ()=>{
+    if(audioEl === el){
+      updateProgressUI();
+      if(activeDayKey!==null) enforceSegment();
+    }
   });
-  audioEl.addEventListener('ended', ()=>{
+  el.addEventListener('ended', ()=>{
+    if(audioEl !== el) return;
     const playBtn = document.getElementById('play-btn');
-    if(loopEnabled){
-      audioEl.currentTime = cropStart;
-      audioEl.play().catch(()=>{});
-      playBtn.textContent='⏸'; playBtn.classList.add('playing');
+    if(activeDayKey!==null && repeatEnabled){
+      const seg = getSeg(activeDayKey);
+      if(seg){
+        el.currentTime = seg.start;
+        el.play().catch(()=>{});
+        playBtn.textContent='⏸'; playBtn.classList.add('playing');
+      }
     }else{
       playBtn.textContent='▶'; playBtn.classList.remove('playing');
     }
     updateProgressUI();
   });
-  audioEl.addEventListener('error', ()=> alert('Error loading audio. Try another file.'));
+  el.addEventListener('error', ()=> alert('Error loading audio. Try another file.'));
 
   applyAllFx();
+  updateFileNameDisplay();
 }
 
-/* ---------- FX control wiring ---------- */
+function updateFileNameDisplay(){
+  const entry = chapterAudio[currentChapter];
+  document.getElementById('file-name').textContent = entry ? entry.fileName : 'no file loaded for this chapter';
+}
+
+/* ---------- Called by the reader when the chapter selector changes ---------- */
+function onChapterSwitchedForMusic(){
+  const entry = chapterAudio[currentChapter];
+  if(entry && entry.audioEl){
+    audioEl = entry.audioEl;
+    document.getElementById('time-duration').textContent = formatTime(entry.audioEl.duration || 0);
+  }else{
+    audioEl = null;
+    document.getElementById('time-current').textContent = '0:00';
+    document.getElementById('time-duration').textContent = '0:00';
+    document.getElementById('progress-range').value = 0;
+  }
+  document.getElementById('play-btn').textContent = '▶';
+  document.getElementById('play-btn').classList.remove('playing');
+  activeDayKey = null;
+  updateFileNameDisplay();
+  buildDayGrid();
+}
+
+/* ---------- FX control wiring (applies to whichever chapter's audio is active) ---------- */
 function applyAllFx(){
   if(!actx) return;
   const vol = parseFloat(document.getElementById('fx-volume').value)/100;
@@ -936,11 +1034,14 @@ document.getElementById('audio-upload').addEventListener('change', e=>{
 });
 
 document.getElementById('play-btn').addEventListener('click', ()=>{
-  if(!audioEl){ alert('Load an MP3 first.'); return; }
+  if(!audioEl){ alert(`Upload an MP3 for Chapter ${currentChapter} first.`); return; }
   if(actx && actx.state === 'suspended') actx.resume();
   const playBtn = document.getElementById('play-btn');
   if(audioEl.paused){
-    if(audioEl.currentTime < cropStart || audioEl.currentTime > cropEnd) audioEl.currentTime = cropStart;
+    if(activeDayKey!==null){
+      const seg = getSeg(activeDayKey);
+      if(seg && (audioEl.currentTime < seg.start || audioEl.currentTime > seg.end)) audioEl.currentTime = seg.start;
+    }
     audioEl.play().catch(()=>{});
     playBtn.textContent='⏸'; playBtn.classList.add('playing');
   }else{
@@ -952,9 +1053,12 @@ document.getElementById('play-btn').addEventListener('click', ()=>{
 document.getElementById('stop-btn').addEventListener('click', ()=>{
   if(!audioEl) return;
   audioEl.pause();
-  audioEl.currentTime = cropStart;
-  const playBtn = document.getElementById('play-btn');
-  playBtn.textContent='▶'; playBtn.classList.remove('playing');
+  if(activeDayKey!==null){
+    const seg = getSeg(activeDayKey);
+    if(seg) audioEl.currentTime = seg.start;
+  }
+  document.getElementById('play-btn').textContent='▶';
+  document.getElementById('play-btn').classList.remove('playing');
   updateProgressUI();
 });
 
@@ -963,14 +1067,16 @@ document.getElementById('progress-range').addEventListener('input', ()=>{
   const pct = parseFloat(document.getElementById('progress-range').value)/1000;
   audioEl.currentTime = pct * audioEl.duration;
   updateProgressUI();
+  if(activeDayKey!==null) enforceSegment();
 });
 
-document.getElementById('loop-check').addEventListener('change', e=>{
-  loopEnabled = e.target.checked;
+document.getElementById('repeat-check').addEventListener('change', e=>{
+  repeatEnabled = e.target.checked;
+  if(activeDayKey!==null){
+    const dayNum = activeDayKey.replace('day','');
+    document.getElementById('day-badge').textContent = `Day ${dayNum} ${repeatEnabled?'🔁':''}`;
+  }
 });
-
-wireCropTextInputs();
-wireCropDragHandles();
 
 function toggleMusicPanel(){
   const panel = document.getElementById('player-panel');
@@ -1005,6 +1111,8 @@ currentChapter = hashChapterMatch ? Math.min(TOTAL_CHAPTERS, Math.max(1, parseIn
 const startDay = hashDayMatch ? Math.min(TOTAL_DAYS, Math.max(1, parseInt(hashDayMatch[1]))) : 1;
 
 setActiveChapterButton(currentChapter);
+document.getElementById('player-chapter-label').textContent = currentChapter;
+buildDayGrid();
 loadDay(startDay);
 precacheAllDays();
 </script>
