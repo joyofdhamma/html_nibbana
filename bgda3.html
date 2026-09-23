@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gita · Chapter 2, 18 Days</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<style>
+  :root{
+    --paper:#FBF8F2;
+    --ink:#2E2A22;
+    --ink-soft:#84796A;
+    --line:#E5DCC9;
+    --saffron:#BF6B3D;
+    --saffron-deep:#9A4E27;
+    --gold:#C9A24B;
+    --card:#FFFFFF;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  header{
+    text-align:center;
+    padding:34px 20px 22px;
+    border-bottom:1px solid var(--line);
+    background:
+      radial-gradient(circle at 50% 0%, rgba(191,107,61,0.06), transparent 60%),
+      var(--paper);
+    position:relative;
+  }
+  header .eyebrow{
+    font-family:var(--serif);
+    font-style:italic;
+    color:var(--saffron-deep);
+    font-size:14px;
+    letter-spacing:0.02em;
+  }
+  header h1{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:30px;
+    margin:6px 0 4px;
+  }
+  header .sub{
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  #music-fab{
+    position:absolute;
+    top:20px;
+    right:20px;
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:var(--card);
+    font-size:18px;
+    cursor:pointer;
+    color:var(--saffron-deep);
+    box-shadow:0 2px 8px rgba(0,0,0,0.06);
+  }
+  #music-fab.active{
+    background:var(--saffron);
+    color:#fff;
+    border-color:var(--saffron);
+  }
+  #datetime-display{
+    margin-top:8px;
+    font-size:13px;
+    color:var(--ink-soft);
+    font-variant-numeric:tabular-nums;
+  }
+
+  /* Day selector strip */
+  /* Chapter selector strip */
+  .chapter-strip-wrap{
+    background:#F3ECDD;
+    border-bottom:1px solid var(--line);
+    padding:12px 0;
+  }
+  .chapter-strip{
+    max-width:760px;
+    margin:0 auto;
+    display:flex;
+    gap:7px;
+    overflow-x:auto;
+    padding:0 20px 4px;
+    scrollbar-width:thin;
+  }
+  .chapter-strip::-webkit-scrollbar{ height:5px; }
+  .chapter-strip::-webkit-scrollbar-thumb{ background:var(--line); border-radius:6px; }
+  .chapter-btn{
+    flex-shrink:0;
+    font-family:var(--sans);
+    font-size:12.5px;
+    font-weight:600;
+    border:1px solid var(--gold);
+    background:var(--card);
+    color:var(--saffron-deep);
+    padding:6px 13px;
+    border-radius:16px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .chapter-btn:hover{ background:#F9F1DE; }
+  .chapter-btn.active{
+    background:var(--gold);
+    border-color:var(--gold);
+    color:#fff;
+  }
+
+  .day-strip-wrap{
+    position:sticky;
+    top:0;
+    z-index:10;
+    background:var(--paper);
+    border-bottom:1px solid var(--line);
+    padding:14px 0;
+  }
+  .day-strip{
+    max-width:760px;
+    margin:0 auto;
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding:0 20px 4px;
+    scrollbar-width:thin;
+  }
+  .day-strip::-webkit-scrollbar{ height:5px; }
+  .day-strip::-webkit-scrollbar-thumb{ background:var(--line); border-radius:6px; }
+  .day-btn{
+    flex-shrink:0;
+    font-family:var(--serif);
+    font-size:14px;
+    border:1px solid var(--line);
+    background:var(--card);
+    color:var(--ink-soft);
+    padding:8px 15px;
+    border-radius:20px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .day-btn:hover{ border-color:var(--saffron); }
+  .day-btn.active{
+    background:var(--saffron);
+    border-color:var(--saffron);
+    color:#fff;
+    font-weight:600;
+  }
+  .day-btn .verses-tag{
+    font-family:var(--sans);
+    font-size:10px;
+    opacity:0.75;
+    display:block;
+    margin-top:1px;
+  }
+
+  .nav-arrows{
+    max-width:760px;
+    margin:0 auto;
+    display:flex;
+    justify-content:space-between;
+    padding:6px 20px 0;
+  }
+  .arrow-btn{
+    font-family:var(--sans);
+    font-size:13px;
+    background:none;
+    border:none;
+    color:var(--saffron-deep);
+    cursor:pointer;
+    padding:4px 6px;
+  }
+  .arrow-btn:disabled{ color:var(--ink-soft); opacity:0.4; cursor:default; }
+
+  main{
+    max-width:760px;
+    margin:0 auto;
+    padding:30px 20px 80px;
+  }
+
+  #status{
+    text-align:center;
+    color:var(--ink-soft);
+    font-style:italic;
+    font-family:var(--serif);
+    padding:50px 20px;
+  }
+  #status.error{ color:var(--saffron-deep); }
+
+  .content-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:36px 32px;
+  }
+
+  .content-card h1{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:24px;
+    margin-top:0;
+  }
+  .content-card h3{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:19px;
+    color:var(--saffron-deep);
+    margin:30px 0 10px;
+    padding-top:22px;
+    border-top:1px solid var(--line);
+  }
+  .content-card h3:first-of-type{ border-top:none; padding-top:0; margin-top:8px; }
+  .content-card p{
+    line-height:1.75;
+    font-size:15.5px;
+    margin:0 0 14px;
+  }
+  .content-card p em{ color:var(--saffron-deep); font-style:italic; }
+  .content-card strong{ color:var(--ink); }
+  .content-card ul, .content-card ol{
+    padding-left:22px;
+    margin:0 0 16px;
+  }
+  .content-card li{
+    line-height:1.7;
+    font-size:15.5px;
+    margin-bottom:8px;
+  }
+  .content-card blockquote{
+    margin:0 0 16px;
+    padding:4px 0 4px 16px;
+    border-left:3px solid var(--gold);
+    color:var(--ink-soft);
+    font-style:italic;
+  }
+
+  footer{
+    text-align:center;
+    padding:24px 20px 40px;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+
+  /* ============ MUSIC PLAYER PANEL ============ */
+  #player-panel{
+    max-width:760px;
+    margin:0 auto;
+    padding:0 20px;
+    max-height:0;
+    overflow:hidden;
+    transition:max-height 0.3s ease;
+  }
+  #player-panel.open{
+    max-height:2000px;
+  }
+  .player-card{
+    background:#1c1c2e;
+    border-radius:18px;
+    padding:20px 18px 22px;
+    margin:14px 0 6px;
+    color:#e5e2f7;
+    font-family:var(--sans);
+  }
+  .player-card h3{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:17px;
+    margin:0 0 14px;
+    color:#f0eef7;
+  }
+  .upload-area{
+    background:#2d2d48;
+    border-radius:14px;
+    padding:10px 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:12px;
+    border:1px dashed #5b5b7a;
+    flex-wrap:wrap;
+  }
+  .upload-label{
+    background:#4c4c6e;
+    padding:7px 16px;
+    border-radius:20px;
+    color:#fff;
+    font-weight:500;
+    font-size:12.5px;
+    cursor:pointer;
+    border:none;
+    white-space:nowrap;
+  }
+  .upload-label:hover{ background:#625f8b; }
+  .file-name{ color:#b7b4d6; font-size:12px; word-break:break-all; flex:1; min-width:60px; }
+  input[type=file]{ display:none; }
+
+  .player-bar{
+    background:#14141f;
+    border-radius:30px;
+    padding:4px 4px 4px 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:14px;
+    border:1px solid #3f3f5e;
+  }
+  .play-btn{
+    background:#7c6df0;
+    border:none;
+    width:36px; height:36px;
+    border-radius:36px;
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-size:15px; cursor:pointer;
+    flex-shrink:0;
+  }
+  .play-btn.playing{ background:#f07c6d; }
+  .time-indicator{
+    color:#cfcce6; font-variant-numeric:tabular-nums; font-size:12px;
+    display:flex; align-items:center; gap:4px; flex:1; min-width:80px;
+  }
+  .progress-range{
+    flex:2; min-width:70px; accent-color:#7c6df0; height:3px; cursor:pointer;
+  }
+  .stop-btn{
+    background:#32324e; border:1px solid #4a4a6a;
+    width:32px; height:32px; border-radius:32px;
+    color:#e5e2f7; font-size:13px; cursor:pointer; flex-shrink:0;
+  }
+  .stop-btn:hover{ background:#4a4a6e; }
+
+  .player-note{
+    font-size:11px; color:#8a86ad; margin-bottom:12px; line-height:1.5;
+  }
+
+  .day-grid{ display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 16px; }
+  .day-seg-btn{
+    background:#32324e; border:1px solid #4a4a6a; border-radius:20px;
+    padding:6px 13px; font-weight:500; color:#e5e2f7; font-size:11.5px; cursor:pointer;
+  }
+  .day-seg-btn.active-segment{ background:#7c6df0; border-color:#9a8cf5; color:#fff; }
+
+  .fx-section{ margin-top:6px; }
+  .fx-section-title{
+    font-size:11px; text-transform:uppercase; letter-spacing:0.06em;
+    color:#8a86ad; margin:16px 0 8px;
+  }
+  .fx-row{
+    display:flex; align-items:center; gap:12px; margin-bottom:10px;
+  }
+  .fx-row label{
+    font-size:12.5px; color:#cfcce6; width:96px; flex-shrink:0;
+  }
+  .fx-row input[type=range]{
+    flex:1; accent-color:#7c6df0; height:3px;
+  }
+  .fx-row .fx-val{
+    font-size:11px; color:#8a86ad; width:40px; text-align:right; flex-shrink:0;
+    font-variant-numeric:tabular-nums;
+  }
+  .footer-row{
+    display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap; gap:8px; margin-top:14px;
+  }
+  .repeat-toggle{
+    background:#2a2a44; border-radius:30px; padding:5px 12px;
+    display:inline-flex; align-items:center; gap:6px;
+    color:#b7b4d6; font-size:12px; border:1px solid #4a4a6a;
+  }
+  .repeat-toggle input{ accent-color:#7c6df0; width:14px; height:14px; cursor:pointer; }
+  .day-badge{
+    background:#32324e; border-radius:20px; padding:5px 12px;
+    font-size:11.5px; color:#b7b4d6;
+  }
+
+  /* ============ FLOATING PLAYBACK CONTROLS ============ */
+  #floating-controls{
+    position:fixed;
+    bottom:22px;
+    left:50%;
+    transform:translateX(-50%) translateY(120%);
+    z-index:40;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:#1c1c2e;
+    border-radius:40px;
+    padding:8px 14px;
+    box-shadow:0 6px 20px rgba(0,0,0,0.25);
+    transition:transform 0.25s ease;
+  }
+  #floating-controls.visible{
+    transform:translateX(-50%) translateY(0);
+  }
+  .float-btn{
+    background:#32324e;
+    border:1px solid #4a4a6a;
+    color:#e5e2f7;
+    border-radius:50%;
+    width:42px;
+    height:42px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:16px;
+    cursor:pointer;
+  }
+  .float-btn:hover{ background:#4a4a6e; }
+  #float-play-btn{
+    background:#7c6df0;
+    border-color:#7c6df0;
+    width:48px;
+    height:48px;
+    font-size:18px;
+  }
+  #float-play-btn.playing{ background:#f07c6d; border-color:#f07c6d; }
+  .float-label{
+    font-family:var(--sans);
+    font-size:11px;
+    color:#b7b4d6;
+    padding:0 4px;
+    white-space:nowrap;
+  }
+
+  @media (max-width:600px){
+    .content-card{ padding:26px 20px; }
+    header h1{ font-size:24px; }
+    .fx-row label{ width:78px; font-size:11.5px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="music-fab" onclick="toggleMusicPanel()" title="Audio player">♪</button>
+  <div class="eyebrow">॥ ॐ श्री परमात्मने नमः ॥</div>
+  <h1>॥॥ श्रीमद्भगवद्गीता ॥॥</h1> 
+  <div class="sub" id="day-heading">Loading…</div>
+  <div id="datetime-display"></div>
+</header>
+
+<!-- MUSIC PLAYER PANEL -->
+<div id="player-panel">
+  <div class="player-card">
+    <h3>Chapter <span id="player-chapter-label">2</span> Recitation</h3>
+    <div class="player-note">One MP3 per chapter — upload each chapter's file once per session; switching chapters remembers the file you loaded for it.</div>
+
+    <div class="upload-area">
+      <label for="audio-upload" class="upload-label">📁 Load MP3 for this chapter</label>
+      <input type="file" id="audio-upload" accept=".mp3,audio/mpeg">
+      <span class="file-name" id="file-name">no file loaded for this chapter</span>
+    </div>
+
+    <div class="player-bar">
+      <button class="play-btn" id="play-btn">▶</button>
+      <div class="time-indicator">
+        <span id="time-current">0:00</span><span style="color:#555;">/</span><span id="time-duration">0:00</span>
+      </div>
+      <input type="range" class="progress-range" id="progress-range" min="0" max="1000" value="0">
+      <button class="stop-btn" id="stop-btn" title="Stop">⏹</button>
+    </div>
+
+    <div class="day-grid" id="day-grid"></div>
+
+    <div class="fx-section">
+      <div class="fx-section-title">Sound</div>
+      <div class="fx-row"><label>Volume</label><input type="range" id="fx-volume" min="0" max="150" value="100"><span class="fx-val" id="val-volume">100%</span></div>
+      <div class="fx-row"><label>Speed</label><input type="range" id="fx-speed" min="50" max="200" value="100"><span class="fx-val" id="val-speed">1.0x</span></div>
+      <div class="fx-row"><label>Stereo Pan</label><input type="range" id="fx-pan" min="-100" max="100" value="0"><span class="fx-val" id="val-pan">C</span></div>
+    </div>
+
+    <div class="fx-section">
+      <div class="fx-section-title">Equalizer</div>
+      <div class="fx-row"><label>Bass</label><input type="range" id="fx-bass" min="-24" max="24" value="0"><span class="fx-val" id="val-bass">0dB</span></div>
+      <div class="fx-row"><label>Mid</label><input type="range" id="fx-mid" min="-24" max="24" value="0"><span class="fx-val" id="val-mid">0dB</span></div>
+      <div class="fx-row"><label>Treble</label><input type="range" id="fx-treble" min="-24" max="24" value="0"><span class="fx-val" id="val-treble">0dB</span></div>
+    </div>
+
+    <div class="fx-section">
+      <div class="fx-section-title">Reverb</div>
+      <div class="fx-row"><label>Wet / Dry</label><input type="range" id="fx-reverb" min="0" max="100" value="0"><span class="fx-val" id="val-reverb">0%</span></div>
+    </div>
+
+    <div class="footer-row">
+      <div class="repeat-toggle">
+        <span>🔁 Repeat day</span>
+        <input type="checkbox" id="repeat-check" checked>
+      </div>
+      <span class="day-badge" id="day-badge">idle</span>
+    </div>
+  </div>
+</div>
+
+
+
+<div class="chapter-strip-wrap">
+  <div class="chapter-strip" id="chapter-strip"></div>
+</div>
+
+<div class="day-strip-wrap">
+  <div class="day-strip" id="day-strip"></div>
+  <div class="nav-arrows">
+    <button class="arrow-btn" id="prev-btn" onclick="shiftDay(-1)">‹ Previous day</button>
+    <button class="arrow-btn" id="next-btn" onclick="shiftDay(1)">Next day ›</button>
+  </div>
+</div>
+
+<main>
+  <div id="status">Loading Day 1…</div>
+  <div class="content-card" id="content" style="display:none;"></div>
+</main>
+
+<footer>शान्ताकारं भुजगशयनं पद्मनाभं सुरेशं
+विश्वाधारं गगनसदृशं मेघवर्णं शुभाङ्गम् ।
+लक्ष्मीकान्तं कमलनयनं योगिभिर्ध्यानगम्यं
+वन्दे विष्णुं भवभयहरं सर्वलोकैकनाथम् ॥</footer>
+
+<script>
+/* ====================================================================
+   READER — text side
+   ==================================================================== */
+const GH_OWNER = "joyofdhamma";
+const GH_REPO  = "bgda";
+const GH_BRANCH = "main";
+
+const TOTAL_CHAPTERS = 18;
+/* ---- Fixed day-count applied to every chapter for now.
+   Edit this single number to change it (Joy: adjust as needed). ---- */
+const TOTAL_DAYS = 18;
+const VERSES_START = 1;
+let currentDay = 1;
+let currentChapter = 2; // Chapter 2 is the original/default chapter
+
+function verseRangeForDay(day){
+  const start = VERSES_START + (day - 1) * 4;
+  const end = start + 3;
+  return `${start}–${end}`;
+}
+
+function buildChapterStrip(){
+  const strip = document.getElementById('chapter-strip');
+  strip.innerHTML = '';
+  for(let c=1; c<=TOTAL_CHAPTERS; c++){
+    const btn = document.createElement('button');
+    btn.className = 'chapter-btn';
+    btn.id = 'chapter-btn-' + c;
+    btn.textContent = `Ch ${c}`;
+    btn.onclick = () => switchChapter(c);
+    strip.appendChild(btn);
+  }
+}
+
+function setActiveChapterButton(chapter){
+  document.querySelectorAll('.chapter-btn').forEach(b=>b.classList.remove('active'));
+  const btn = document.getElementById('chapter-btn-' + chapter);
+  if(btn){
+    btn.classList.add('active');
+    btn.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
+  }
+}
+
+function switchChapter(chapter){
+  currentChapter = chapter;
+  setActiveChapterButton(chapter);
+  history.replaceState(null, '', '#ch-' + chapter + '-day-1');
+  document.getElementById('player-chapter-label').textContent = chapter;
+  onChapterSwitchedForMusic();
+  loadDay(1);
+  precacheAllDays();
+}
+
+function buildDayStrip(){
+  const strip = document.getElementById('day-strip');
+  strip.innerHTML = '';
+  for(let d=1; d<=TOTAL_DAYS; d++){
+    const btn = document.createElement('button');
+    btn.className = 'day-btn';
+    btn.id = 'day-btn-' + d;
+    btn.innerHTML = `Day ${d}<span class="verses-tag">v.${verseRangeForDay(d)}</span>`;
+    btn.onclick = () => loadDay(d);
+    strip.appendChild(btn);
+  }
+}
+
+function setActiveButton(day){
+  document.querySelectorAll('.day-btn').forEach(b=>b.classList.remove('active'));
+  const btn = document.getElementById('day-btn-' + day);
+  if(btn){
+    btn.classList.add('active');
+    btn.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
+  }
+  document.getElementById('prev-btn').disabled = day <= 1;
+  document.getElementById('next-btn').disabled = day >= TOTAL_DAYS;
+}
+
+function shiftDay(n){
+  const next = currentDay + n;
+  if(next < 1 || next > TOTAL_DAYS) return;
+  loadDay(next);
+}
+
+async function loadDay(day){
+  currentDay = day;
+  setActiveButton(day);
+  history.replaceState(null, '', '#ch-' + currentChapter + '-day-' + day);
+
+  const statusEl = document.getElementById('status');
+  const contentEl = document.getElementById('content');
+  contentEl.style.display = 'none';
+  statusEl.style.display = 'block';
+  statusEl.className = '';
+  statusEl.textContent = `Loading Chapter ${currentChapter}, Day ${day}…`;
+  document.getElementById('day-heading').textContent = `Chapter ${currentChapter} · Day ${day} of ${TOTAL_DAYS} · Verses ${verseRangeForDay(day)}`;
+
+  const filename = `Ch${currentChapter}_D${day}.md`;
+  const url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${filename}`;
+  const cacheKey = 'gita_cache_' + filename;
+
+  try{
+    const res = await fetch(url, { cache: 'no-store' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const md = await res.text();
+    localStorage.setItem(cacheKey, md);
+    renderMarkdown(md, false);
+  }catch(e){
+    console.warn('Network fetch failed, trying cache:', e);
+    const cached = localStorage.getItem(cacheKey);
+    if(cached){
+      renderMarkdown(cached, true);
+    }else{
+      statusEl.className = 'error';
+      statusEl.textContent = `Couldn't load Chapter ${currentChapter}, Day ${day} — no internet connection and no offline copy saved yet for ${filename}.`;
+    }
+  }
+
+  syncMusicToReaderDay(day);
+}
+
+function renderMarkdown(md, fromCache){
+  const statusEl = document.getElementById('status');
+  const contentEl = document.getElementById('content');
+  contentEl.innerHTML = marked.parse(md);
+  if(fromCache){
+    const note = document.createElement('div');
+    note.style.cssText = 'font-size:12px;color:var(--ink-soft);margin-bottom:18px;font-style:italic;';
+    note.textContent = '(Showing offline copy saved earlier — not connected right now)';
+    contentEl.insertBefore(note, contentEl.firstChild);
+  }
+  statusEl.style.display = 'none';
+  contentEl.style.display = 'block';
+}
+
+async function precacheAllDays(){
+  for(let d=1; d<=TOTAL_DAYS; d++){
+    const filename = `Ch${currentChapter}_D${d}.md`;
+    const cacheKey = 'gita_cache_' + filename;
+    if(localStorage.getItem(cacheKey)) continue;
+    try{
+      const url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${filename}`;
+      const res = await fetch(url, { cache: 'no-store' });
+      if(res.ok){
+        const md = await res.text();
+        localStorage.setItem(cacheKey, md);
+      }
+    }catch(e){ /* silent */ }
+  }
+}
+
+/* ====================================================================
+/* ====================================================================
+   MUSIC PLAYER — per-chapter MP3, day-wise segments, synced with reader
+   ==================================================================== */
+
+// Day-wise start/end seconds per chapter. Edit these numbers directly to
+// adjust timings (Joy: this is your DEFAULT_DATA, carried over as-is).
+const CHAPTER_DAY_TIMINGS = {
+  1: { day1: { start: 0, end: 100 }, day2: { start: 101, end: 120 }, day3: { start: 387, end: 457 } },
+  2: {
+    day1: { start: 10.00, end: 88.00 },
+    day2: { start: 88.00, end: 173.00 },
+    day3: { start: 173.00, end: 249.60 },
+    day4: { start: 249.60, end: 318.00 },
+    day5: { start: 318.00, end: 387.00 },
+    
+    
+    
+    day6: { start: 387, end: 457 },
+    day7: { start: 457, end: 526 },
+    day8: { start: 526, end: 595 },
+    day9: { start: 595, end: 662 },
+    day10: { start: 662, end: 727.50 },
+    day11: { start: 727.50, end: 792.00 },
+    day12: { start: 792.00, end: 858.00 },
+    day13: { start: 857.99, end: 923.00 },
+    day14: { start: 923.00, end: 994.00 },
+    day15: { start: 994.00, end: 1060.00 },
+    day16: { start: 1060.00, end: 1128.00 },
+    day17: { start: 1128.00, end: 1195.06 },
+    day18: { start: 1195.06, end: 1267.00 }
+  },
+  3: {
+    day1: { start: 22.49, end: 99.00 },
+    day2: { start: 99.00, end: 168.98 },
+    day3: { start: 168.98, end: 240.00 },
+    day4: { start: 240.00, end: 312.75 },
+    day5: { start: 312.75, end: 380.00 },
+    day6: { start: 380.00, end: 447.00 },
+    day7: { start: 447.00, end: 512.00 },
+    day8: { start: 512.00, end: 581.00 },
+    day9: { start: 581.00, end: 652.00 },
+    day10: { start: 652.00, end: 724.38 },
+    day11: { start: 724.34, end: 778.00 }
+  },
+  4: { day1: { start: 0, end: 30 }, day2: { start: 40, end: 70 }, day3: { start: 150, end: 220 } },
+  5: { day1: { start: 20, end: 80 }, day2: { start: 90, end: 120 }, day3: { start: 400, end: 500 } },
+  6: { day1: { start: 0, end: 50 }, day2: { start: 60, end: 100 }, day3: { start: 250, end: 320 } },
+  7: { day1: { start: 15, end: 55 }, day2: { start: 60, end: 85 }, day3: { start: 180, end: 240 } },
+  8: { day1: { start: 5, end: 40 }, day2: { start: 50, end: 80 }, day3: { start: 350, end: 420 } },
+  9: { day1: { start: 0, end: 35 }, day2: { start: 40, end: 65 }, day3: { start: 120, end: 190 } },
+  10: { day1: { start: 10, end: 70 }, day2: { start: 80, end: 110 }, day3: { start: 280, end: 360 } },
+  11: { day1: { start: 0, end: 60 }, day2: { start: 70, end: 95 }, day3: { start: 200, end: 270 } },
+  12: { day1: { start: 5, end: 45 }, day2: { start: 50, end: 75 }, day3: { start: 330, end: 400 } },
+  13: { day1: { start: 0, end: 25 }, day2: { start: 30, end: 55 }, day3: { start: 160, end: 230 } },
+  14: { day1: { start: 10, end: 50 }, day2: { start: 60, end: 90 }, day3: { start: 380, end: 460 } },
+  15: { day1: { start: 0, end: 40 }, day2: { start: 50, end: 80 }, day3: { start: 220, end: 300 } },
+  16: { day1: { start: 5, end: 55 }, day2: { start: 60, end: 85 }, day3: { start: 310, end: 390 } },
+  17: { day1: { start: 0, end: 30 }, day2: { start: 40, end: 70 }, day3: { start: 140, end: 210 } },
+  18: { day1: { start: 10, end: 65 }, day2: { start: 70, end: 100 }, day3: { start: 250, end: 330 } }
+};
+
+function getCurrentChapterDays(){
+  return CHAPTER_DAY_TIMINGS[currentChapter] || {};
+}
+function getDayKeys(){
+  return Object.keys(getCurrentChapterDays()).sort((a,b)=>{
+    return parseInt(a.replace('day','')) - parseInt(b.replace('day',''));
+  });
+}
+function getSeg(dayKey){ return getCurrentChapterDays()[dayKey]; }
+
+// Per-chapter uploaded audio. Files themselves live only in memory (object URLs) —
+// they are NOT persisted across a page reload, only remembered for the current
+// session so switching chapters back and forth keeps each one's file loaded.
+let chapterAudio = {}; // { [chapterNum]: { objectUrl, fileName, audioEl, duration } }
+let audioEl = null;         // the <audio> element currently attached to the graph
+let activeDayKey = null;
+let repeatEnabled = true;
+
+// Web Audio graph nodes (shared across chapters; reattached per file)
+let actx = null;
+let sourceNodes = {}; // one MediaElementSource per chapter's audio element (can't reuse across elements)
+let bassFilter, midFilter, trebleFilter;
+let pannerNode, gainNode;
+let convolver, wetGain, dryGain, reverbMixOut;
+
+function ensureAudioGraph(){
+  if(actx) return;
+  actx = new (window.AudioContext || window.webkitAudioContext)();
+
+  bassFilter = actx.createBiquadFilter();
+  bassFilter.type = 'lowshelf';
+  bassFilter.frequency.value = 200;
+
+  midFilter = actx.createBiquadFilter();
+  midFilter.type = 'peaking';
+  midFilter.frequency.value = 1000;
+  midFilter.Q.value = 0.8;
+
+  trebleFilter = actx.createBiquadFilter();
+  trebleFilter.type = 'highshelf';
+  trebleFilter.frequency.value = 3000;
+
+  pannerNode = actx.createStereoPanner();
+  gainNode = actx.createGain();
+
+  convolver = actx.createConvolver();
+  convolver.buffer = makeImpulseResponse(2.5, 2.2);
+  wetGain = actx.createGain();
+  dryGain = actx.createGain();
+  wetGain.gain.value = 0;
+  dryGain.gain.value = 1;
+  reverbMixOut = actx.createGain();
+
+  bassFilter.connect(midFilter);
+  midFilter.connect(trebleFilter);
+  trebleFilter.connect(pannerNode);
+  pannerNode.connect(dryGain);
+  pannerNode.connect(convolver);
+  convolver.connect(wetGain);
+  dryGain.connect(reverbMixOut);
+  wetGain.connect(reverbMixOut);
+  reverbMixOut.connect(gainNode);
+  gainNode.connect(actx.destination);
+}
+
+function makeImpulseResponse(duration, decay){
+  const sampleRate = actx.sampleRate;
+  const length = sampleRate * duration;
+  const impulse = actx.createBuffer(2, length, sampleRate);
+  for(let ch=0; ch<2; ch++){
+    const data = impulse.getChannelData(ch);
+    for(let i=0; i<length; i++){
+      data[i] = (Math.random()*2-1) * Math.pow(1 - i/length, decay);
+    }
+  }
+  return impulse;
+}
+
+function connectSourceToGraph(chapter, el){
+  ensureAudioGraph();
+  if(!sourceNodes[chapter]){
+    sourceNodes[chapter] = actx.createMediaElementSource(el);
+  }
+  try{ sourceNodes[chapter].disconnect(); }catch(e){}
+  sourceNodes[chapter].connect(bassFilter);
+}
+
+function formatTime(sec){
+  if(!isFinite(sec) || sec < 0) sec = 0;
+  const m = Math.floor(sec/60), s = Math.floor(sec%60);
+  return `${m}:${s.toString().padStart(2,'0')}`;
+}
+
+/* ---------- Day grid (built from CHAPTER_DAY_TIMINGS for current chapter) ---------- */
+function buildDayGrid(){
+  const grid = document.getElementById('day-grid');
+  grid.innerHTML = '';
+  const chapterDays = getCurrentChapterDays();
+  const keys = getDayKeys();
+  if(keys.length === 0){
+    const note = document.createElement('div');
+    note.style.cssText = 'font-size:12px;color:#8a86ad;font-style:italic;';
+    note.textContent = `No day timings defined for Chapter ${currentChapter}.`;
+    grid.appendChild(note);
+    return;
+  }
+  keys.forEach(key=>{
+    const seg = chapterDays[key];
+    const dayNum = key.replace('day','');
+    const btn = document.createElement('button');
+    btn.className = 'day-seg-btn';
+    btn.dataset.day = key;
+    btn.textContent = `Day ${dayNum}`;
+    btn.title = `${seg.start}s – ${seg.end}s`;
+    btn.onclick = () => {
+      const dNum = parseInt(key.replace('day',''));
+      if(dNum !== currentDay){
+        loadDay(dNum); // triggers syncMusicToReaderDay -> playSegment
+      }else{
+        playSegment(key);
+      }
+    };
+    grid.appendChild(btn);
+  });
+  highlightPlayerDay(currentDay);
+}
+
+function highlightPlayerDay(readerDay){
+  const key = 'day' + readerDay;
+  document.querySelectorAll('.day-seg-btn').forEach(b=>{
+    b.classList.toggle('active-segment', b.dataset.day === key);
+  });
+}
+
+/* ---------- Called by the reader whenever chapter/day changes ---------- */
+function syncMusicToReaderDay(day){
+  const key = 'day' + day;
+  const chapterDays = getCurrentChapterDays();
+  if(!chapterDays[key]){
+    highlightPlayerDay(day);
+    return;
+  }
+  const entry = chapterAudio[currentChapter];
+  if(entry && entry.audioEl){
+    audioEl = entry.audioEl;
+    playSegment(key);
+  }else{
+    activeDayKey = key;
+    document.getElementById('day-badge').textContent =
+      `Day ${day} ${repeatEnabled?'🔁':''} (upload Ch.${currentChapter} MP3 to play)`;
+  }
+  highlightPlayerDay(day);
+}
+
+/* ---------- Playback within a day's segment ---------- */
+function updateProgressUI(){
+  if(!audioEl) return;
+  const current = audioEl.currentTime || 0;
+  const duration = audioEl.duration || 0;
+  document.getElementById('progress-range').value = duration>0 ? Math.min(1000,(current/duration)*1000) : 0;
+  document.getElementById('time-current').textContent = formatTime(current);
+  document.getElementById('time-duration').textContent = formatTime(duration);
+}
+
+function enforceSegment(){
+  if(!audioEl || activeDayKey===null) return;
+  const seg = getSeg(activeDayKey);
+  if(!seg) return;
+  const current = audioEl.currentTime;
+  const playBtn = document.getElementById('play-btn');
+  if(current > seg.end){
+    if(repeatEnabled){
+      audioEl.currentTime = seg.start;
+    }else{
+      if(!audioEl.paused){ audioEl.pause(); playBtn.textContent='▶'; playBtn.classList.remove('playing'); }
+      audioEl.currentTime = seg.end;
+    }
+    updateProgressUI();
+    return;
+  }
+  if(current < seg.start){
+    audioEl.currentTime = seg.start;
+    updateProgressUI();
+  }
+}
+
+function playSegment(dayKey){
+  const entry = chapterAudio[currentChapter];
+  if(!entry || !entry.audioEl){
+    document.getElementById('day-badge').textContent = `Upload Ch.${currentChapter} MP3 first`;
+    return;
+  }
+  audioEl = entry.audioEl;
+  const seg = getSeg(dayKey);
+  if(!seg) return;
+  const duration = audioEl.duration;
+  if(!duration){ return; }
+
+  activeDayKey = dayKey;
+  document.querySelectorAll('.day-seg-btn').forEach(btn=>{
+    btn.classList.toggle('active-segment', btn.dataset.day === dayKey);
+  });
+  const dayNum = dayKey.replace('day','');
+  document.getElementById('day-badge').textContent = `Day ${dayNum} ${repeatEnabled?'🔁':''}`;
+
+  if(actx && actx.state === 'suspended') actx.resume();
+  audioEl.currentTime = Math.min(seg.start, duration-0.5);
+  audioEl.play().catch(()=>{});
+  const playBtn = document.getElementById('play-btn');
+  playBtn.textContent = '⏸';
+  playBtn.classList.add('playing');
+  updateProgressUI();
+}
+
+/* ---------- Loading an MP3 for the CURRENT chapter ---------- */
+function loadAudioFile(file){
+  if(!file) return;
+
+  // Pause/release whichever chapter's file was previously attached to the graph
+  if(audioEl){ audioEl.pause(); }
+
+  const url = URL.createObjectURL(file);
+  const el = new Audio(url);
+  el.preload = 'metadata';
+  el.crossOrigin = 'anonymous';
+
+  chapterAudio[currentChapter] = { objectUrl: url, fileName: file.name, audioEl: el, duration: 0 };
+  audioEl = el;
+  connectSourceToGraph(currentChapter, el);
+
+  activeDayKey = null;
+  document.getElementById('play-btn').textContent = '▶';
+  document.getElementById('play-btn').classList.remove('playing');
+  document.querySelectorAll('.day-seg-btn').forEach(b=>b.classList.remove('active-segment'));
+  document.getElementById('day-badge').textContent = 'idle';
+  document.getElementById('progress-range').value = 0;
+  document.getElementById('time-current').textContent = '0:00';
+  document.getElementById('file-name').textContent = file.name;
+
+  el.addEventListener('loadedmetadata', ()=>{
+    chapterAudio[currentChapter].duration = el.duration;
+    document.getElementById('time-duration').textContent = formatTime(el.duration);
+    updateProgressUI();
+  });
+  el.addEventListener('timeupdate', ()=>{
+    if(audioEl === el){
+      updateProgressUI();
+      if(activeDayKey!==null) enforceSegment();
+    }
+  });
+  el.addEventListener('ended', ()=>{
+    if(audioEl !== el) return;
+    const playBtn = document.getElementById('play-btn');
+    if(activeDayKey!==null && repeatEnabled){
+      const seg = getSeg(activeDayKey);
+      if(seg){
+        el.currentTime = seg.start;
+        el.play().catch(()=>{});
+        playBtn.textContent='⏸'; playBtn.classList.add('playing');
+      }
+    }else{
+      playBtn.textContent='▶'; playBtn.classList.remove('playing');
+    }
+    updateProgressUI();
+  });
+  el.addEventListener('error', ()=> alert('Error loading audio. Try another file.'));
+
+  applyAllFx();
+  updateFileNameDisplay();
+}
+
+function updateFileNameDisplay(){
+  const entry = chapterAudio[currentChapter];
+  document.getElementById('file-name').textContent = entry ? entry.fileName : 'no file loaded for this chapter';
+}
+
+/* ---------- Called by the reader when the chapter selector changes ---------- */
+function onChapterSwitchedForMusic(){
+  const entry = chapterAudio[currentChapter];
+  if(entry && entry.audioEl){
+    audioEl = entry.audioEl;
+    document.getElementById('time-duration').textContent = formatTime(entry.audioEl.duration || 0);
+  }else{
+    audioEl = null;
+    document.getElementById('time-current').textContent = '0:00';
+    document.getElementById('time-duration').textContent = '0:00';
+    document.getElementById('progress-range').value = 0;
+  }
+  document.getElementById('play-btn').textContent = '▶';
+  document.getElementById('play-btn').classList.remove('playing');
+  activeDayKey = null;
+  updateFileNameDisplay();
+  buildDayGrid();
+}
+
+/* ---------- FX control wiring (applies to whichever chapter's audio is active) ---------- */
+function applyAllFx(){
+  if(!actx) return;
+  const vol = parseFloat(document.getElementById('fx-volume').value)/100;
+  gainNode.gain.setTargetAtTime(vol, actx.currentTime, 0.01);
+
+  const pan = parseFloat(document.getElementById('fx-pan').value)/100;
+  pannerNode.pan.setTargetAtTime(pan, actx.currentTime, 0.01);
+
+  const bass = parseFloat(document.getElementById('fx-bass').value);
+  bassFilter.gain.setTargetAtTime(bass, actx.currentTime, 0.01);
+
+  const mid = parseFloat(document.getElementById('fx-mid').value);
+  midFilter.gain.setTargetAtTime(mid, actx.currentTime, 0.01);
+
+  const treble = parseFloat(document.getElementById('fx-treble').value);
+  trebleFilter.gain.setTargetAtTime(treble, actx.currentTime, 0.01);
+
+  const reverbPct = parseFloat(document.getElementById('fx-reverb').value)/100;
+  wetGain.gain.setTargetAtTime(reverbPct, actx.currentTime, 0.01);
+  dryGain.gain.setTargetAtTime(1 - reverbPct*0.6, actx.currentTime, 0.01);
+
+  if(audioEl){
+    const speed = parseFloat(document.getElementById('fx-speed').value)/100;
+    audioEl.playbackRate = speed;
+  }
+}
+
+function wireFxControl(id, valId, formatter){
+  const input = document.getElementById(id);
+  const valEl = document.getElementById(valId);
+  input.addEventListener('input', ()=>{
+    valEl.textContent = formatter(input.value);
+    ensureAudioGraph();
+    applyAllFx();
+  });
+}
+wireFxControl('fx-volume','val-volume', v=>`${v}%`);
+wireFxControl('fx-speed','val-speed', v=>`${(v/100).toFixed(2)}x`);
+wireFxControl('fx-pan','val-pan', v=>{ v=parseInt(v); if(v===0) return 'C'; return v<0 ? `L${Math.abs(v)}` : `R${v}`; });
+wireFxControl('fx-bass','val-bass', v=>`${v>0?'+':''}${v}dB`);
+wireFxControl('fx-mid','val-mid', v=>`${v>0?'+':''}${v}dB`);
+wireFxControl('fx-treble','val-treble', v=>`${v>0?'+':''}${v}dB`);
+wireFxControl('fx-reverb','val-reverb', v=>`${v}%`);
+
+document.getElementById('audio-upload').addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if(file) loadAudioFile(file);
+});
+
+document.getElementById('play-btn').addEventListener('click', ()=>{
+  if(!audioEl){ alert(`Upload an MP3 for Chapter ${currentChapter} first.`); return; }
+  if(actx && actx.state === 'suspended') actx.resume();
+  const playBtn = document.getElementById('play-btn');
+  if(audioEl.paused){
+    if(activeDayKey!==null){
+      const seg = getSeg(activeDayKey);
+      if(seg && (audioEl.currentTime < seg.start || audioEl.currentTime > seg.end)) audioEl.currentTime = seg.start;
+    }
+    audioEl.play().catch(()=>{});
+    playBtn.textContent='⏸'; playBtn.classList.add('playing');
+  }else{
+    audioEl.pause();
+    playBtn.textContent='▶'; playBtn.classList.remove('playing');
+  }
+});
+
+document.getElementById('stop-btn').addEventListener('click', ()=>{
+  if(!audioEl) return;
+  audioEl.pause();
+  if(activeDayKey!==null){
+    const seg = getSeg(activeDayKey);
+    if(seg) audioEl.currentTime = seg.start;
+  }
+  document.getElementById('play-btn').textContent='▶';
+  document.getElementById('play-btn').classList.remove('playing');
+  updateProgressUI();
+});
+
+document.getElementById('progress-range').addEventListener('input', ()=>{
+  if(!audioEl || !audioEl.duration) return;
+  const pct = parseFloat(document.getElementById('progress-range').value)/1000;
+  audioEl.currentTime = pct * audioEl.duration;
+  updateProgressUI();
+  if(activeDayKey!==null) enforceSegment();
+});
+
+document.getElementById('repeat-check').addEventListener('change', e=>{
+  repeatEnabled = e.target.checked;
+  if(activeDayKey!==null){
+    const dayNum = activeDayKey.replace('day','');
+    document.getElementById('day-badge').textContent = `Day ${dayNum} ${repeatEnabled?'🔁':''}`;
+  }
+});
+
+function toggleMusicPanel(){
+  const panel = document.getElementById('player-panel');
+  const fab = document.getElementById('music-fab');
+  panel.classList.toggle('open');
+  fab.classList.toggle('active');
+}
+
+/* ---------- Floating playback controls (mirror the panel's play/pause) ---------- */
+function updateFloatingControls(){
+  const floatEl = document.getElementById('floating-controls');
+  const floatPlayBtn = document.getElementById('float-play-btn');
+  const floatLabel = document.getElementById('float-label');
+  const entry = chapterAudio[currentChapter];
+
+  if(entry && entry.audioEl){
+    floatEl.classList.add('visible');
+    const isPlaying = audioEl && !audioEl.paused;
+    floatPlayBtn.textContent = isPlaying ? '⏸' : '▶';
+    floatPlayBtn.classList.toggle('playing', isPlaying);
+    const dayNum = activeDayKey ? activeDayKey.replace('day','') : '–';
+    floatLabel.textContent = `Ch ${currentChapter} · Day ${dayNum}`;
+  }else{
+    floatEl.classList.remove('visible');
+  }
+}
+
+document.getElementById('float-play-btn').addEventListener('click', ()=>{
+  document.getElementById('play-btn').click(); // reuse existing play/pause logic exactly
+});
+
+document.getElementById('float-rewind-btn').addEventListener('click', ()=>{
+  if(!audioEl) return;
+  audioEl.currentTime = Math.max(0, audioEl.currentTime - 10);
+  updateProgressUI();
+  updateFloatingControls();
+});
+
+// Keep the floating controls' state in sync with the panel's play button
+// by observing clicks on it and periodic playback state (lightweight poll).
+setInterval(updateFloatingControls, 500);
+
+/* ====================================================================
+   LIVE DATE & TIME DISPLAY
+   ==================================================================== */
+function updateDateTimeDisplay(){
+  const el = document.getElementById('datetime-display');
+  if(!el) return;
+  const now = new Date();
+  const dateStr = now.toLocaleDateString(undefined, { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  const timeStr = now.toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  el.textContent = `${dateStr} · ${timeStr}`;
+}
+updateDateTimeDisplay();
+setInterval(updateDateTimeDisplay, 1000);
+
+/* ====================================================================
+   INIT
+   ==================================================================== */
+buildChapterStrip();
+buildDayStrip();
+
+const hashChapterMatch = location.hash.match(/ch-(\d+)/);
+const hashDayMatch = location.hash.match(/day-(\d+)/);
+currentChapter = hashChapterMatch ? Math.min(TOTAL_CHAPTERS, Math.max(1, parseInt(hashChapterMatch[1]))) : 2;
+const startDay = hashDayMatch ? Math.min(TOTAL_DAYS, Math.max(1, parseInt(hashDayMatch[1]))) : 1;
+
+setActiveChapterButton(currentChapter);
+document.getElementById('player-chapter-label').textContent = currentChapter;
+buildDayGrid();
+loadDay(startDay);
+precacheAllDays();
+</script>
+<!-- FLOATING PLAYBACK CONTROLS -->
+<div id="floating-controls">
+  <button class="float-btn" id="float-rewind-btn" title="Rewind 10s">⏪</button>
+  <button class="float-btn" id="float-play-btn" title="Play/Pause">▶</button>
+  <span class="float-label" id="float-label">Ch 2 · idle</span>
+</div>
+
+</body>
+</html>
