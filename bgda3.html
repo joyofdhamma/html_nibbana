@@ -181,6 +181,29 @@
   }
   .arrow-btn:disabled{ color:var(--ink-soft); opacity:0.4; cursor:default; }
 
+  .mini-transport{
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .mini-btn{
+    font-family:var(--sans);
+    font-size:14px;
+    background:var(--card);
+    border:1px solid var(--line);
+    color:var(--saffron-deep);
+    cursor:pointer;
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+  }
+  .mini-btn:hover{ border-color:var(--saffron); }
+  .mini-btn.playing{ background:var(--saffron); border-color:var(--saffron); color:#fff; }
+
   main{
     max-width:760px;
     margin:0 auto;
@@ -382,55 +405,6 @@
     font-size:11.5px; color:#b7b4d6;
   }
 
-  /* ============ FLOATING PLAYBACK CONTROLS ============ */
-  #floating-controls{
-    position:fixed;
-    bottom:22px;
-    left:50%;
-    transform:translateX(-50%) translateY(120%);
-    z-index:40;
-    display:flex;
-    align-items:center;
-    gap:10px;
-    background:#1c1c2e;
-    border-radius:40px;
-    padding:8px 14px;
-    box-shadow:0 6px 20px rgba(0,0,0,0.25);
-    transition:transform 0.25s ease;
-  }
-  #floating-controls.visible{
-    transform:translateX(-50%) translateY(0);
-  }
-  .float-btn{
-    background:#32324e;
-    border:1px solid #4a4a6a;
-    color:#e5e2f7;
-    border-radius:50%;
-    width:42px;
-    height:42px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:16px;
-    cursor:pointer;
-  }
-  .float-btn:hover{ background:#4a4a6e; }
-  #float-play-btn{
-    background:#7c6df0;
-    border-color:#7c6df0;
-    width:48px;
-    height:48px;
-    font-size:18px;
-  }
-  #float-play-btn.playing{ background:#f07c6d; border-color:#f07c6d; }
-  .float-label{
-    font-family:var(--sans);
-    font-size:11px;
-    color:#b7b4d6;
-    padding:0 4px;
-    white-space:nowrap;
-  }
-
   @media (max-width:600px){
     .content-card{ padding:26px 20px; }
     header h1{ font-size:24px; }
@@ -510,6 +484,10 @@
   <div class="day-strip" id="day-strip"></div>
   <div class="nav-arrows">
     <button class="arrow-btn" id="prev-btn" onclick="shiftDay(-1)">‹ Previous day</button>
+    <div class="mini-transport">
+      <button class="mini-btn" id="mini-rewind-btn" title="Rewind 10s">⏪</button>
+      <button class="mini-btn" id="mini-play-btn" title="Play/Pause">▶</button>
+    </div>
     <button class="arrow-btn" id="next-btn" onclick="shiftDay(1)">Next day ›</button>
   </div>
 </div>
@@ -899,6 +877,7 @@ function updateProgressUI(){
   document.getElementById('progress-range').value = duration>0 ? Math.min(1000,(current/duration)*1000) : 0;
   document.getElementById('time-current').textContent = formatTime(current);
   document.getElementById('time-duration').textContent = formatTime(duration);
+  syncMiniPlayBtn();
 }
 
 function enforceSegment(){
@@ -1127,46 +1106,32 @@ document.getElementById('repeat-check').addEventListener('change', e=>{
   }
 });
 
+/* ---------- Mini transport (below day pills, between prev/next day) ---------- */
+function syncMiniPlayBtn(){
+  const mini = document.getElementById('mini-play-btn');
+  if(!mini) return;
+  const isPlaying = !!(audioEl && !audioEl.paused);
+  mini.textContent = isPlaying ? '⏸' : '▶';
+  mini.classList.toggle('playing', isPlaying);
+}
+
+document.getElementById('mini-play-btn').addEventListener('click', ()=>{
+  document.getElementById('play-btn').click();
+  syncMiniPlayBtn();
+});
+
+document.getElementById('mini-rewind-btn').addEventListener('click', ()=>{
+  if(!audioEl) return;
+  audioEl.currentTime = Math.max(0, audioEl.currentTime - 10);
+  updateProgressUI();
+});
+
 function toggleMusicPanel(){
   const panel = document.getElementById('player-panel');
   const fab = document.getElementById('music-fab');
   panel.classList.toggle('open');
   fab.classList.toggle('active');
 }
-
-/* ---------- Floating playback controls (mirror the panel's play/pause) ---------- */
-function updateFloatingControls(){
-  const floatEl = document.getElementById('floating-controls');
-  const floatPlayBtn = document.getElementById('float-play-btn');
-  const floatLabel = document.getElementById('float-label');
-  const entry = chapterAudio[currentChapter];
-
-  if(entry && entry.audioEl){
-    floatEl.classList.add('visible');
-    const isPlaying = audioEl && !audioEl.paused;
-    floatPlayBtn.textContent = isPlaying ? '⏸' : '▶';
-    floatPlayBtn.classList.toggle('playing', isPlaying);
-    const dayNum = activeDayKey ? activeDayKey.replace('day','') : '–';
-    floatLabel.textContent = `Ch ${currentChapter} · Day ${dayNum}`;
-  }else{
-    floatEl.classList.remove('visible');
-  }
-}
-
-document.getElementById('float-play-btn').addEventListener('click', ()=>{
-  document.getElementById('play-btn').click(); // reuse existing play/pause logic exactly
-});
-
-document.getElementById('float-rewind-btn').addEventListener('click', ()=>{
-  if(!audioEl) return;
-  audioEl.currentTime = Math.max(0, audioEl.currentTime - 10);
-  updateProgressUI();
-  updateFloatingControls();
-});
-
-// Keep the floating controls' state in sync with the panel's play button
-// by observing clicks on it and periodic playback state (lightweight poll).
-setInterval(updateFloatingControls, 500);
 
 /* ====================================================================
    LIVE DATE & TIME DISPLAY
@@ -1199,12 +1164,5 @@ buildDayGrid();
 loadDay(startDay);
 precacheAllDays();
 </script>
-<!-- FLOATING PLAYBACK CONTROLS -->
-<div id="floating-controls">
-  <button class="float-btn" id="float-rewind-btn" title="Rewind 10s">⏪</button>
-  <button class="float-btn" id="float-play-btn" title="Play/Pause">▶</button>
-  <span class="float-label" id="float-label">Ch 2 · idle</span>
-</div>
-
 </body>
 </html>
