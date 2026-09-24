@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sound-triggered recorder</title>
+<style>
+  :root {
+    --text-primary: #1a1a1a;
+    --text-secondary: #666;
+    --border: #ddd;
+    --surface-1: #f7f7f5;
+    --surface-2: #ffffff;
+    --accent: #2f6fed;
+    --danger: #d64545;
+    --success: #2e9e5b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --text-primary: #f0f0f0;
+      --text-secondary: #aaa;
+      --border: #3a3a3a;
+      --surface-1: #1c1c1c;
+      --surface-2: #262626;
+      --accent: #6ea1ff;
+      --danger: #ff7a7a;
+      --success: #5cd68a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --text-primary: #f0f0f0;
+    --text-secondary: #aaa;
+    --border: #3a3a3a;
+    --surface-1: #1c1c1c;
+    --surface-2: #262626;
+    --accent: #6ea1ff;
+    --danger: #ff7a7a;
+    --success: #5cd68a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--surface-1);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+  .wrap { width: 100%; max-width: 640px; }
+  h1 { font-size: 20px; font-weight: 500; margin: 0 0 4px; }
+  p.sub { color: var(--text-secondary); font-size: 14px; margin: 0 0 20px; }
+  .row { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  button {
+    font-size: 14px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+  button#toggle { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 500; }
+  button#toggle.active { background: var(--danger); border-color: var(--danger); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .meter-label { font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .meter-track { height: 14px; background: var(--surface-1); border-radius: 7px; overflow: hidden; border: 1px solid var(--border); position: relative; }
+  .meter-fill { height: 100%; background: var(--accent); transition: width 0.05s linear; }
+  .meter-fill.over { background: var(--danger); }
+  .threshold-marker { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--text-primary); opacity: 0.5; }
+  label { font-size: 13px; color: var(--text-secondary); display: block; margin-bottom: 4px; }
+  input[type="range"] { width: 100%; }
+  .status { font-size: 14px; margin: 4px 0 0; }
+  .status.idle { color: var(--text-secondary); }
+  .status.armed { color: var(--accent); }
+  .status.recording { color: var(--danger); font-weight: 500; }
+  .clips { display: flex; flex-direction: column; gap: 10px; }
+  .clip {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px;
+  }
+  .clip-info { flex: 1; font-size: 13px; color: var(--text-secondary); }
+  .clip audio { max-width: 200px; height: 32px; }
+  a.dl { font-size: 13px; color: var(--accent); text-decoration: none; }
+  .empty { font-size: 13px; color: var(--text-secondary); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Sound-triggered recorder</h1>
+  <p class="sub">Recording starts automatically when the sound level crosses your threshold, and stops once it drops back down.</p>
+
+  <div class="card">
+    <label for="threshold">Trigger threshold</label>
+    <input type="range" id="threshold" min="0" max="100" value="55" step="1">
+    <div class="meter-label">
+      <span>Current level</span>
+      <span id="levelVal">0</span>
+    </div>
+    <div class="meter-track">
+      <div class="meter-fill" id="meterFill" style="width:0%"></div>
+      <div class="threshold-marker" id="thresholdMarker" style="left:55%"></div>
+    </div>
+    <p class="status idle" id="status">Not started</p>
+  </div>
+
+  <div class="row">
+    <button id="toggle">Start listening</button>
+  </div>
+
+  <div class="card">
+    <div class="clips" id="clips">
+      <p class="empty">No recording yet.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const toggleBtn = document.getElementById('toggle');
+const thresholdSlider = document.getElementById('threshold');
+const thresholdMarker = document.getElementById('thresholdMarker');
+const meterFill = document.getElementById('meterFill');
+const levelVal = document.getElementById('levelVal');
+const statusEl = document.getElementById('status');
+const clipsEl = document.getElementById('clips');
+
+let audioCtx, analyser, dataArray, source, stream;
+let mediaRecorder;
+let allChunks = [];
+let listening = false;
+let isRecording = false;
+let rafId = null;
+let silenceStart = null;
+let segmentCount = 0;
+const SILENCE_HOLD_MS = 1200;
+
+function setStatus(text, cls) {
+  statusEl.textContent = text;
+  statusEl.className = 'status ' + cls;
+}
+
+thresholdSlider.addEventListener('input', () => {
+  thresholdMarker.style.left = thresholdSlider.value + '%';
+});
+
+function getLevel() {
+  analyser.getByteTimeDomainData(dataArray);
+  let sumSquares = 0;
+  for (let i = 0; i < dataArray.length; i++) {
+    const v = (dataArray[i] - 128) / 128;
+    sumSquares += v * v;
+  }
+  const rms = Math.sqrt(sumSquares / dataArray.length);
+  return Math.min(100, Math.round(rms * 300));
+}
+
+function loop() {
+  const level = getLevel();
+  levelVal.textContent = level;
+  meterFill.style.width = level + '%';
+  const threshold = Number(thresholdSlider.value);
+  meterFill.classList.toggle('over', level >= threshold);
+
+  if (level >= threshold) {
+    silenceStart = null;
+    if (!isRecording) startRecording();
+  } else if (isRecording) {
+    if (silenceStart === null) silenceStart = performance.now();
+    if (performance.now() - silenceStart >= SILENCE_HOLD_MS) {
+      stopRecording();
+    }
+  }
+
+  rafId = requestAnimationFrame(loop);
+}
+
+function startRecording() {
+  if (!stream) return;
+  segmentCount++;
+  try {
+    mediaRecorder = new MediaRecorder(stream);
+  } catch (e) {
+    setStatus('Recording not supported in this browser.', 'idle');
+    return;
+  }
+  mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) allChunks.push(e.data); };
+  mediaRecorder.onstop = () => {
+    renderOutput();
+  };
+  mediaRecorder.start();
+  isRecording = true;
+  setStatus('Loud sound detected — recording (segment ' + segmentCount + ')...', 'recording');
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop();
+  }
+  isRecording = false;
+  silenceStart = null;
+  setStatus('Listening for loud sound...', 'armed');
+}
+
+function renderOutput() {
+  if (allChunks.length === 0) return;
+  const blob = new Blob(allChunks, { type: 'audio/webm' });
+  const url = URL.createObjectURL(blob);
+  const time = new Date().toLocaleTimeString();
+  clipsEl.innerHTML =
+    '<div class="clip">' +
+      '<div class="clip-info">Combined recording (' + segmentCount + ' segment' + (segmentCount === 1 ? '' : 's') + ')<br>updated ' + time + '</div>' +
+      '<audio controls src="' + url + '"></audio>' +
+      '<a class="dl" href="' + url + '" download="recording.webm">Download</a>' +
+    '</div>';
+}
+
+async function startListening() {
+  allChunks = [];
+  segmentCount = 0;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch (e) {
+    setStatus('Microphone access denied.', 'idle');
+    return;
+  }
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  source = audioCtx.createMediaStreamSource(stream);
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 2048;
+  dataArray = new Uint8Array(analyser.fftSize);
+  source.connect(analyser);
+
+  listening = true;
+  toggleBtn.textContent = 'Stop listening';
+  toggleBtn.classList.add('active');
+  setStatus('Listening for loud sound...', 'armed');
+  loop();
+}
+
+function stopListening() {
+  listening = false;
+  cancelAnimationFrame(rafId);
+  if (isRecording) stopRecording();
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  if (audioCtx) audioCtx.close();
+  toggleBtn.textContent = 'Start listening';
+  toggleBtn.classList.remove('active');
+  meterFill.style.width = '0%';
+  levelVal.textContent = '0';
+  setStatus('Not started', 'idle');
+}
+
+toggleBtn.addEventListener('click', () => {
+  if (listening) stopListening();
+  else startListening();
+});
+</script>
+</body>
+</html>
