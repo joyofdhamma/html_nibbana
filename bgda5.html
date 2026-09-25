@@ -1206,8 +1206,8 @@ function toggleTheme(){
   applyTheme(mode);
   try{ localStorage.setItem('gita_theme', mode); }catch(e){}
 }
-let savedTheme = 'light';
-try{ savedTheme = localStorage.getItem('gita_theme') || 'light'; }catch(e){}
+let savedTheme = 'dark';
+try{ savedTheme = localStorage.getItem('gita_theme') || 'dark'; }catch(e){}
 applyTheme(savedTheme);
 
 const hashChapterMatch = location.hash.match(/ch-(\d+)/);
