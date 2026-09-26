@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+
+<!--- this is manual changes of chapter from search const CHAPTER_DAYS -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -17,6 +19,35 @@
     --card:#FFFFFF;
     --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
     --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --strip-bg:#F3ECDD;
+    --hover-bg:#F9F1DE;
+  }
+  /* Dark mode palette */
+  body.dark{
+    --paper:#16140F;
+    --ink:#ECE4D3;
+    --ink-soft:#A39883;
+    --line:#3A3428;
+    --saffron:#D98A5C;
+    --saffron-deep:#E7A279;
+    --gold:#C9A24B;
+    --card:#221E17;
+    --strip-bg:#1D1A14;
+    --hover-bg:#2B261D;
+  }
+  #theme-fab{
+    position:absolute;
+    top:20px;
+    right:70px;
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:var(--card);
+    font-size:18px;
+    cursor:pointer;
+    color:var(--saffron-deep);
+    box-shadow:0 2px 8px rgba(0,0,0,0.06);
   }
   *{box-sizing:border-box;}
   body{
@@ -82,7 +113,7 @@
   /* Day selector strip */
   /* Chapter selector strip */
   .chapter-strip-wrap{
-    background:#F3ECDD;
+    background:var(--strip-bg);
     border-bottom:1px solid var(--line);
     padding:12px 0;
   }
@@ -110,7 +141,7 @@
     cursor:pointer;
     white-space:nowrap;
   }
-  .chapter-btn:hover{ background:#F9F1DE; }
+  .chapter-btn:hover{ background:var(--hover-bg); }
   .chapter-btn.active{
     background:var(--gold);
     border-color:var(--gold);
@@ -180,6 +211,29 @@
     padding:4px 6px;
   }
   .arrow-btn:disabled{ color:var(--ink-soft); opacity:0.4; cursor:default; }
+
+  .mini-transport{
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .mini-btn{
+    font-family:var(--sans);
+    font-size:14px;
+    background:var(--card);
+    border:1px solid var(--line);
+    color:var(--saffron-deep);
+    cursor:pointer;
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+  }
+  .mini-btn:hover{ border-color:var(--saffron); }
+  .mini-btn.playing{ background:var(--saffron); border-color:var(--saffron); color:#fff; }
 
   main{
     max-width:760px;
@@ -392,6 +446,7 @@
 <body>
 
 <header>
+  <button id="theme-fab" onclick="toggleTheme()" title="Dark / light mode">☾</button>
   <button id="music-fab" onclick="toggleMusicPanel()" title="Audio player">♪</button>
   <div class="eyebrow">॥ ॐ श्री परमात्मने नमः ॥</div>
   <h1>॥॥ श्रीमद्भगवद्गीता ॥॥</h1> 
@@ -461,6 +516,10 @@
   <div class="day-strip" id="day-strip"></div>
   <div class="nav-arrows">
     <button class="arrow-btn" id="prev-btn" onclick="shiftDay(-1)">‹ Previous day</button>
+    <div class="mini-transport">
+      <button class="mini-btn" id="mini-rewind-btn" title="Rewind 10s">⏪</button>
+      <button class="mini-btn" id="mini-play-btn" title="Play/Pause">▶</button>
+    </div>
     <button class="arrow-btn" id="next-btn" onclick="shiftDay(1)">Next day ›</button>
   </div>
 </div>
@@ -484,9 +543,17 @@ const GH_REPO  = "bgda";
 const GH_BRANCH = "main";
 
 const TOTAL_CHAPTERS = 18;
-/* ---- Fixed day-count applied to every chapter for now.
-   Edit this single number to change it (Joy: adjust as needed). ---- */
-const TOTAL_DAYS = 18;
+/* ---- DAYS PER CHAPTER — edit these numbers by hand.
+   Example: Chapter 3 has only 9 files uploaded -> set 3: 9 ---- */
+const CHAPTER_DAYS = {
+  1: 18,  2: 18,  3: 18,  4: 18,  5: 18,  6: 18,
+  7: 18,  8: 18,  9: 18, 10: 18, 11: 18, 12: 18,
+ 13: 18, 14: 18, 15: 18, 16: 18, 17: 18, 18: 18
+};
+let TOTAL_DAYS = 18; // set automatically from CHAPTER_DAYS below
+function setChapterDays(chapter){
+  TOTAL_DAYS = CHAPTER_DAYS[chapter] || 18;
+}
 const VERSES_START = 1;
 let currentDay = 1;
 let currentChapter = 2; // Chapter 2 is the original/default chapter
@@ -524,7 +591,10 @@ function switchChapter(chapter){
   setActiveChapterButton(chapter);
   history.replaceState(null, '', '#ch-' + chapter + '-day-1');
   document.getElementById('player-chapter-label').textContent = chapter;
+  setChapterDays(chapter);
+  buildDayStrip();
   onChapterSwitchedForMusic();
+  buildDayGrid();
   loadDay(1);
   precacheAllDays();
 }
@@ -692,7 +762,10 @@ function getCurrentChapterDays(){
   return CHAPTER_DAY_TIMINGS[currentChapter] || {};
 }
 function getDayKeys(){
-  return Object.keys(getCurrentChapterDays()).sort((a,b)=>{
+  // Hide player days beyond this chapter's day count.
+  return Object.keys(getCurrentChapterDays())
+    .filter(k => parseInt(k.replace('day','')) <= TOTAL_DAYS)
+    .sort((a,b)=>{
     return parseInt(a.replace('day','')) - parseInt(b.replace('day',''));
   });
 }
@@ -850,6 +923,7 @@ function updateProgressUI(){
   document.getElementById('progress-range').value = duration>0 ? Math.min(1000,(current/duration)*1000) : 0;
   document.getElementById('time-current').textContent = formatTime(current);
   document.getElementById('time-duration').textContent = formatTime(duration);
+  syncMiniPlayBtn();
 }
 
 function enforceSegment(){
@@ -1078,6 +1152,26 @@ document.getElementById('repeat-check').addEventListener('change', e=>{
   }
 });
 
+/* ---------- Mini transport (below day pills, between prev/next day) ---------- */
+function syncMiniPlayBtn(){
+  const mini = document.getElementById('mini-play-btn');
+  if(!mini) return;
+  const isPlaying = !!(audioEl && !audioEl.paused);
+  mini.textContent = isPlaying ? '⏸' : '▶';
+  mini.classList.toggle('playing', isPlaying);
+}
+
+document.getElementById('mini-play-btn').addEventListener('click', ()=>{
+  document.getElementById('play-btn').click();
+  syncMiniPlayBtn();
+});
+
+document.getElementById('mini-rewind-btn').addEventListener('click', ()=>{
+  if(!audioEl) return;
+  audioEl.currentTime = Math.max(0, audioEl.currentTime - 10);
+  updateProgressUI();
+});
+
 function toggleMusicPanel(){
   const panel = document.getElementById('player-panel');
   const fab = document.getElementById('music-fab');
@@ -1102,12 +1196,27 @@ setInterval(updateDateTimeDisplay, 1000);
 /* ====================================================================
    INIT
    ==================================================================== */
-buildChapterStrip();
-buildDayStrip();
+/* ---- Theme (dark / light), remembered on this device ---- */
+function applyTheme(mode){
+  document.body.classList.toggle('dark', mode === 'dark');
+  document.getElementById('theme-fab').textContent = mode === 'dark' ? '☀' : '☾';
+}
+function toggleTheme(){
+  const mode = document.body.classList.contains('dark') ? 'light' : 'dark';
+  applyTheme(mode);
+  try{ localStorage.setItem('gita_theme', mode); }catch(e){}
+}
+let savedTheme = 'dark';
+try{ savedTheme = localStorage.getItem('gita_theme') || 'dark'; }catch(e){}
+applyTheme(savedTheme);
 
 const hashChapterMatch = location.hash.match(/ch-(\d+)/);
 const hashDayMatch = location.hash.match(/day-(\d+)/);
 currentChapter = hashChapterMatch ? Math.min(TOTAL_CHAPTERS, Math.max(1, parseInt(hashChapterMatch[1]))) : 2;
+setChapterDays(currentChapter);
+
+buildChapterStrip();
+buildDayStrip();
 const startDay = hashDayMatch ? Math.min(TOTAL_DAYS, Math.max(1, parseInt(hashDayMatch[1]))) : 1;
 
 setActiveChapterButton(currentChapter);
