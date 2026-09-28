@@ -1,0 +1,237 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Soundroom</title>
+<style>
+:root{--bg:#eef1f4;--card:#fff;--ink:#1b2430;--mute:#5d6878;--line:#d7dde5;--acc:#3a6ea5;--acc2:#e3ecf6;--on:#2f7d5b;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10151c;--card:#18202a;--ink:#e4eaf2;--mute:#94a1b3;--line:#27313e;--acc:#7fb0e6;--acc2:#1f2d3d;--on:#5cc596;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#10151c;--card:#18202a;--ink:#e4eaf2;--mute:#94a1b3;--line:#27313e;--acc:#7fb0e6;--acc2:#1f2d3d;--on:#5cc596;color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:grid;gap:16px}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+h1{font:700 26px ui-rounded,"Segoe UI",system-ui,sans-serif;margin:0}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute);margin:0 0 12px;font-weight:600}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button,select{font:inherit;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:7px 14px;cursor:pointer}
+button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.big{padding:10px 22px;font-weight:600}
+.stop{background:#b5473a;color:#fff;border-color:#b5473a}
+input[type=range]{accent-color:var(--acc);width:100%}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.tile{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:6px;background:var(--bg);transition:border-color .15s,background .15s}
+.tile.on{border-color:var(--on);background:var(--acc2)}
+.tile button{all:unset;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:600;gap:6px}
+.tile button:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:4px}
+.dot{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--mute);flex:none}
+.tile.on .dot{background:var(--on);border-color:var(--on)}
+.tile small{color:var(--mute);font-size:12px;line-height:1.3}
+.group{margin:14px 0 8px;font-size:12px;color:var(--mute);font-weight:600}
+.group:first-of-type{margin-top:0}
+.note{color:var(--mute);font-size:13px;margin:0}
+.bands{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+.band{text-align:left;border-radius:12px;padding:10px 12px;display:grid;gap:2px}
+.band b{font-size:14px}.band span{font-size:12px;opacity:.85;line-height:1.3}
+.ctl{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:14px}
+.ctl label{font-size:12px;color:var(--mute);display:grid;gap:4px}
+.status{font-variant-numeric:tabular-nums;color:var(--mute);font-size:13px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head><body>
+<div class="wrap">
+  <header>
+    <div><h1>Soundroom</h1><p class="note">Mix sounds for study and deep work. Everything plays offline.</p></div>
+    <div class="row"><button class="big stop" id="stopAll">Stop all</button></div>
+  </header>
+
+  <div class="card">
+    <h2>Quick mixes</h2>
+    <div class="row" id="presets"></div>
+  </div>
+
+  <div class="card">
+    <h2>Sounds <span style="text-transform:none;letter-spacing:0;font-weight:400">· tap to play, layer as many as you like</span></h2>
+    <div id="sounds"></div>
+  </div>
+
+  <div class="card">
+    <h2>Brainwave beats</h2>
+    <div class="row" style="margin-bottom:12px" id="modeRow">
+      <button data-mode="bin" class="on">Binaural (headphones)</button>
+      <button data-mode="iso">Isochronic (speakers OK)</button>
+    </div>
+    <div class="bands" id="bands"></div>
+    <div class="ctl">
+      <label for="bvol">Beat volume<input type="range" id="bvol" min="0" max="0.4" step="0.01" value="0.12"></label>
+      <label for="carrier">Tone pitch<select id="carrier"><option value="120">Deep 120 Hz</option><option value="200" selected>Mid 200 Hz</option><option value="300">Bright 300 Hz</option><option value="432">Soft high 432 Hz</option></select></label>
+    </div>
+    <p class="note" style="margin-top:12px">Binaural: each ear gets a slightly different tone, needs headphones. Isochronic: one pulsing tone, works on speakers. For ADHD-style focus, try SMR 14 or Beta 16 first. Research is mixed, so test for a few days.</p>
+  </div>
+
+  <div class="card">
+    <h2>Master</h2>
+    <div class="ctl" style="margin-top:0">
+      <label for="master">Master volume<input type="range" id="master" min="0" max="1" step="0.01" value="0.8"></label>
+      <label for="sleep">Auto-stop<select id="sleep"><option value="0">Never</option><option value="25">After 25 min</option><option value="50">After 50 min</option><option value="90">After 90 min</option><option value="120">After 2 hours</option></select></label>
+    </div>
+    <p class="status" id="status" style="margin-top:10px">Nothing playing.</p>
+  </div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+let ac,master,beatBus;
+function ctx(){if(!ac){ac=new AudioContext();master=ac.createGain();master.gain.value=+$('master').value;master.connect(ac.destination)}ac.resume();return ac}
+
+/* ---------- building blocks ---------- */
+const bufs={};
+function nbuf(type){if(bufs[type])return bufs[type];
+  const n=ac.sampleRate*6,b=ac.createBuffer(2,n,ac.sampleRate);
+  for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);let l=0,b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+    for(let i=0;i<n;i++){const w=Math.random()*2-1;
+      if(type==='white')d[i]=w*.4;
+      else if(type==='brown'){l=(l+.02*w)/1.02;d[i]=l*3.5}
+      else{b0=.99886*b0+w*.0555179;b1=.99332*b1+w*.0750759;b2=.969*b2+w*.153852;b3=.8665*b3+w*.3104856;b4=.55*b4+w*.5329522;b5=-.7616*b5-w*.016898;d[i]=(b0+b1+b2+b3+b4+b5+b6+w*.5362)*.11;b6=w*.115926}}
+    // crossfade loop seam
+    const f=2000;for(let i=0;i<f;i++){const t=i/f;d[i]=d[i]*t+d[n-f+i]*(1-t)}}
+  return bufs[type]=b}
+function mk(){const nodes=[],timers=[];const out=ac.createGain();out.gain.value=0;
+  const api={out,nodes,timers,
+    noise(t){const s=ac.createBufferSource();s.buffer=nbuf(t);s.loop=true;s.loopStart=2000/ac.sampleRate;s.start(0,Math.random()*5);nodes.push(s);return s},
+    f(type,freq,q){const n=ac.createBiquadFilter();n.type=type;n.frequency.value=freq;if(q)n.Q.value=q;return n},
+    g(v){const n=ac.createGain();n.gain.value=v;return n},
+    pan(v){const p=ac.createStereoPanner();p.pan.value=v;return p},
+    osc(freq,type){const o=ac.createOscillator();o.type=type||'sine';o.frequency.value=freq;o.start();nodes.push(o);return o},
+    lfo(rate,depth,param,base){param.value=base;const o=api.osc(rate),g=api.g(depth);o.connect(g).connect(param)},
+    every(minS,maxS,fn){const loop=()=>{fn();timers.push(setTimeout(loop,(minS+Math.random()*(maxS-minS))*1000))};timers.push(setTimeout(loop,Math.random()*maxS*500))},
+    chain(...xs){for(let i=0;i<xs.length-1;i++)xs[i].connect(xs[i+1]);return xs[xs.length-1]},
+    // one-shot helpers
+    burst(type,dur,filter,freq,q,peak,att,panV){const s=ac.createBufferSource();s.buffer=nbuf(type);const fl=api.f(filter,freq,q),g=api.g(0),p=api.pan(panV||0),t=ac.currentTime;
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+att);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+      s.connect(fl).connect(g).connect(p).connect(out);s.start(t,Math.random()*4,dur+.1);return fl},
+    tone(freq,dur,peak,type,panV,glideTo){const o=ac.createOscillator(),g=api.g(0),p=api.pan(panV||0),t=ac.currentTime;o.type=type||'sine';o.frequency.setValueAtTime(freq,t);
+      if(glideTo)o.frequency.exponentialRampToValueAtTime(glideTo,t+dur);
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+Math.min(.02,dur/4));g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+      o.connect(g).connect(p).connect(out);o.start(t);o.stop(t+dur+.05)}
+  };return api}
+
+/* ---------- sound recipes ---------- */
+const S=[
+ {grp:'Noise',id:'white',name:'White noise',tip:'Bright, masks voices',b:a=>a.chain(a.noise('white'),a.g(.6),a.out)},
+ {grp:'Noise',id:'pink',name:'Pink noise',tip:'Balanced, easy for hours',b:a=>a.chain(a.noise('pink'),a.g(.9),a.out)},
+ {grp:'Noise',id:'brown',name:'Brown noise',tip:'Deep rumble, ADHD favourite',b:a=>a.chain(a.noise('brown'),a.g(.9),a.out)},
+ {grp:'Noise',id:'grey',name:'Grey noise',tip:'Soft and even to the ear',b:a=>{const n=a.noise('pink');a.chain(n,a.f('lowshelf',200),a.f('peaking',3500,1),a.g(.8),a.out);n.connect(a.f('lowpass',300)).connect(a.out)}},
+
+ {grp:'Rain & storm',id:'rain',name:'Light rain',tip:'Gentle drizzle',b:a=>{a.chain(a.noise('pink'),a.f('highpass',600),a.g(.5),a.out);a.every(.02,.12,()=>a.burst('white',.05,'bandpass',2500+Math.random()*4000,2,.15*Math.random(),.002,Math.random()*2-1))}},
+ {grp:'Rain & storm',id:'heavy',name:'Heavy rain',tip:'Steady downpour',b:a=>{a.chain(a.noise('pink'),a.f('lowpass',5000),a.g(1),a.out);a.chain(a.noise('white'),a.f('highpass',2000),a.g(.25),a.out);a.chain(a.noise('brown'),a.g(.4),a.out)}},
+ {grp:'Rain & storm',id:'roof',name:'Rain on roof',tip:'Patter on a tin roof',b:a=>{a.chain(a.noise('brown'),a.f('lowpass',900),a.g(.5),a.out);a.every(.01,.06,()=>a.burst('white',.04,'bandpass',900+Math.random()*1800,4,.25*Math.random(),.001,Math.random()*1.6-.8))}},
+ {grp:'Rain & storm',id:'window',name:'Rain on window',tip:'Soft taps on glass',b:a=>{a.chain(a.noise('pink'),a.f('bandpass',1500,.4),a.g(.35),a.out);a.every(.05,.3,()=>a.tone(3000+Math.random()*3000,.03,.05,'sine',Math.random()*2-1))}},
+ {grp:'Rain & storm',id:'thunder',name:'Thunder',tip:'Distant rolls every so often',b:a=>{a.chain(a.noise('brown'),a.f('lowpass',120),a.g(.35),a.out);a.every(10,28,()=>{const d=4+Math.random()*5,f=a.burst('brown',d,'lowpass',180+Math.random()*250,.7,1.6,.25+Math.random()*.8,Math.random()*1.2-.6);f.frequency.exponentialRampToValueAtTime(70,ac.currentTime+d)})}},
+
+ {grp:'Nature',id:'birds',name:'Birds',tip:'Morning songbirds',b:a=>{a.chain(a.noise('pink'),a.f('highpass',1500),a.g(.05),a.out);
+   a.every(.6,3,()=>{const p=Math.random()*1.6-.8,base=2200+Math.random()*2800,n=2+Math.floor(Math.random()*6),sty=Math.random();
+     for(let i=0;i<n;i++)setTimeout(()=>{if(!a.out.context)return;const f=base*(1+(Math.random()-.5)*.25);sty<.5?a.tone(f,.09,.08,'sine',p,f*1.4):a.tone(f*1.2,.12,.07,'sine',p,f*.8)},i*(90+sty*90))})}},
+ {grp:'Nature',id:'crickets',name:'Crickets',tip:'Warm summer night',b:a=>{a.chain(a.noise('brown'),a.f('lowpass',300),a.g(.2),a.out);
+   [[-.6,4400],[.5,4700],[.1,4100]].forEach(([p,f],k)=>{const o=a.osc(f),g=a.g(0),pn=a.pan(p);o.connect(g).connect(pn).connect(a.out);
+     a.every(.7+k*.13,1.1+k*.1,()=>{const t=ac.currentTime;for(let i=0;i<3;i++){g.gain.setValueAtTime(.035,t+i*.045);g.gain.setValueAtTime(0,t+i*.045+.025)}})})}},
+ {grp:'Nature',id:'forest',name:'Forest breeze',tip:'Leaves rustling softly',b:a=>{const f=a.f('bandpass',1800,.6),g=a.g(1);a.chain(a.noise('pink'),f,g,a.g(.7),a.out);a.lfo(.09,900,f.frequency,1800);a.lfo(.13,.4,g.gain,.6)}},
+ {grp:'Nature',id:'wind',name:'Wind',tip:'Gusts that rise and fall',b:a=>{const f=a.f('bandpass',500,1.2),g=a.g(1);a.chain(a.noise('pink'),f,g,a.out);a.lfo(.12,300,f.frequency,550);a.lfo(.07,.4,g.gain,.9)}},
+ {grp:'Nature',id:'ocean',name:'Ocean waves',tip:'Slow swells on a beach',b:a=>{const f=a.f('lowpass',900),g=a.g(1);a.chain(a.noise('pink'),f,g,a.out);a.lfo(.08,.5,g.gain,.55);a.lfo(.08,600,f.frequency,1000)}},
+ {grp:'Nature',id:'stream',name:'Stream',tip:'Bubbling brook',b:a=>{const f=a.f('bandpass',2500,.8),g=a.g(1);a.chain(a.noise('white'),f,g,a.g(.8),a.out);a.lfo(3.7,.2,g.gain,.8);a.lfo(.3,800,f.frequency,2500);a.every(.05,.25,()=>a.tone(600+Math.random()*900,.06,.03,'sine',Math.random()*1.4-.7,1400+Math.random()*800))}},
+ {grp:'Nature',id:'fire',name:'Fireplace',tip:'Low roar with crackles',b:a=>{a.chain(a.noise('brown'),a.f('lowpass',400),a.g(.8),a.out);a.every(.03,.5,()=>a.burst('white',.02+Math.random()*.05,'highpass',1500+Math.random()*3000,0,.35*Math.random(),.001,Math.random()*.8-.4))}},
+
+ {grp:'Travel & machines',id:'plane',name:'Airplane cabin',tip:'Long-haul engine hum',b:a=>{a.chain(a.noise('brown'),a.f('lowpass',500),a.out);a.chain(a.noise('pink'),a.f('bandpass',1200,.5),a.g(.25),a.out);[[115,.04],[230,.015]].forEach(([f,v])=>a.chain(a.osc(f),a.g(v),a.out))}},
+ {grp:'Travel & machines',id:'train',name:'Train',tip:'Rhythmic rail rumble',b:a=>{const g=a.g(1);a.chain(a.noise('brown'),a.f('lowpass',700),g,a.out);a.lfo(1.6,.25,g.gain,.75);a.chain(a.osc(70),a.g(.03),a.out);
+   a.every(2.2,2.6,()=>{a.burst('brown',.25,'lowpass',300,0,.8,.005,-.3);setTimeout(()=>a.burst('brown',.25,'lowpass',300,0,.8,.005,.3),220)})}},
+ {grp:'Travel & machines',id:'car',name:'Car at night',tip:'Tyres on a highway',b:a=>{const f=a.f('lowpass',350);a.chain(a.noise('brown'),f,a.g(1.1),a.out);a.lfo(.05,80,f.frequency,350);a.chain(a.noise('pink'),a.f('bandpass',700,.8),a.g(.15),a.out)}},
+ {grp:'Travel & machines',id:'fan',name:'Fan',tip:'Steady airflow',b:a=>{a.chain(a.noise('pink'),a.f('lowpass',1500),a.out);a.chain(a.osc(60),a.g(.05),a.out);a.chain(a.osc(120),a.g(.02),a.out)}},
+ {grp:'Travel & machines',id:'ac',name:'Air conditioner',tip:'Office AC drone',b:a=>{a.chain(a.noise('pink'),a.f('lowpass',900),a.g(.8),a.out);a.chain(a.noise('white'),a.f('bandpass',4000,2),a.g(.05),a.out);a.chain(a.osc(50,'triangle'),a.g(.04),a.out)}},
+ {grp:'Travel & machines',id:'space',name:'Spaceship hum',tip:'Very deep drone',b:a=>{a.chain(a.noise('brown'),a.f('lowpass',250),a.out);[[55,.06],[82.5,.03],[110,.02]].forEach(([f,v])=>a.chain(a.osc(f),a.g(v),a.out))}},
+
+ {grp:'Places & objects',id:'cafe',name:'Café murmur',tip:'Busy coffee shop',b:a=>{const f=a.f('bandpass',700,.9),g=a.g(1);a.chain(a.noise('pink'),f,g,a.g(.9),a.out);a.lfo(.4,250,f.frequency,700);a.lfo(.23,.3,g.gain,.8);
+   a.every(1.5,6,()=>{const f0=2600+Math.random()*1500,p=Math.random()*1.6-.8;a.tone(f0,.5,.05,'sine',p);a.tone(f0*2.7,.3,.02,'sine',p)})}},
+ {grp:'Places & objects',id:'library',name:'Library',tip:'Quiet room, page turns',b:a=>{a.chain(a.noise('brown'),a.f('lowpass',200),a.g(.3),a.out);a.every(4,12,()=>a.burst('pink',.35,'bandpass',3000,.7,.25,.08,Math.random()*1.6-.8))}},
+ {grp:'Places & objects',id:'typing',name:'Keyboard typing',tip:'Someone working nearby',b:a=>{let burst=0;a.every(.07,.22,()=>{if(burst<=0){burst=Math.random()<.1?-(8+Math.random()*12):5+Math.random()*25}
+   if(burst<0){burst++;return}burst--;a.burst('white',.03,'bandpass',2200+Math.random()*1800,3,.35,.001,.2+Math.random()*.2)})}},
+ {grp:'Places & objects',id:'clock',name:'Clock ticking',tip:'Steady one-second tick',b:a=>{let k=0;const tick=()=>{a.burst('white',.025,'bandpass',k++%2?3200:2600,6,.6,.001,0)};a.timers.push(setInterval(tick,1000))}},
+ {grp:'Places & objects',id:'bowl',name:'Singing bowl',tip:'Calm resonant drone',b:a=>{const strike=()=>{[[220,.08],[331,.05],[443,.04],[661,.02]].forEach(([f,v])=>{a.tone(f,11,v,'sine',-.2);a.tone(f*1.004,11,v,'sine',.2)})};strike();a.timers.push(setInterval(strike,10000))}},
+ {grp:'Places & objects',id:'heart',name:'Heartbeat',tip:'Slow calm pulse, 60 bpm',b:a=>{a.timers.push(setInterval(()=>{a.tone(60,.18,.5,'sine',0,40);setTimeout(()=>a.tone(55,.2,.35,'sine',0,38),250)},1000))}},
+];
+const groups=[...new Set(S.map(s=>s.grp))];
+const live={},vols={};
+$('sounds').innerHTML=groups.map(g=>`<div class="group">${g}</div><div class="grid">${S.filter(s=>s.grp===g).map(s=>
+ `<div class="tile" id="t_${s.id}"><button data-id="${s.id}" aria-pressed="false"><span>${s.name}</span><span class="dot"></span></button><small>${s.tip}</small><input type="range" id="v_${s.id}" min="0" max="1" step="0.01" value="0.5" aria-label="${s.name} volume"></div>`).join('')}</div>`).join('');
+
+function play(id,v){ctx();if(live[id])return;const s=S.find(x=>x.id===id),a=mk();a.out.connect(master);s.b(a);
+  a.out.gain.setTargetAtTime(v??+$('v_'+id).value,ac.currentTime,.4);live[id]=a;ui(id,true)}
+function stop(id){const a=live[id];if(!a)return;a.timers.forEach(t=>{clearTimeout(t);clearInterval(t)});a.out.gain.setTargetAtTime(0,ac.currentTime,.25);
+  setTimeout(()=>{a.nodes.forEach(n=>{try{n.stop()}catch(e){}});a.out.disconnect()},1200);delete live[id];ui(id,false)}
+function ui(id,on){const t=$('t_'+id);t.classList.toggle('on',on);t.querySelector('button').setAttribute('aria-pressed',on);status()}
+$('sounds').addEventListener('click',e=>{const b=e.target.closest('button[data-id]');if(!b)return;live[b.dataset.id]?stop(b.dataset.id):play(b.dataset.id);save()});
+$('sounds').addEventListener('input',e=>{if(e.target.type!=='range')return;const id=e.target.id.slice(2);if(live[id])live[id].out.gain.setTargetAtTime(+e.target.value,ac.currentTime,.1);save()});
+
+/* ---------- beats ---------- */
+const B=[
+ {hz:0,name:'Off',d:'No beat'},
+ {hz:2,name:'Delta 2 Hz',d:'Deep rest. Not for work, use for naps'},
+ {hz:6,name:'Theta 6 Hz',d:'Creative, dreamy. Brainstorming, writing ideas'},
+ {hz:8,name:'Alpha 8 Hz',d:'Relaxed and calm. Reading, reviewing'},
+ {hz:10,name:'Alpha 10 Hz',d:'Calm focus. Light study, winding up'},
+ {hz:12,name:'Low beta 12 Hz',d:'Relaxed but alert. Easy start to work'},
+ {hz:14,name:'SMR 14 Hz',d:'Calm, steady attention. Top ADHD pick'},
+ {hz:16,name:'Beta 16 Hz',d:'Focused problem solving. Maths, coding'},
+ {hz:18,name:'Beta 18 Hz',d:'Alert, active thinking. Analysis, emails'},
+ {hz:22,name:'Beta 22 Hz',d:'High alertness. Deadline sprints'},
+ {hz:25,name:'Beta 25 Hz',d:'Energised. Boring, repetitive tasks'},
+ {hz:30,name:'High beta 30 Hz',d:'Very intense. Short bursts only'},
+ {hz:36,name:'Gamma 36 Hz',d:'Concentration and learning'},
+ {hz:40,name:'Gamma 40 Hz',d:'Peak focus and memory. Exam study'},
+];
+let beat=0,mode='bin',bnodes=[];
+$('bands').innerHTML=B.map(b=>`<button class="band${b.hz?'':' on'}" data-hz="${b.hz}"><b>${b.name}</b><span>${b.d}</span></button>`).join('');
+function stopBeat(){bnodes.forEach(n=>{try{n.stop()}catch(e){}});bnodes=[];if(beatBus){const g=beatBus;g.gain.setTargetAtTime(0,ac.currentTime,.2);setTimeout(()=>g.disconnect(),800);beatBus=null}}
+function startBeat(){stopBeat();status();if(!beat)return;ctx();const c=+$('carrier').value;
+  beatBus=ac.createGain();beatBus.gain.value=0;beatBus.connect(master);beatBus.gain.setTargetAtTime(+$('bvol').value,ac.currentTime,.4);
+  if(mode==='bin'){const m=ac.createChannelMerger(2),L=ac.createOscillator(),R=ac.createOscillator();L.frequency.value=c;R.frequency.value=c+beat;L.connect(m,0,0);R.connect(m,0,1);m.connect(beatBus);L.start();R.start();bnodes=[L,R]}
+  else{const o=ac.createOscillator(),am=ac.createGain(),l=ac.createOscillator(),sh=ac.createWaveShaper(),dep=ac.createGain();o.frequency.value=c;l.frequency.value=beat;
+    const curve=new Float32Array(256);for(let i=0;i<256;i++){const x=i/128-1;curve[i]=Math.tanh(x*4)}sh.curve=curve;
+    am.gain.value=.5;dep.gain.value=.5;l.connect(sh).connect(dep).connect(am.gain);o.connect(am).connect(beatBus);o.start();l.start();bnodes=[o,l]}}
+$('bands').onclick=e=>{const b=e.target.closest('button');if(!b)return;[...$('bands').children].forEach(x=>x.classList.toggle('on',x===b));beat=+b.dataset.hz;startBeat();save()};
+$('modeRow').onclick=e=>{const b=e.target.closest('button');if(!b)return;[...$('modeRow').children].forEach(x=>x.classList.toggle('on',x===b));mode=b.dataset.mode;if(beat)startBeat();save()};
+$('bvol').oninput=()=>{if(beatBus)beatBus.gain.setTargetAtTime(+$('bvol').value,ac.currentTime,.1);save()};
+$('carrier').onchange=()=>{if(beat)startBeat();save()};
+function setBeat(hz){[...$('bands').children].forEach(x=>x.classList.toggle('on',+x.dataset.hz===hz));beat=hz;startBeat()}
+
+/* ---------- presets ---------- */
+const P=[
+ {n:'Deep work',s:{brown:.6,plane:.35},b:14},
+ {n:'Exam study',s:{pink:.35,library:.5},b:40},
+ {n:'Rainy café',s:{rain:.5,cafe:.45,window:.3},b:0},
+ {n:'Thunderstorm',s:{heavy:.55,thunder:.6,roof:.3},b:10},
+ {n:'Forest morning',s:{birds:.5,forest:.4,stream:.35},b:10},
+ {n:'Night coding',s:{crickets:.35,fire:.45,brown:.3},b:16},
+ {n:'Long flight',s:{plane:.7},b:14},
+ {n:'Office buzz',s:{ac:.4,typing:.4,cafe:.2},b:18},
+ {n:'Calm reading',s:{ocean:.4,bowl:.3},b:8},
+];
+$('presets').innerHTML=P.map((p,i)=>`<button data-p="${i}">${p.n}</button>`).join('');
+$('presets').onclick=e=>{const b=e.target.closest('button');if(!b)return;const p=P[+b.dataset.p];
+  Object.keys(live).forEach(id=>{if(!(id in p.s))stop(id)});
+  Object.entries(p.s).forEach(([id,v])=>{$('v_'+id).value=v;live[id]?live[id].out.gain.setTargetAtTime(v,ac.currentTime,.3):play(id,v)});
+  setBeat(p.b);save()};
+
+/* ---------- master, auto-stop, status, save ---------- */
+$('master').oninput=()=>{if(master)master.gain.setTargetAtTime(+$('master').value,ac.currentTime,.1);save()};
+function stopAll(){Object.keys(live).forEach(stop);setBeat(0);clearTimeout(sleepT);sleepAt=0;$('sleep').value='0';status();save()}
+$('stopAll').onclick=stopAll;
+let sleepT,sleepAt=0;
+$('sleep').onchange=()=>{clearTimeout(sleepT);const m=+$('sleep').value;sleepAt=m?Date.now()+m*60000:0;if(m)sleepT=setTimeout(stopAll,m*60000);status()};
+function status(){const n=Object.keys(live).map(id=>S.find(s=>s.id===id).name),bt=beat?B.find(b=>b.hz===beat).name:'';
+  let t=n.length||bt?'Playing: '+[...n,bt].filter(Boolean).join(', '):'Nothing playing.';
+  if(sleepAt)t+=` · stops in ${Math.max(0,Math.ceil((sleepAt-Date.now())/60000))} min`;$('status').textContent=t}
+setInterval(()=>{if(sleepAt)status()},20000);
+function save(){try{const v={};S.forEach(s=>v[s.id]=+$('v_'+s.id).value);localStorage.setItem('soundroom',JSON.stringify({v,on:Object.keys(live),beat,mode,bvol:$('bvol').value,car:$('carrier').value,master:$('master').value}))}catch(e){}}
+let last=null;try{last=JSON.parse(localStorage.getItem('soundroom'))}catch(e){}
+if(last){Object.entries(last.v||{}).forEach(([k,v])=>{if($('v_'+k))$('v_'+k).value=v});['bvol','carrier','master'].forEach((k,i)=>{const val=[last.bvol,last.car,last.master][i];if(val)$(k).value=val});
+  if(last.mode){mode=last.mode;[...$('modeRow').children].forEach(x=>x.classList.toggle('on',x.dataset.mode===mode))}
+  if(last.on&&last.on.length||last.beat){const r=document.createElement('button');r.textContent='Resume last mix';r.className='on';r.onclick=()=>{last.on.forEach(id=>play(id));if(last.beat)setBeat(last.beat);r.remove()};$('presets').prepend(r)}}
+</script>
+</body></html>
