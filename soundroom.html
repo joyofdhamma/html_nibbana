@@ -33,6 +33,14 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .band b{font-size:14px}.band span{font-size:12px;opacity:.85;line-height:1.3}
 .ctl{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:14px}
 .ctl label{font-size:12px;color:var(--mute);display:grid;gap:4px}
+.tasks{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.task{border:1px solid var(--line);border-radius:12px;background:var(--bg);display:grid}
+.task.on{border-color:var(--on);background:var(--acc2)}
+.task>button{all:unset;cursor:pointer;padding:12px 14px 6px;display:grid;gap:2px}
+.task>button:focus-visible{outline:2px solid var(--acc);border-radius:12px}
+.task b{font-size:15px}.task span{font-size:12px;color:var(--mute)}
+.alts{display:flex;gap:6px;flex-wrap:wrap;padding:4px 14px 12px}
+.alts button{padding:3px 10px;font-size:12px}
 .status{font-variant-numeric:tabular-nums;color:var(--mute);font-size:13px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -42,6 +50,11 @@ input[type=range]{accent-color:var(--acc);width:100%}
     <div><h1>Soundroom</h1><p class="note">Mix sounds for study and deep work. Everything plays offline.</p></div>
     <div class="row"><button class="big stop" id="stopAll">Stop all</button></div>
   </header>
+
+  <div class="card">
+    <h2>Work modes <span style="text-transform:none;letter-spacing:0;font-weight:400">· one tap sets beat + sounds</span></h2>
+    <div class="tasks" id="tasks"></div>
+  </div>
 
   <div class="card">
     <h2>Quick mixes</h2>
@@ -74,12 +87,50 @@ input[type=range]{accent-color:var(--acc);width:100%}
       <label for="sleep">Auto-stop<select id="sleep"><option value="0">Never</option><option value="25">After 25 min</option><option value="50">After 50 min</option><option value="90">After 90 min</option><option value="120">After 2 hours</option></select></label>
     </div>
     <p class="status" id="status" style="margin-top:10px">Nothing playing.</p>
+    <button id="test" style="margin-top:8px">Play test beep</button>
   </div>
 </div>
 <script>
 const $=id=>document.getElementById(id);
+
+/* =========================================================
+   WORK MODES  —  EDIT THIS TO CUSTOMISE
+   name   : button label
+   use    : short description
+   bands  : beat options in Hz. First one plays by default,
+            others show as small switch buttons.
+   sounds : { soundId: volume 0–1 } — add as many as you like.
+   Sound ids: white pink brown grey rain heavy roof window thunder
+     birds crickets forest wind stream fire
+     ocean calmbeach stormbeach pebble lagoon gulls harbour
+     motorboat sailboat
+     plane train car fan ac space
+     cafe library typing clock bowl heart
+   ========================================================= */
+const TASKS=[
+ {name:'Deep analysis',  use:'SQL, coding, modelling', bands:[14,16], sounds:{ocean:.4, brown:.3}},
+ {name:'Emails & admin', use:'Inbox, forms, boring tasks', bands:[18], sounds:{cafe:.35, rain:.3}},
+ {name:'Learning',       use:'Courses, reading new topics', bands:[40], sounds:{library:.4, calmbeach:.35}},
+ {name:'Planning & ideas',use:'Strategy, writing, brainstorming', bands:[10,6], sounds:{lagoon:.4, gulls:.25}},
+];
 let ac,master,beatBus;
-function ctx(){if(!ac){ac=new AudioContext();master=ac.createGain();master.gain.value=+$('master').value;master.connect(ac.destination)}ac.resume();return ac}
+function silentWav(){const n=8000,b=new ArrayBuffer(44+n*2),v=new DataView(b),w=(o,s)=>[...s].forEach((c,i)=>v.setUint8(o+i,c.charCodeAt(0)));
+  w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVEfmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,8000,true);v.setUint32(28,16000,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
+  return URL.createObjectURL(new Blob([b],{type:'audio/wav'}))}
+let unlockEl;
+function ctx(){
+  if(!ac){const AC=window.AudioContext||window.webkitAudioContext;if(!AC){$('status').textContent='This browser cannot play generated sound. Try Chrome, Edge or Firefox.';throw new Error('no audio')}
+    ac=new AC();master=ac.createGain();master.gain.value=+$('master').value;master.connect(ac.destination);
+    if(!ac.createStereoPanner)ac.createStereoPanner=function(){const g=ac.createGain();g.pan={value:0};return g};
+    // iPhone/iPad: a looping silent <audio> keeps sound on even with the silent switch on
+    try{unlockEl=new Audio(silentWav());unlockEl.loop=true;unlockEl.setAttribute('playsinline','');unlockEl.play().catch(()=>{})}catch(e){}
+    ac.onstatechange=()=>status();
+  }
+  if(ac.state!=='running'){ac.resume().then(status).catch(()=>{})}
+  // play a tiny blip to wake up audio output on some devices
+  try{const o=ac.createOscillator(),g=ac.createGain();g.gain.value=0.0001;o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+.05)}catch(e){}
+  return ac}
+document.addEventListener('pointerdown',()=>{if(ac&&ac.state!=='running')ac.resume()},{capture:true});
 
 /* ---------- building blocks ---------- */
 const bufs={};
@@ -134,10 +185,24 @@ const S=[
      a.every(.7+k*.13,1.1+k*.1,()=>{const t=ac.currentTime;for(let i=0;i<3;i++){g.gain.setValueAtTime(.035,t+i*.045);g.gain.setValueAtTime(0,t+i*.045+.025)}})})}},
  {grp:'Nature',id:'forest',name:'Forest breeze',tip:'Leaves rustling softly',b:a=>{const f=a.f('bandpass',1800,.6),g=a.g(1);a.chain(a.noise('pink'),f,g,a.g(.7),a.out);a.lfo(.09,900,f.frequency,1800);a.lfo(.13,.4,g.gain,.6)}},
  {grp:'Nature',id:'wind',name:'Wind',tip:'Gusts that rise and fall',b:a=>{const f=a.f('bandpass',500,1.2),g=a.g(1);a.chain(a.noise('pink'),f,g,a.out);a.lfo(.12,300,f.frequency,550);a.lfo(.07,.4,g.gain,.9)}},
- {grp:'Nature',id:'ocean',name:'Ocean waves',tip:'Slow swells on a beach',b:a=>{const f=a.f('lowpass',900),g=a.g(1);a.chain(a.noise('pink'),f,g,a.out);a.lfo(.08,.5,g.gain,.55);a.lfo(.08,600,f.frequency,1000)}},
  {grp:'Nature',id:'stream',name:'Stream',tip:'Bubbling brook',b:a=>{const f=a.f('bandpass',2500,.8),g=a.g(1);a.chain(a.noise('white'),f,g,a.g(.8),a.out);a.lfo(3.7,.2,g.gain,.8);a.lfo(.3,800,f.frequency,2500);a.every(.05,.25,()=>a.tone(600+Math.random()*900,.06,.03,'sine',Math.random()*1.4-.7,1400+Math.random()*800))}},
  {grp:'Nature',id:'fire',name:'Fireplace',tip:'Low roar with crackles',b:a=>{a.chain(a.noise('brown'),a.f('lowpass',400),a.g(.8),a.out);a.every(.03,.5,()=>a.burst('white',.02+Math.random()*.05,'highpass',1500+Math.random()*3000,0,.35*Math.random(),.001,Math.random()*.8-.4))}},
 
+ {grp:'Beach & sea',id:'ocean',name:'Ocean waves',tip:'Slow swells on a beach',b:a=>{const f=a.f('lowpass',900),g=a.g(1);a.chain(a.noise('pink'),f,g,a.out);a.lfo(.08,.5,g.gain,.55);a.lfo(.08,600,f.frequency,1000)}},
+ {grp:'Beach & sea',id:'calmbeach',name:'Calm beach',tip:'Small waves, soft fizz',b:a=>{const f=a.f('lowpass',1400),g=a.g(1);a.chain(a.noise('pink'),f,g,a.g(.6),a.out);a.lfo(.14,.35,g.gain,.45);a.lfo(.14,500,f.frequency,1200);a.chain(a.noise('white'),a.f('highpass',4000),a.g(.04),a.out)}},
+ {grp:'Beach & sea',id:'stormbeach',name:'Stormy beach',tip:'Big crashing surf and wind',b:a=>{const f=a.f('lowpass',700),g=a.g(1);a.chain(a.noise('brown'),f,g,a.g(1.2),a.out);a.lfo(.055,.6,g.gain,.6);a.lfo(.055,500,f.frequency,800);const w=a.f('bandpass',600,1.5),wg=a.g(.3);a.chain(a.noise('pink'),w,wg,a.out);a.lfo(.1,350,w.frequency,650)}},
+ {grp:'Beach & sea',id:'pebble',name:'Pebble beach',tip:'Waves pulling stones back',b:a=>{const g=a.g(1);a.chain(a.noise('pink'),a.f('lowpass',1000),g,a.g(.6),a.out);a.lfo(.1,.45,g.gain,.5);
+   a.every(.02,.08,()=>{const ph=(ac.currentTime*.1)%1;if(ph>.45&&ph<.95)a.burst('white',.025,'bandpass',2500+Math.random()*3500,5,.25*Math.random(),.001,Math.random()*1.6-.8)})}},
+ {grp:'Beach & sea',id:'lagoon',name:'Tropical lagoon',tip:'Gentle lapping, warm and still',b:a=>{a.chain(a.noise('brown'),a.f('lowpass',300),a.g(.25),a.out);a.every(.8,2.2,()=>a.burst('pink',.6+Math.random()*.6,'bandpass',400+Math.random()*300,1,.5,.15,Math.random()*1.2-.6))}},
+ {grp:'Beach & sea',id:'gulls',name:'Seagulls',tip:'Gulls calling over the shore',b:a=>{a.every(2,7,()=>{const p=Math.random()*1.8-.9,n=1+Math.floor(Math.random()*4),f0=1400+Math.random()*700,far=.3+Math.random()*.7;
+   for(let i=0;i<n;i++)setTimeout(()=>{const o=ac.createOscillator(),bp=a.f('bandpass',f0*1.3,3),g=a.g(0),pn=a.pan(p),t=ac.currentTime,d=.25+Math.random()*.15;o.type='sawtooth';o.frequency.setValueAtTime(f0*1.25,t);o.frequency.linearRampToValueAtTime(f0,t+d*.3);o.frequency.exponentialRampToValueAtTime(f0*.7,t+d);
+     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.12*far,t+.03);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(bp).connect(g).connect(pn).connect(a.out);o.start(t);o.stop(t+d+.05)},i*(320+Math.random()*120))})}},
+ {grp:'Beach & sea',id:'harbour',name:'Harbour',tip:'Lapping water, far-off horn',b:a=>{a.chain(a.noise('brown'),a.f('lowpass',250),a.g(.3),a.out);a.every(.6,1.6,()=>a.burst('pink',.4+Math.random()*.4,'bandpass',500+Math.random()*400,1.5,.35,.08,Math.random()*1.2-.6));
+   a.every(25,50,()=>{[110,138.6].forEach(f=>{const o=ac.createOscillator(),g=a.g(0),lp=a.f('lowpass',500),t=ac.currentTime;o.type='sawtooth';o.frequency.value=f;g.gain.linearRampToValueAtTime(.05,t+.4);g.gain.setValueAtTime(.05,t+2.2);g.gain.linearRampToValueAtTime(0,t+3.2);o.connect(lp).connect(g).connect(a.out);o.start(t);o.stop(t+3.4)})})}},
+ {grp:'Beach & sea',id:'motorboat',name:'Motor boat',tip:'Steady outboard putter',b:a=>{const o=a.osc(48,'sawtooth'),g=a.g(1);a.chain(o,a.f('lowpass',300),g,a.g(.25),a.out);a.lfo(9,.5,g.gain,.6);a.chain(a.noise('pink'),a.f('bandpass',900,.7),a.g(.25),a.out)}},
+ {grp:'Beach & sea',id:'sailboat',name:'Sailboat',tip:'Creaking wood, rigging, water',b:a=>{a.every(.7,1.8,()=>a.burst('pink',.5,'bandpass',600,1.5,.25,.1,Math.random()-.5));
+   a.every(3,9,()=>{const o=ac.createOscillator(),bp=a.f('bandpass',400,8),g=a.g(0),t=ac.currentTime,d=.4+Math.random()*.6;o.type='sawtooth';o.frequency.setValueAtTime(90+Math.random()*40,t);o.frequency.linearRampToValueAtTime(70,t+d);g.gain.linearRampToValueAtTime(.1,t+d*.3);g.gain.linearRampToValueAtTime(0,t+d);o.connect(bp).connect(g).connect(a.out);o.start(t);o.stop(t+d+.05)});
+   a.every(2,6,()=>a.tone(2400+Math.random()*800,.4,.04,'sine',Math.random()*1.6-.8))}},
  {grp:'Travel & machines',id:'plane',name:'Airplane cabin',tip:'Long-haul engine hum',b:a=>{a.chain(a.noise('brown'),a.f('lowpass',500),a.out);a.chain(a.noise('pink'),a.f('bandpass',1200,.5),a.g(.25),a.out);[[115,.04],[230,.015]].forEach(([f,v])=>a.chain(a.osc(f),a.g(v),a.out))}},
  {grp:'Travel & machines',id:'train',name:'Train',tip:'Rhythmic rail rumble',b:a=>{const g=a.g(1);a.chain(a.noise('brown'),a.f('lowpass',700),g,a.out);a.lfo(1.6,.25,g.gain,.75);a.chain(a.osc(70),a.g(.03),a.out);
    a.every(2.2,2.6,()=>{a.burst('brown',.25,'lowpass',300,0,.8,.005,-.3);setTimeout(()=>a.burst('brown',.25,'lowpass',300,0,.8,.005,.3),220)})}},
@@ -211,20 +276,28 @@ const P=[
  {n:'Long flight',s:{plane:.7},b:14},
  {n:'Office buzz',s:{ac:.4,typing:.4,cafe:.2},b:18},
  {n:'Calm reading',s:{ocean:.4,bowl:.3},b:8},
+ {n:'Seaside desk',s:{calmbeach:.45,gulls:.3,harbour:.2},b:14},
+ {n:'Sailing day',s:{sailboat:.4,ocean:.35,gulls:.2},b:10},
 ];
 $('presets').innerHTML=P.map((p,i)=>`<button data-p="${i}">${p.n}</button>`).join('');
-$('presets').onclick=e=>{const b=e.target.closest('button');if(!b)return;const p=P[+b.dataset.p];
-  Object.keys(live).forEach(id=>{if(!(id in p.s))stop(id)});
-  Object.entries(p.s).forEach(([id,v])=>{$('v_'+id).value=v;live[id]?live[id].out.gain.setTargetAtTime(v,ac.currentTime,.3):play(id,v)});
-  setBeat(p.b);save()};
+function applyMix(snd,hz){ctx();Object.keys(live).forEach(id=>{if(!(id in snd))stop(id)});
+  Object.entries(snd).forEach(([id,v])=>{if(!$('v_'+id))return;$('v_'+id).value=v;live[id]?live[id].out.gain.setTargetAtTime(v,ac.currentTime,.3):play(id,v)});setBeat(hz);save()}
+$('presets').onclick=e=>{const b=e.target.closest('button[data-p]');if(!b)return;const p=P[+b.dataset.p];markTask(-1);applyMix(p.s,p.b)};
+const bname=hz=>(B.find(x=>x.hz===hz)||{name:hz+' Hz'}).name;
+$('tasks').innerHTML=TASKS.map((t,i)=>`<div class="task" id="task${i}"><button data-t="${i}" data-hz="${t.bands[0]}"><b>${t.name}</b><span>${t.use}</span><span>${bname(t.bands[0])} + ${Object.keys(t.sounds).map(id=>(S.find(s=>s.id===id)||{name:id}).name).join(', ')}</span></button>${t.bands.length>1?`<div class="alts">${t.bands.map((hz,k)=>`<button data-t="${i}" data-hz="${hz}" class="${k?'':'on'}">${bname(hz)}</button>`).join('')}</div>`:'<div class="alts"></div>'}</div>`).join('');
+function markTask(i){TASKS.forEach((_,k)=>$('task'+k).classList.toggle('on',k===i))}
+$('tasks').onclick=e=>{const b=e.target.closest('button[data-t]');if(!b)return;const i=+b.dataset.t,hz=+b.dataset.hz;
+  $('task'+i).querySelectorAll('.alts button').forEach(x=>x.classList.toggle('on',+x.dataset.hz===hz));markTask(i);applyMix(TASKS[i].sounds,hz)};
 
 /* ---------- master, auto-stop, status, save ---------- */
 $('master').oninput=()=>{if(master)master.gain.setTargetAtTime(+$('master').value,ac.currentTime,.1);save()};
-function stopAll(){Object.keys(live).forEach(stop);setBeat(0);clearTimeout(sleepT);sleepAt=0;$('sleep').value='0';status();save()}
+function stopAll(){markTask(-1);Object.keys(live).forEach(stop);setBeat(0);clearTimeout(sleepT);sleepAt=0;$('sleep').value='0';status();save()}
 $('stopAll').onclick=stopAll;
+$('test').onclick=()=>{ctx();const o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime;o.frequency.value=660;g.gain.setValueAtTime(.3,t);g.gain.exponentialRampToValueAtTime(.001,t+.6);o.connect(g).connect(ac.destination);o.start(t);o.stop(t+.7);$('status').textContent='Test beep sent. Audio state: '+ac.state+'. If you heard nothing, check device volume and silent switch.'};
 let sleepT,sleepAt=0;
 $('sleep').onchange=()=>{clearTimeout(sleepT);const m=+$('sleep').value;sleepAt=m?Date.now()+m*60000:0;if(m)sleepT=setTimeout(stopAll,m*60000);status()};
 function status(){const n=Object.keys(live).map(id=>S.find(s=>s.id===id).name),bt=beat?B.find(b=>b.hz===beat).name:'';
+  if(ac&&ac.state!=='running'&&(n.length||bt)){$('status').textContent='Sound is paused by the browser. Tap anywhere on the page to start it.';return}
   let t=n.length||bt?'Playing: '+[...n,bt].filter(Boolean).join(', '):'Nothing playing.';
   if(sleepAt)t+=` · stops in ${Math.max(0,Math.ceil((sleepAt-Date.now())/60000))} min`;$('status').textContent=t}
 setInterval(()=>{if(sleepAt)status()},20000);
