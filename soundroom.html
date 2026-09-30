@@ -41,6 +41,27 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .task b{font-size:15px}.task span{font-size:12px;color:var(--mute)}
 .alts{display:flex;gap:6px;flex-wrap:wrap;padding:4px 14px 12px}
 .alts button{padding:3px 10px;font-size:12px}
+[hidden]{display:none!important}
+.modal{position:fixed;inset:0;background:rgba(10,14,20,.55);display:flex;align-items:flex-start;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + 24px) 16px 24px;overflow-y:auto;z-index:10}
+.sheet{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;width:100%;max-width:620px;display:grid;gap:14px}
+.sheet header{display:flex;justify-content:space-between;align-items:center}
+.sheet h3{margin:0;font-size:18px}
+.sec{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute);font-weight:600;margin-top:4px}
+.sl{display:grid;grid-template-columns:110px 1fr 56px;gap:12px;align-items:center}
+.sl output{text-align:right;color:var(--mute);font-size:13px;font-variant-numeric:tabular-nums}
+.now{font-weight:600;overflow-wrap:anywhere}
+.transport{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.transport button{min-width:44px}
+.time2{display:grid;grid-template-columns:44px 1fr 44px;gap:8px;align-items:center;font-size:12px;color:var(--mute);font-variant-numeric:tabular-nums}
+.plist{max-height:180px;overflow-y:auto;border:1px solid var(--line);border-radius:10px}
+.plist div{padding:7px 12px;cursor:pointer;font-size:13px;display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid var(--line)}
+.plist div:last-child{border-bottom:0}
+.plist div.cur{background:var(--acc2);font-weight:600}
+.plist div button{all:unset;cursor:pointer;color:var(--mute);padding:0 4px}
+.file{display:inline-block;border:1px dashed var(--acc);color:var(--acc);border-radius:999px;padding:7px 14px;cursor:pointer}
+.file input{display:none}
+.mini{font-size:13px;color:var(--mute)}
+@media (max-width:480px){.sl{grid-template-columns:80px 1fr 48px}}
 .status{font-variant-numeric:tabular-nums;color:var(--mute);font-size:13px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -48,7 +69,7 @@ input[type=range]{accent-color:var(--acc);width:100%}
 <div class="wrap">
   <header>
     <div><h1>Soundroom</h1><p class="note">Mix sounds for study and deep work. Everything plays offline.</p></div>
-    <div class="row"><button class="big stop" id="stopAll">Stop all</button></div>
+    <div class="row"><button class="big" id="musicBtn">♪ Music</button><button class="big stop" id="stopAll">Stop all</button></div>
   </header>
 
   <div class="card">
@@ -90,6 +111,31 @@ input[type=range]{accent-color:var(--acc);width:100%}
     <button id="test" style="margin-top:8px">Play test beep</button>
   </div>
 </div>
+<div class="modal" id="musicModal" hidden>
+ <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <header><h3 id="mTitle">My music</h3><button id="mClose">Close</button></header>
+  <div class="row"><label class="file">+ Add music files<input type="file" id="mFiles" accept="audio/*" multiple></label><button id="mClear">Clear list</button></div>
+  <div class="plist" id="mList"><div class="mini" style="cursor:default">No songs yet. Add MP3, M4A, WAV or OGG files from your device.</div></div>
+  <div class="now" id="mNow">Nothing loaded</div>
+  <div class="time2"><span id="mCur">0:00</span><input type="range" id="mSeek" min="0" max="1000" value="0" aria-label="Seek"><span id="mDur">0:00</span></div>
+  <div class="transport">
+   <button id="mPrev" aria-label="Previous">⏮</button><button id="mPlay" class="on" aria-label="Play">▶</button><button id="mNext" aria-label="Next">⏭</button>
+   <button id="mRepeat">Repeat: all</button><button id="mShuffle">Shuffle: off</button>
+  </div>
+  <div class="sec">Sound</div>
+  <div class="sl"><label for="mVol">Volume</label><input type="range" id="mVol" min="0" max="1" step="0.01" value="0.5"><output id="oVol">50%</output></div>
+  <div class="sl"><label for="mSpeed">Speed</label><input type="range" id="mSpeed" min="0.5" max="2" step="0.05" value="1"><output id="oSpeed">1.0x</output></div>
+  <div class="sl"><label for="mPan">Stereo pan</label><input type="range" id="mPan" min="-1" max="1" step="0.05" value="0"><output id="oPan">C</output></div>
+  <div class="sec">Equalizer</div>
+  <div class="sl"><label for="mBass">Bass</label><input type="range" id="mBass" min="-12" max="12" step="1" value="0"><output id="oBass">0dB</output></div>
+  <div class="sl"><label for="mMid">Mid</label><input type="range" id="mMid" min="-12" max="12" step="1" value="0"><output id="oMid">0dB</output></div>
+  <div class="sl"><label for="mTreble">Treble</label><input type="range" id="mTreble" min="-12" max="12" step="1" value="0"><output id="oTreble">0dB</output></div>
+  <div class="sec">Reverb</div>
+  <div class="sl"><label for="mWet">Wet / dry</label><input type="range" id="mWet" min="0" max="1" step="0.01" value="0"><output id="oWet">0%</output></div>
+  <div class="row" style="justify-content:space-between"><button id="mReset">Reset settings</button><span class="mini">Songs stay on your device. Beats and sounds keep playing underneath.</span></div>
+ </div>
+</div>
+
 <script>
 const $=id=>document.getElementById(id);
 
@@ -291,14 +337,15 @@ $('tasks').onclick=e=>{const b=e.target.closest('button[data-t]');if(!b)return;c
 
 /* ---------- master, auto-stop, status, save ---------- */
 $('master').oninput=()=>{if(master)master.gain.setTargetAtTime(+$('master').value,ac.currentTime,.1);save()};
-function stopAll(){markTask(-1);Object.keys(live).forEach(stop);setBeat(0);clearTimeout(sleepT);sleepAt=0;$('sleep').value='0';status();save()}
+function stopAll(){markTask(-1);mEl&&mEl.pause();Object.keys(live).forEach(stop);setBeat(0);clearTimeout(sleepT);sleepAt=0;$('sleep').value='0';status();save()}
 $('stopAll').onclick=stopAll;
 $('test').onclick=()=>{ctx();const o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime;o.frequency.value=660;g.gain.setValueAtTime(.3,t);g.gain.exponentialRampToValueAtTime(.001,t+.6);o.connect(g).connect(ac.destination);o.start(t);o.stop(t+.7);$('status').textContent='Test beep sent. Audio state: '+ac.state+'. If you heard nothing, check device volume and silent switch.'};
 let sleepT,sleepAt=0;
 $('sleep').onchange=()=>{clearTimeout(sleepT);const m=+$('sleep').value;sleepAt=m?Date.now()+m*60000:0;if(m)sleepT=setTimeout(stopAll,m*60000);status()};
 function status(){const n=Object.keys(live).map(id=>S.find(s=>s.id===id).name),bt=beat?B.find(b=>b.hz===beat).name:'';
   if(ac&&ac.state!=='running'&&(n.length||bt)){$('status').textContent='Sound is paused by the browser. Tap anywhere on the page to start it.';return}
-  let t=n.length||bt?'Playing: '+[...n,bt].filter(Boolean).join(', '):'Nothing playing.';
+  const mu=typeof mEl!=='undefined'&&!mEl.paused&&M.i>=0?'Music':'';
+  let t=n.length||bt||mu?'Playing: '+[mu,...n,bt].filter(Boolean).join(', '):'Nothing playing.';
   if(sleepAt)t+=` · stops in ${Math.max(0,Math.ceil((sleepAt-Date.now())/60000))} min`;$('status').textContent=t}
 setInterval(()=>{if(sleepAt)status()},20000);
 function save(){try{const v={};S.forEach(s=>v[s.id]=+$('v_'+s.id).value);localStorage.setItem('soundroom',JSON.stringify({v,on:Object.keys(live),beat,mode,bvol:$('bvol').value,car:$('carrier').value,master:$('master').value}))}catch(e){}}
@@ -306,5 +353,57 @@ let last=null;try{last=JSON.parse(localStorage.getItem('soundroom'))}catch(e){}
 if(last){Object.entries(last.v||{}).forEach(([k,v])=>{if($('v_'+k))$('v_'+k).value=v});['bvol','carrier','master'].forEach((k,i)=>{const val=[last.bvol,last.car,last.master][i];if(val)$(k).value=val});
   if(last.mode){mode=last.mode;[...$('modeRow').children].forEach(x=>x.classList.toggle('on',x.dataset.mode===mode))}
   if(last.on&&last.on.length||last.beat){const r=document.createElement('button');r.textContent='Resume last mix';r.className='on';r.onclick=()=>{last.on.forEach(id=>play(id));if(last.beat)setBeat(last.beat);r.remove()};$('presets').prepend(r)}}
+
+/* ---------- music player ---------- */
+var M={list:[],i:-1,repeat:'all',shuffle:false},mEl=new Audio();mEl.preload='auto';mEl.preservesPitch=true;mEl.mozPreservesPitch=true;mEl.webkitPreservesPitch=true;
+var mNodes=null;
+function impulse(){const len=ac.sampleRate*2.8,b=ac.createBuffer(2,len,ac.sampleRate);for(let c=0;c<2;c++){const d=b.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.6)}return b}
+function mGraph(){if(mNodes)return mNodes;ctx();const src=ac.createMediaElementSource(mEl),vol=ac.createGain(),pan=ac.createStereoPanner(),
+  bass=ac.createBiquadFilter(),mid=ac.createBiquadFilter(),tre=ac.createBiquadFilter(),dry=ac.createGain(),wet=ac.createGain(),conv=ac.createConvolver();
+  bass.type='lowshelf';bass.frequency.value=200;mid.type='peaking';mid.frequency.value=1000;mid.Q.value=.8;tre.type='highshelf';tre.frequency.value=4000;conv.buffer=impulse();
+  src.connect(bass).connect(mid).connect(tre).connect(pan);pan.connect(dry).connect(vol);pan.connect(conv).connect(wet).connect(vol);vol.connect(master);
+  mNodes={vol,pan,bass,mid,tre,dry,wet};mApply();return mNodes}
+const mv=id=>+$(id).value;
+function mApply(){const f=v=>(v>0?'+':'')+v+'dB';
+  $('oVol').textContent=Math.round(mv('mVol')*100)+'%';$('oSpeed').textContent=mv('mSpeed').toFixed(2).replace(/0$/,'')+'x';
+  const p=mv('mPan');$('oPan').textContent=p===0?'C':(p<0?'L':'R')+Math.round(Math.abs(p)*100);
+  $('oBass').textContent=f(mv('mBass'));$('oMid').textContent=f(mv('mMid'));$('oTreble').textContent=f(mv('mTreble'));$('oWet').textContent=Math.round(mv('mWet')*100)+'%';
+  mEl.playbackRate=mv('mSpeed');
+  if(mNodes){const n=mNodes,t=ac.currentTime;n.vol.gain.setTargetAtTime(mv('mVol'),t,.05);n.pan.pan.value=p;n.bass.gain.value=mv('mBass');n.mid.gain.value=mv('mMid');n.tre.gain.value=mv('mTreble');
+    const w=mv('mWet');n.wet.gain.setTargetAtTime(w*1.2,t,.05);n.dry.gain.setTargetAtTime(1-w*.6,t,.05)}}
+['mVol','mSpeed','mPan','mBass','mMid','mTreble','mWet'].forEach(id=>$(id).addEventListener('input',()=>{mApply();mSave()}));
+function mSave(){try{const o={};['mVol','mSpeed','mPan','mBass','mMid','mTreble','mWet'].forEach(id=>o[id]=$(id).value);o.repeat=M.repeat;o.shuffle=M.shuffle;localStorage.setItem('soundroom-music',JSON.stringify(o))}catch(e){}}
+try{const o=JSON.parse(localStorage.getItem('soundroom-music'));if(o){Object.entries(o).forEach(([k,v])=>{if($(k))$(k).value=v});M.repeat=o.repeat||'all';M.shuffle=!!o.shuffle}}catch(e){}
+function mRender(){const L=$('mList');if(!M.list.length){L.innerHTML='<div class="mini" style="cursor:default">No songs yet. Add MP3, M4A, WAV or OGG files from your device.</div>';}
+  else L.innerHTML=M.list.map((t,i)=>`<div data-i="${i}" class="${i===M.i?'cur':''}"><span>${i+1}. ${t.name.replace(/[<>&]/g,'')}</span><button data-del="${i}" aria-label="Remove">✕</button></div>`).join('');
+  $('mNow').textContent=M.i>=0?(mEl.paused?'Paused: ':'Playing: ')+M.list[M.i].name:'Nothing loaded';
+  $('mPlay').textContent=mEl.paused?'▶':'⏸';$('mRepeat').textContent='Repeat: '+M.repeat;$('mShuffle').textContent='Shuffle: '+(M.shuffle?'on':'off');
+  $('musicBtn').textContent=!mEl.paused&&M.i>=0?'♪ Music (playing)':'♪ Music';status()}
+function mLoad(i,play=true){if(i<0||i>=M.list.length)return;M.i=i;mEl.src=M.list[i].url;mApply();if(play)mPlayNow();mRender()}
+function mPlayNow(){mGraph();ctx();mEl.play().then(mRender).catch(()=>{$('mNow').textContent='Could not play this file. Try an MP3.'})}
+$('mFiles').onchange=e=>{const fs=[...e.target.files].map(f=>({name:f.name.replace(/\.[^.]+$/,''),url:URL.createObjectURL(f)}));const was=M.list.length;M.list.push(...fs);e.target.value='';if(M.i<0&&fs.length)mLoad(was);else mRender()};
+$('mList').onclick=e=>{const d=e.target.closest('[data-del]');if(d){const k=+d.dataset.del;URL.revokeObjectURL(M.list[k].url);M.list.splice(k,1);if(k===M.i){mEl.pause();M.i=-1;mEl.removeAttribute('src');if(M.list.length)mLoad(Math.min(k,M.list.length-1),false)}else if(k<M.i)M.i--;mRender();return}
+  const r=e.target.closest('[data-i]');if(r)mLoad(+r.dataset.i)};
+$('mPlay').onclick=()=>{if(M.i<0){if(M.list.length)mLoad(0);return}mEl.paused?mPlayNow():mEl.pause()};
+function nextIdx(dir){if(!M.list.length)return -1;if(M.shuffle&&M.list.length>1){let k;do k=Math.floor(Math.random()*M.list.length);while(k===M.i);return k}
+  const k=M.i+dir;if(k>=M.list.length)return M.repeat==='all'?0:-1;if(k<0)return M.list.length-1;return k}
+$('mNext').onclick=()=>{const k=nextIdx(1);if(k>=0)mLoad(k)};
+$('mPrev').onclick=()=>{if(mEl.currentTime>3){mEl.currentTime=0;return}const k=nextIdx(-1);if(k>=0)mLoad(k)};
+$('mRepeat').onclick=()=>{M.repeat={all:'one',one:'off',off:'all'}[M.repeat];mRender();mSave()};
+$('mShuffle').onclick=()=>{M.shuffle=!M.shuffle;mRender();mSave()};
+mEl.onended=()=>{if(M.repeat==='one'){mEl.currentTime=0;mPlayNow();return}const k=nextIdx(1);if(k>=0)mLoad(k);else mRender()};
+mEl.onplay=mEl.onpause=mRender;
+const ft=s=>isFinite(s)?Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0'):'0:00';
+let seeking=false;
+mEl.ontimeupdate=()=>{$('mCur').textContent=ft(mEl.currentTime);$('mDur').textContent=ft(mEl.duration);if(!seeking&&mEl.duration)$('mSeek').value=mEl.currentTime/mEl.duration*1000};
+$('mSeek').addEventListener('input',()=>{seeking=true;if(mEl.duration)$('mCur').textContent=ft(mv('mSeek')/1000*mEl.duration)});
+$('mSeek').addEventListener('change',()=>{if(mEl.duration)mEl.currentTime=mv('mSeek')/1000*mEl.duration;seeking=false});
+$('mClear').onclick=()=>{mEl.pause();M.list.forEach(t=>URL.revokeObjectURL(t.url));M.list=[];M.i=-1;mEl.removeAttribute('src');mRender()};
+$('mReset').onclick=()=>{[['mVol',.5],['mSpeed',1],['mPan',0],['mBass',0],['mMid',0],['mTreble',0],['mWet',0]].forEach(([k,v])=>$(k).value=v);mApply();mSave()};
+$('musicBtn').onclick=()=>{$('musicModal').hidden=false;ctx();$('mClose').focus()};
+$('mClose').onclick=()=>{$('musicModal').hidden=true;$('musicBtn').focus()};
+$('musicModal').addEventListener('click',e=>{if(e.target.id==='musicModal')$('mClose').click()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('musicModal').hidden)$('mClose').click()});
+mApply();mRender();
 </script>
 </body></html>
