@@ -197,6 +197,14 @@ textarea{width:100%;min-height:96px;resize:vertical}
 .blk .mn{font-size:calc(.92rem*var(--rs,1));color:var(--mut);margin-top:6px;line-height:1.55}
 .hdivider{height:1px;background:var(--line);margin:0 0 14px}
 
+/* sankalpa */
+.sk{font-size:calc(1.12rem*var(--rs,1));line-height:1.95;margin:0 0 14px}
+.sk.sks{font-weight:700;text-align:center}
+.sk mark{background:color-mix(in srgb,var(--acc) 35%,transparent);color:inherit;border-radius:5px;padding:0 3px}
+.sk b{color:var(--pri)}
+.skf{display:block;margin-top:10px}
+.skf span{display:block;font-size:.8rem;color:var(--mut);font-weight:600;margin-bottom:3px}
+.skf input{width:100%;font:inherit;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-height:46px}
 /* japa counter */
 .jwrap{display:flex;flex-direction:column;align-items:center;gap:14px;padding:6px 0 4px}
 .jbtn{position:relative;width:min(74vw,300px);aspect-ratio:1;border-radius:50%;background:var(--card);box-shadow:var(--shadow);border:1px solid var(--line);
@@ -232,7 +240,7 @@ const D = {"days": [{"n": 1, "hi": "मां शैलपुत्री", "en"
 /* ---------- storage (safe) ---------- */
 const LS=(()=>{try{localStorage.setItem('_t','1');localStorage.removeItem('_t');return localStorage}catch(_){const m={};return{getItem:k=>m[k]??null,setItem:(k,v)=>{m[k]=v}}}})();
 const KEY='navratri-sadhana-v1';
-const DEF={start:'2026-10-11',fs:1,rs:1,theme:'auto',rom:true,done:{},cnt:{},note:{},nm:{}};
+const DEF={start:'2026-10-11',fs:1,rs:1,theme:'auto',rom:true,done:{},cnt:{},note:{},nm:{},sk:{},skd:{}};
 let S;try{S=Object.assign({},DEF,JSON.parse(LS.getItem(KEY)||'{}'))}catch(_){S=JSON.parse(JSON.stringify(DEF))}
 let _st;const save=()=>{clearTimeout(_st);_st=setTimeout(()=>{try{LS.setItem(KEY,JSON.stringify(S))}catch(_){}} ,250)};
 
@@ -272,8 +280,30 @@ const gk=(i,slot,id)=>`${i}.${slot}.${id}`;
 const isDone=(i,slot,id)=>!!S.done[gk(i,slot,id)];
 
 function ganeshBlocks(){
-  const st=D.puja.prep.find(p=>/Vighneshwara/.test(p.t));
-  return [{h:'Vighneshwara Dhyānam',hi:'गणेश ध्यान',desc:'Add your own Ganesh Stotram here after it.',lines:st.chant}];
+  return [{h:'Sankat Nashana Ganesh Stotram',hi:'श्रीगणेशस्तोत्र',lines:["श्रीगणेशाय नमः ।", "नारद उवाच ।", "प्रणम्य शिरसा देवं गौरीपुत्रं विनायकम् ।", "भक्तावासं स्मरेन्नित्यमायुःकामार्थसिद्धये ॥ १॥", "प्रथमं वक्रतुण्डं च एकदन्तं द्वितीयकम् ।", "तृतीयं कृष्णपिङ्गाक्षं गजवक्त्रं चतुर्थकम् ॥ २॥", "लम्बोदरं पञ्चमं च षष्ठं विकटमेव च ।", "सप्तमं विघ्नराजेन्द्रं धूम्रवर्णं तथाष्टमम् ॥ ३॥", "नवमं भालचन्द्रं च दशमं तु विनायकम् ।", "एकादशं गणपतिं द्वादशं तु गजाननम् ॥ ४॥", "द्वादशैतानि नामानि त्रिसन्ध्यं यः पठेन्नरः ।", "न च विघ्नभयं तस्य सर्वसिद्धिकरः प्रभुः ॥ ५॥", "विद्यार्थी लभते विद्यां धनार्थी लभते धनम् ।", "पुत्रार्थी लभते पुत्रान्मोक्षार्थी लभते गतिम् ॥ ६॥", "जपेद्गणपतिस्तोत्रं षड्भिर्मासैः फलं लभेत् ।", "संवत्सरेण सिद्धिं च लभते नात्र संशयः ॥ ७॥", "अष्टभ्यो ब्राह्मणेभ्यश्च लिखित्वा यः समर्पयेत् ।", "तस्य विद्या भवेत्सर्वा गणेशस्य प्रसादतः ॥ ८॥", "॥ इति श्रीनारदपुराणे संकटनाशनं गणेशस्तोत्रं सम्पूर्णम् ॥"]}];
+}
+const SK=[{"s": true, "l": ["ওঁ বিষ্ণুঃ ওঁ বিষ্ণুঃ ওঁ বিষ্ণুঃ। ওঁ তৎসৎ।"]}, {"s": false, "l": ["অদ্য শারদীয় নবরাত্রি/দুর্গোৎসবের পুণ্যলগ্নে, [বঙ্গাব্দ/শকাব্দ সাল], আশ্বিন মাসে, শুক্লপক্ষে, [তিথি] তিথিতে, [বার] বারে, [দেশ], [শহর] স্থানে,"]}, {"s": false, "l": ["আমি [নাম], [গোত্র] গোত্র, [নক্ষত্র] নক্ষত্র, [রাশি] রাশির জাতক,", "শ্রীশ্রীঠাকুর, শ্রীশ্রীমা, স্বামীজী ও গুরুমহারাজের কৃপায়,", "শ্রীশ্রীজগদম্বা দুর্গার [আজকের রূপ] রূপের প্রীতার্থে,", "দেবগণ, ঋষিগণ ও পিতৃপুরুষের আশীর্বাদে,", "গ্রহ-নক্ষত্রের শান্তি ও সকল বিঘ্ননাশের কামনায়,", "[সংখ্যা] জপ / [সময়] ধ্যান / [নিয়ম] উপবাস / পূজা করতে সংকল্প করছি।"]}, {"s": false, "l": ["মা, আমার এই সংকল্প যেন বিঘ্নহীনভাবে সিদ্ধ হয়।", "এই কর্ম যেন আমার অহং ভঙ্গ করে এবং জন্ম-মৃত্যুর চক্র থেকে মুক্তির পথ দেখায়।", "হে মা, অজ্ঞতাবশত কোনো ভুল-ত্রুটি হলে ক্ষমা করো।", "এই ভক্তি-অঞ্জলি যেন তোমার চরণে শুদ্ধভাবে পৌঁছায়।"]}, {"s": true, "l": ["ওঁ তৎসৎ ব্রহ্মার্পণমস্তু। ওঁ শান্তিঃ শান্তিঃ শান্তিঃ।"]}];
+const BN_DEITY=['শৈলপুত্রী','ব্রহ্মচারিণী','চন্দ্রঘণ্টা','কুষ্মাণ্ডা','স্কন্দমাতা','কাত্যায়নী','কালরাত্রি','মহাগৌরী','সিদ্ধিদাত্রী'];
+const BN_WK=['রবিবার','সোমবার','মঙ্গলবার','বুধবার','বৃহস্পতিবার','শুক্রবার','শনিবার'];
+const SKF=[['name','নাম','Name'],['gotra','গোত্র','Gotra'],['nak','নক্ষত্র','Nakshatra'],['rashi','রাশি','Rashi'],['country','দেশ','Country'],['city','শহর','City'],['count','সংখ্যা','Japa count (e.g. 108)'],['time','সময়','Dhyana time (e.g. 20 min)'],['niyam','নিয়ম','Niyam (e.g. fast)']];
+const SKD=[['year','বঙ্গাব্দ/শকাব্দ সাল','Year (Bangabda / Shakabda)'],['tithi','তিথি','Tithi (today)']];
+function skVal(i,k){return k==='year'||k==='tithi'?((S.skd[i]||{})[k]||''):(S.sk[k]||'')}
+function sankText(i){
+  const map={'বঙ্গাব্দ/শকাব্দ সাল':'year','তিথি':'tithi','বার':'*wk','আজকের রূপ':'*dv','নাম':'name','গোত্র':'gotra','নক্ষত্র':'nak','রাশি':'rashi','দেশ':'country','শহর':'city','সংখ্যা':'count','সময়':'time','নিয়ম':'niyam'};
+  return SK.map(p=>{
+    const inner=p.l.map(l=>esc(l).replace(/\[([^\]]+)\]/g,(m,k)=>{
+      const f=map[k];if(!f)return m;
+      let v=f==='*wk'?BN_WK[dayDate(i).getDay()]:f==='*dv'?BN_DEITY[i]:skVal(i,f);
+      return v?`<b>${esc(v)}</b>`:`<mark>[${k}]</mark>`;
+    })).join('<br>');
+    return `<p class="sk ${p.s?'sks':''}" lang="bn">${inner}</p>`}).join('');
+}
+function sankHtml(i){
+  const inp=(k,bn,en,d)=>`<label class="skf"><span>${en} <i lang="bn">${bn}</i></span><input data-sk="${k}" data-skd="${d?1:0}" value="${esc(skVal(i,k))}" autocomplete="off"></label>`;
+  return `<details class="acc" id="skd" style="margin:0 0 14px"><summary>Fill your details <span style="flex:1"></span></summary><div class="in">
+    <p class="dsc">Saved on this phone. Name, gotra etc. fill once for all days. Tithi and year are per day. Weekday and Mata’s form fill themselves.</p>
+    ${SKD.map(f=>inp(f[0],f[1],f[2],1)).join('')}${SKF.map(f=>inp(f[0],f[1],f[2],0)).join('')}</div></details>
+    <div class="blk" id="skt">${sankText(i)}</div>`;
 }
 function manasBlocks(i){
   const b=[{h:'Mental offering',desc:'Do each upachāra in the mind, one by one. Chant the line if you wish.',lines:[]}];
@@ -292,77 +322,26 @@ function kshamaBlocks(){
 }
 function mantraBlock(i){const d=nm(i);return [{h:'Mantra',hi:'मंत्र',lines:d.mantra.dev,rom:d.mantra.rom}]}
 
-
-/* ---------- Chandi Path day plan, remote text, local mp3 ---------- */
-const CHD_PLAN=['Chapter 1','Chapters 2–4','Chapters 5–6','Chapter 7','Chapter 8','Chapters 9–10','Chapter 11','Chapter 12','Chapter 13 · Kshama · Devi Suktam'];
-const TXT_BASES=['https://raw.githubusercontent.com/joyofdhamma/SCH_Path/main/','https://cdn.jsdelivr.net/gh/joyofdhamma/SCH_Path@main/'];
-const TXT_MEM={};
-const withTimeout=(p,ms)=>Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms))]);
-/* ---- mp3 upload, saved on this device (IndexedDB) ---- */
-const MP3_KNOWN=['sdc.mp3','arati.mp3',...Array.from({length:9},(_,k)=>`SCH_D${k+1}.mp3`)];
-const idbOpen=()=>new Promise((ok,no)=>{try{const r=indexedDB.open('navratri-audio',1);r.onupgradeneeded=()=>r.result.createObjectStore('f');r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)}catch(e){no(e)}});
-async function idbGet(k){try{const d=await idbOpen();return await new Promise(ok=>{const q=d.transaction('f').objectStore('f').get(k);q.onsuccess=()=>ok(q.result||null);q.onerror=()=>ok(null)})}catch(_){return null}}
-async function idbPut(k,v){try{const d=await idbOpen();return await new Promise(ok=>{const t=d.transaction('f','readwrite');t.objectStore('f').put(v,k);t.oncomplete=()=>ok(true);t.onerror=()=>ok(false)})}catch(_){return false}}
-async function idbDel(k){try{const d=await idbOpen();return await new Promise(ok=>{const t=d.transaction('f','readwrite');t.objectStore('f').delete(k);t.oncomplete=()=>ok(true);t.onerror=()=>ok(false)})}catch(_){return false}}
-async function loadText(name){
-  const file=name+'.md';
-  let cache=null;
-  try{cache=await caches.open('navratri-text-v1')}catch(_){}
-  for(const b of TXT_BASES){
-    try{
-      const r=await withTimeout(fetch(b+file,{cache:'no-cache'}),9000);
-      if(!r.ok)throw new Error(r.status);
-      const t=await r.text();
-      TXT_MEM[name]=t;
-      try{cache&&await cache.put(b+file,new Response(t))}catch(_){}
-      return{t,old:false};
-    }catch(_){}
-  }
-  if(TXT_MEM[name])return{t:TXT_MEM[name],old:true};
-  if(cache){for(const b of TXT_BASES){try{const m=await cache.match(b+file);if(m)return{t:await m.text(),old:true}}catch(_){}}}
-  throw new Error('offline');
-}
-function mdBlocks(t){
-  const out=[];let cur=[];
-  const flush=()=>{if(cur.length){out.push({lines:cur});cur=[]}};
-  t.replace(/\r/g,'').split('\n').forEach(raw=>{
-    const l=raw.replace(/ /g,' ').trim();
-    if(!l){flush();return}
-    if(/^[`*_~\-=\s]+$/.test(l)){flush();return}
-    const m=l.match(/^#{1,6}\s*(.*)$/);
-    if(m){flush();out.push({h:m[1].replace(/\*+/g,'').trim()});return}
-    cur.push(l.replace(/\*\*/g,''));
-  });
-  flush();
-  return out;
-}
-function remoteHtml(blocks){
-  return blocks.map((b,k)=>b.h!=null
-    ?`<div class="blk"><h2 class="hi" lang="hi" style="font-size:calc(1.15rem*var(--rs,1));text-transform:none;letter-spacing:0">${esc(b.h)}</h2></div>`
-    :`<div class="blk" style="margin-bottom:18px">${b.lines.map(l=>`<p class="ln hi" lang="hi">${esc(l)}</p>`).join('')}</div>`).join('');
-}
-
 function items(i,slot){
   const d=nm(i);
-  const gan={id:'gan',t:'Ganesh Stotram',hi:'गणेश स्तोत्रम्',ty:'read',s:'Vighneshwara dhyānam',blocks:()=>ganeshBlocks()};
+  const gan={id:'gan',t:'Ganesh Stotram',hi:'गणेश स्तोत्रम्',ty:'read',s:'Sankat Nashana · Narada Purana',blocks:()=>ganeshBlocks()};
   const man={id:'man',t:'Manas Puja',hi:'मानस पूजा',ty:'read',s:`Mental offering to ${d.en}`,blocks:()=>manasBlocks(i)};
   const dur={id:'dur',t:'ॐ श्री दुर्गा देव्यै नमः',ty:'japa',target:108,s:'108 times (or as many as you can)',blocks:()=>[{h:'Mantra',lines:['ॐ श्री दुर्गा देव्यै नमः'],rom:['Om Shri Durgā Devyai Namaḥ']}]};
   if(slot==='m')return[
-    gan,man,
-    {id:'jap',t:'Japa 108 times',hi:d.mantra.dev[0],ty:'japa',target:108,s:d.mantra.rom[0]||'',blocks:()=>mantraBlock(i)},
-    {id:'san',t:'Sankalpa for the day',hi:'संकल्प',ty:'sank',s:'Set your intention',blocks:()=>mantraBlock(i)},
-    dur];
+    gan,
+    {id:'san',t:'Sankalpa',hi:'संकल्प',ty:'sank',s:`Today’s resolve · ${d.en}`}];
   return[
+    gan,
     {id:'guru',t:'Guru Dhyan',hi:'गुरु ध्यान',ty:'check',s:'Sit quietly. Remember your Guru.'},
-    gan,man,
+    man,
     {id:'path',t:`${d.en} path`,hi:'प्रार्थना · स्तुति · ध्यान · स्तोत्र · कवच',ty:'read',s:'Today’s texts, in order',blocks:()=>pathBlocks(i),jump:true},
     {id:'aar',t:'Aarti',hi:'आरती',ty:'read',s:`${d.en} aarti`,blocks:()=>aartiBlocks(i)},
-    {id:'cha',t:'Durga Chalisa',hi:'दुर्गा चालीसा',ty:'rem',s:'Read and listen',src:'sdc',mp3:'sdc.mp3'},
+    {id:'cha',t:'Durga Chalisa',hi:'दुर्गा चालीसा',ty:'check',s:'Read from your own book'},
     dur,
-    {id:'chd',t:'Chandi Path',hi:'चंडी पाठ',ty:'rem',s:CHD_PLAN[i]+' · read and listen',src:'SCH_D'+(i+1),mp3:'SCH_D'+(i+1)+'.mp3',note:d.note},
+    {id:'chd',t:'Chandi Path',hi:'चंडी पाठ',ty:'check',s:d.note?'Today’s note: '+d.note:'Read from your own book',note:d.note},
     {id:'ksh',t:'Aparadh Kshama Prarthana',hi:'अपराध क्षमा प्रार्थना',ty:'read',s:'Ask forgiveness. Close the puja.',blocks:()=>kshamaBlocks()},
     {id:'nam',t:'Dwatrinsha Namavali',hi:'दुर्गा बत्तीस नामावली',ty:'names',opt:true,s:'32 names of Durga'},
-    {id:'kir',t:'Durga Arati',hi:'दुर्गा आरती',ty:'rem',s:'Sing and listen',src:'arati',mp3:'arati.mp3'}
+    {id:'kir',t:'Durga Kirtan',hi:'दुर्गा कीर्तन',ty:'check',opt:true,s:'Sing if you can'}
   ];
 }
 const vowKey=(i,id)=>`${i}.v.${id}`;
@@ -461,8 +440,8 @@ function aboutHtml(i){
   const wd=dayDate(i).getDay();
   const blk=(h,t)=>t?`<div class="card"><h3>${h}</h3><p class="bn" lang="bn">${esc(t)}</p></div>`:'';
   return `<div class="sec">
-   <div class="card"><h3>Colour</h3><p>The colour for Day ${i+1} is <b>${esc(d.color)}</b>. Many people also wear the weekday colour. ${wk[wd]} is commonly <b>${WC[wd]}</b>.</p>
-     <p class="hint" style="margin:6px 0 0">These colours follow the 2024 calendar. Follow your family tradition.</p></div>
+   <div class="card"><h3>Colour</h3><p>Your sheet lists <b>${esc(d.color)}</b> for Day ${i+1}. Many people also wear the weekday colour. ${wk[wd]} is commonly <b>${WC[wd]}</b>.</p>
+     <p class="hint" style="margin:6px 0 0">Your sheet’s colours follow the 2024 calendar. Follow your family tradition.</p></div>
    <div class="card"><h3>Planet &amp; chakra</h3><p><b>${esc(d.graha)}</b>${d.chakra?` · <span class="hi">${esc(d.chakra)}</span>`:''}</p></div>
    ${blk('Origin · উৎপত্তি',a.Origin)}${blk('Navratri worship',a['Navratri Worship'])}${blk('Governing planet',a['Governing Planet'])}${blk('Iconography',a.Iconography)}${blk('Details',a.Details)}
    ${d.chakra?`<div class="card"><h3>Chakras</h3><img class="imgfull" alt="Chakra chart" src="${D.chakraImg}"></div>`:''}
@@ -500,7 +479,7 @@ function viewDays(){
 function viewPuja(){
   const i=V.sel,d=nm(i);
   const step=(n,t,desc,chant)=>`<details class="acc"><summary><span>${n?n+'. ':''}${esc(t)}</span><span style="flex:1"></span></summary><div class="in"><p>${esc(desc||'')}</p>${(chant||[]).map(c=>`<p class="vl" style="font-size:1.05rem;font-weight:600;margin-top:6px">${esc(c)}</p>`).join('')}</div></details>`;
-  return `<div class="ph"><h1>Puja vidhi</h1><p>Full procedure for <b>${esc(d.en)}</b> (Day ${i+1}). Change the day from the Today tab.</p></div>
+  return `<div class="ph"><h1>Puja vidhi</h1><p>Full procedure from your sheet, for <b>${esc(d.en)}</b> (Day ${i+1}). Change the day from the Today tab.</p></div>
   <div class="sec"><div class="sechead"><h2>Before you begin</h2></div>
   ${D.puja.prep.map((p,k)=>step(k+1,p.t,p.d,p.chant)).join('')}
   <div class="sechead mt16"><h2>16 upachāras</h2></div>
@@ -527,7 +506,7 @@ function viewMore(){
    <div class="srow"><div class="l">Show roman transliteration</div><button class="tg ${S.rom?'on':''}" data-rom aria-label="Toggle roman"></button></div>
   </div>
   <div class="card"><h3>Reading</h3><button class="btn g" data-ksh style="width:100%">Aparadh Kshama Stotram · अपराधक्षमापणस्तोत्रम्</button></div>
-  <div class="card"><h3>Tips</h3><p class="hint" style="margin:0">• In Chrome on Android, tap ⋮ then <b>Add to Home screen</b> to open this like an app.<br>• The app works offline. Chandi Path, Chalisa and Arati text load from the internet first, then stay saved. Keep the mp3 files next to this app. Your ticks stay on this phone.<br>• Panchang: one calendar lists both Ashtami and Navami on 19 Oct 2026. If a tithi is skipped or doubled, set Day 1 above, or tap any day tab to jump.</p></div>
+  <div class="card"><h3>Tips</h3><p class="hint" style="margin:0">• In Chrome on Android, tap ⋮ then <b>Add to Home screen</b> to open this like an app.<br>• It works fully offline. Your ticks and counts stay on this phone.<br>• Panchang: one calendar lists both Ashtami and Navami on 19 Oct 2026. If a tithi is skipped or doubled, set Day 1 above, or tap any day tab to jump.</p></div>
   <div class="card"><h3>Reset</h3><button class="btn g" data-reset style="width:100%">Clear all ticks and counts</button></div></div>`;
 }
 function render(keepScroll){
@@ -585,24 +564,13 @@ function renderStep(){
       <div class="jrow"><button class="btn g sm" id="jundo">− 1</button><button class="btn g sm" id="jreset">Reset</button></div></div>
       <div class="hdivider mt16"></div>`+blocksHtml(x.blocks());
   }else if(x.ty==='sank'){
-    const nk=`${i}`;
-    body=`<div class="blk"><h2>Sankalpa <span class="hi" lang="hi">संकल्प</span></h2>
-      <p class="dsc">Write your intention for today. It is saved on this phone.</p>
-      <textarea id="sk" placeholder="Today I offer my sadhana to Maa ${esc(d.en)} for…">${esc(S.note[nk]||'')}</textarea></div>`+blocksHtml(x.blocks());
+    body=sankHtml(i);
   }else if(x.ty==='check'){
     body=`<div class="blk"><h2>${esc(x.t)} <span class="hi" lang="hi">${esc(x.hi||'')}</span></h2><p class="dsc">${esc(x.s||'')}</p>
       ${x.note?`<div class="noteBox hi" lang="hi">${esc(x.note)}</div>`:''}</div>
       <div class="blk center"><h2 style="justify-content:center">Quiet timer</h2><div class="timer" id="tm">--:--</div>
       <div class="jrow" style="justify-content:center" id="tmb"><button class="btn g sm" data-t="5">5 min</button><button class="btn g sm" data-t="11">11 min</button><button class="btn g sm" data-t="21">21 min</button></div>
       <p class="dsc mt12">Vibrates when time is up. Screen stays on while it runs.</p></div>`;
-  }else if(x.ty==='rem'){
-    body=`<div class="blk"><audio id="aud" controls preload="none" src="${esc(x.mp3)}" style="width:100%"></audio>
-      <p class="dsc" id="audmsg" style="display:none;margin-top:6px"></p>
-      <div class="jrow" style="margin-top:8px;flex-wrap:wrap"><label class="btn g sm" for="aupl" style="cursor:pointer">⬆ Upload mp3</label><button class="btn g sm" id="aclr" style="display:none">Remove saved mp3</button>
-      <input type="file" id="aupl" accept="audio/*,.mp3" multiple style="display:none"></div>
-      <p class="dsc" id="aupm" style="margin-top:4px"></p></div>
-      ${x.note?`<div class="noteBox hi" lang="hi">${esc(x.note)}</div>`:''}
-      <div id="rtxt"><p class="dsc">Loading text…</p></div>`;
   }else if(x.ty==='names'){
     body=`<div class="blk"><p class="dsc">Open the list and tap each name as you chant it.</p><button class="btn p" id="gonames">Open the 32 names</button></div>`;
   }else{
@@ -616,7 +584,7 @@ function renderStep(){
     <div class="ttl"><b>${esc(x.t)}</b><small>${O.guided?`Step ${O.idx+1} of ${total} · `:''}${esc(d.en)} · Day ${i+1}</small></div>
     <button class="ib" id="fsm" aria-label="Smaller text">A<small>−</small></button><button class="ib" id="fsp" aria-label="Bigger text">A<small>+</small></button></div>`;
   const rd=(x.ty==='read'||x.ty==='japa'||x.ty==='sank');
-  const tl=`<div class="ovtools"><button class="tbtn ${O.wake?'on':''}" id="wk">☀ Keep screen on</button>${(x.ty==='read'||x.ty==='rem')?`<button class="tbtn ${O.auto?'on':''}" id="au">⇩ Auto-scroll${O.auto?' '+O.auto+'×':''}</button>`:''}${x.ty==='rem'?'<button class="tbtn" style="display:none" id="rmt"></button>':`<button class="tbtn ${S.rom?'on':''}" id="rmt">Aa Roman</button>`}</div>`;
+  const tl=`<div class="ovtools"><button class="tbtn ${O.wake?'on':''}" id="wk">☀ Keep screen on</button>${x.ty==='read'?`<button class="tbtn ${O.auto?'on':''}" id="au">⇩ Auto-scroll${O.auto?' '+O.auto+'×':''}</button>`:''}<button class="tbtn ${S.rom?'on':''}" id="rmt">Aa Roman</button></div>`;
   const foot=`<div class="ovf">${O.guided&&O.idx>0?`<button class="btn g" id="bk">‹ Back</button>`:''}
     ${O.guided?`<button class="btn g" id="sk2">Skip</button><button class="btn p" id="dn">${done?'Next ›':'Done & next ›'}</button>`
     :`<button class="btn p" id="dn">${done?'Done ✓ · tap to undo':'Mark done ✓'}</button>`}</div>`;
@@ -629,8 +597,8 @@ function setDone(i,slot,id,v){const k=gk(i,slot,id);if(v)S.done[k]=1;else delete
 function wireStep(x,jk){
   const q=s=>$('#ov').querySelector(s);
   q('#ovx').onclick=()=>closeStep();
-  q('#fsm').onclick=()=>{S.rs=Math.max(.8,+(S.rs-.1).toFixed(2));save();if(x.ty==='rem')document.documentElement.style.setProperty('--rs',S.rs);else renderStep();};
-  q('#fsp').onclick=()=>{S.rs=Math.min(1.9,+(S.rs+.1).toFixed(2));save();if(x.ty==='rem')document.documentElement.style.setProperty('--rs',S.rs);else renderStep();};
+  q('#fsm').onclick=()=>{S.rs=Math.max(.8,+(S.rs-.1).toFixed(2));save();renderStep();};
+  q('#fsp').onclick=()=>{S.rs=Math.min(1.9,+(S.rs+.1).toFixed(2));save();renderStep();};
   q('#wk').onclick=()=>{O.wake=!O.wake;setWake(O.wake);q('#wk').classList.toggle('on',O.wake)};
   q('#rmt').onclick=()=>{S.rom=!S.rom;save();const sc=q('#ovb').scrollTop;renderStep();$('#ovb').scrollTop=sc};
   const au=q('#au');if(au)au.onclick=()=>{O.auto=O.auto>=3?0:O.auto+1;startAuto();au.classList.toggle('on',!!O.auto);au.textContent='⇩ Auto-scroll'+(O.auto?' '+O.auto+'×':'')};
@@ -663,38 +631,9 @@ function wireStep(x,jk){
     q('#jundo').onclick=()=>{S.cnt[jk]=Math.max(0,(S.cnt[jk]||0)-1);upd();save()};
     q('#jreset').onclick=()=>{if(confirm('Reset this counter to 0?')){S.cnt[jk]=0;upd();save()}};
   }
-  if(x.ty==='rem'){
-    const a=q('#aud'),am=q('#audmsg');
-    const aq=q('#aupl'),ac=q('#aclr'),ap=q('#aupm');
-    let url=null;
-    const setBlob=(b,saved)=>{if(O&&O.url)URL.revokeObjectURL(O.url);url=URL.createObjectURL(b);if(O)O.url=url;a.src=url;am.style.display='none';ac.style.display=saved?'inline-flex':'none';ap.textContent=saved?'Using the mp3 saved on this device.':''};
-    idbGet(x.mp3).then(b=>{if(b)setBlob(b,true)});
-    a.addEventListener('error',()=>{if(url)return;am.style.display='block';am.textContent='Audio not found. Tap Upload mp3 and pick '+x.mp3+'.'});
-    aq.onchange=async()=>{
-      const fs=[...aq.files];let n=0,mine=false;
-      for(const f of fs){
-        const key=MP3_KNOWN.find(k=>k.toLowerCase()===f.name.toLowerCase())||(fs.length===1?x.mp3:null);
-        if(!key)continue;
-        if(await idbPut(key,f)){n++;if(key===x.mp3){mine=true;setBlob(f,true)}}
-      }
-      aq.value='';
-      ap.textContent=n?`Saved ${n} file${n>1?'s':''} on this device.${mine?'':' Not this one yet.'}`:'No match. Name files like '+x.mp3+'.';
-      if(mine)ap.textContent=`Saved ${n} file${n>1?'s':''} on this device.`;
-    };
-    ac.onclick=async()=>{await idbDel(x.mp3);a.removeAttribute('src');a.load();ac.style.display='none';ap.textContent='Removed.'};
-    const tok=O;
-    loadText(x.src).then(r=>{
-      if(O!==tok)return;
-      const box=q('#rtxt');if(!box)return;
-      box.innerHTML=(r.old?'<p class="dsc">Offline. Showing the saved copy.</p>':'')+remoteHtml(mdBlocks(r.t));
-    }).catch(()=>{
-      if(O!==tok)return;
-      const box=q('#rtxt');if(!box)return;
-      box.innerHTML='<p class="dsc">Could not load the text. Check your internet and try again.</p><button class="btn g sm" id="rtry">Try again</button>';
-      const b=q('#rtry');if(b)b.onclick=()=>renderStep();
-    });
-  }
-  if(x.ty==='sank'){const t=q('#sk');t.oninput=()=>{S.note[`${O.i}`]=t.value;save()}}
+  if(x.ty==='sank'){$('#ov').querySelectorAll('[data-sk]').forEach(inp=>inp.oninput=()=>{
+    const k=inp.dataset.sk;if(inp.dataset.skd==='1'){(S.skd[O.i]=S.skd[O.i]||{})[k]=inp.value}else S.sk[k]=inp.value;
+    save();$('#skt').innerHTML=sankText(O.i)})}
   if(x.ty==='check'){
     $('#ov').querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>startTimer(+b.dataset.t));
   }
