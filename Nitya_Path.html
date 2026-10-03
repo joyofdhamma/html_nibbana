@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nitya Path</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<style>
+  :root{
+    --paper:#FBF8F2;
+    --ink:#2E2A22;
+    --ink-soft:#84796A;
+    --line:#E5DCC9;
+    --saffron:#BF6B3D;
+    --saffron-deep:#9A4E27;
+    --gold:#C9A24B;
+    --card:#FFFFFF;
+    --strip-bg:#F3ECDD;
+    --hover-bg:#F9F1DE;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  body.dark{
+    --paper:#16140F;
+    --ink:#ECE4D3;
+    --ink-soft:#A39883;
+    --line:#3A3428;
+    --saffron:#D98A5C;
+    --saffron-deep:#E7A279;
+    --gold:#C9A24B;
+    --card:#221E17;
+    --strip-bg:#1D1A14;
+    --hover-bg:#2B261D;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  header{
+    text-align:center;
+    padding:34px 20px 22px;
+    border-bottom:1px solid var(--line);
+    background:
+      radial-gradient(circle at 50% 0%, rgba(191,107,61,0.06), transparent 60%),
+      var(--paper);
+    position:relative;
+  }
+  header .eyebrow{
+    font-family:var(--serif);
+    font-style:italic;
+    color:var(--saffron-deep);
+    font-size:14px;
+    letter-spacing:0.02em;
+  }
+  header h1{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:30px;
+    margin:6px 0 4px;
+  }
+  header .sub{
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  #theme-fab{
+    position:absolute;
+    top:20px;
+    right:70px;
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:var(--card);
+    font-size:18px;
+    cursor:pointer;
+    color:var(--saffron-deep);
+    box-shadow:0 2px 8px rgba(0,0,0,0.06);
+  }
+  #music-fab{
+    position:absolute;
+    top:20px;
+    right:20px;
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:var(--card);
+    font-size:18px;
+    cursor:pointer;
+    color:var(--saffron-deep);
+    box-shadow:0 2px 8px rgba(0,0,0,0.06);
+  }
+  #music-fab.active{
+    background:var(--saffron);
+    color:#fff;
+    border-color:var(--saffron);
+  }
+  #datetime-display{
+    margin-top:8px;
+    font-size:13px;
+    color:var(--ink-soft);
+    font-variant-numeric:tabular-nums;
+  }
+
+  /* Stotra tab strip */
+  .stotra-strip-wrap{
+    position:sticky;
+    top:0;
+    z-index:10;
+    background:var(--strip-bg);
+    border-bottom:1px solid var(--line);
+    padding:12px 0;
+  }
+  .stotra-strip{
+    max-width:760px;
+    margin:0 auto;
+    display:flex;
+    gap:7px;
+    overflow-x:auto;
+    padding:0 20px 4px;
+    scrollbar-width:thin;
+  }
+  .stotra-strip::-webkit-scrollbar{ height:5px; }
+  .stotra-strip::-webkit-scrollbar-thumb{ background:var(--line); border-radius:6px; }
+  .stotra-btn{
+    flex-shrink:0;
+    font-family:var(--sans);
+    font-size:13px;
+    font-weight:600;
+    border:1px solid var(--gold);
+    background:var(--card);
+    color:var(--saffron-deep);
+    padding:7px 15px;
+    border-radius:18px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .stotra-btn:hover{ background:var(--hover-bg); }
+  .stotra-btn.active{
+    background:var(--gold);
+    border-color:var(--gold);
+    color:#fff;
+  }
+  .stotra-btn.coming-soon{
+    opacity:0.45;
+    cursor:default;
+  }
+
+  main{
+    max-width:760px;
+    margin:0 auto;
+    padding:30px 20px 80px;
+  }
+
+  #status{
+    text-align:center;
+    color:var(--ink-soft);
+    font-style:italic;
+    font-family:var(--serif);
+    padding:50px 20px;
+  }
+  #status.error{ color:var(--saffron-deep); }
+
+  .content-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:36px 32px;
+  }
+
+  .content-card h1{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:24px;
+    margin-top:0;
+  }
+  .content-card h2{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:20px;
+    color:var(--saffron-deep);
+    margin:32px 0 12px;
+    padding-top:22px;
+    border-top:1px solid var(--line);
+  }
+  .content-card h2:first-of-type{ border-top:none; padding-top:0; margin-top:8px; }
+  .content-card h3{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:18px;
+    color:var(--saffron-deep);
+    margin:26px 0 10px;
+  }
+  .content-card p{
+    line-height:1.85;
+    font-size:16px;
+    margin:0 0 16px;
+  }
+  .content-card p em{ color:var(--saffron-deep); font-style:italic; }
+  .content-card strong{ color:var(--ink); }
+  .content-card ul, .content-card ol{
+    padding-left:22px;
+    margin:0 0 16px;
+  }
+  .content-card li{
+    line-height:1.8;
+    font-size:16px;
+    margin-bottom:8px;
+  }
+  .content-card blockquote{
+    margin:0 0 16px;
+    padding:4px 0 4px 16px;
+    border-left:3px solid var(--gold);
+    color:var(--ink-soft);
+    font-style:italic;
+  }
+  .content-card hr{
+    border:none;
+    border-top:1px solid var(--line);
+    margin:28px 0;
+  }
+
+  footer{
+    text-align:center;
+    padding:24px 20px 40px;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+
+  /* ============ MUSIC PLAYER PANEL ============ */
+  #player-panel{
+    max-width:760px;
+    margin:0 auto;
+    padding:0 20px;
+    max-height:0;
+    overflow:hidden;
+    transition:max-height 0.3s ease;
+  }
+  #player-panel.open{
+    max-height:2000px;
+  }
+  .player-card{
+    background:#1c1c2e;
+    border-radius:18px;
+    padding:20px 18px 22px;
+    margin:14px 0 6px;
+    color:#e5e2f7;
+    font-family:var(--sans);
+  }
+  .player-card h3{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:17px;
+    margin:0 0 6px;
+    color:#f0eef7;
+  }
+  .player-note{
+    font-size:11px; color:#8a86ad; margin-bottom:12px; line-height:1.5;
+  }
+  .upload-area{
+    background:#2d2d48;
+    border-radius:14px;
+    padding:10px 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:12px;
+    border:1px dashed #5b5b7a;
+    flex-wrap:wrap;
+  }
+  .upload-label{
+    background:#4c4c6e;
+    padding:7px 16px;
+    border-radius:20px;
+    color:#fff;
+    font-weight:500;
+    font-size:12.5px;
+    cursor:pointer;
+    border:none;
+    white-space:nowrap;
+  }
+  .upload-label:hover{ background:#625f8b; }
+  .file-name{ color:#b7b4d6; font-size:12px; word-break:break-all; flex:1; min-width:60px; }
+  input[type=file]{ display:none; }
+
+  .player-bar{
+    background:#14141f;
+    border-radius:30px;
+    padding:4px 4px 4px 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:14px;
+    border:1px solid #3f3f5e;
+  }
+  .play-btn{
+    background:#7c6df0;
+    border:none;
+    width:36px; height:36px;
+    border-radius:36px;
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-size:15px; cursor:pointer;
+    flex-shrink:0;
+  }
+  .play-btn.playing{ background:#f07c6d; }
+  .time-indicator{
+    color:#cfcce6; font-variant-numeric:tabular-nums; font-size:12px;
+    display:flex; align-items:center; gap:4px; flex:1; min-width:80px;
+  }
+  .progress-range{
+    flex:2; min-width:70px; accent-color:#7c6df0; height:3px; cursor:pointer;
+  }
+  .stop-btn{
+    background:#32324e; border:1px solid #4a4a6a;
+    width:32px; height:32px; border-radius:32px;
+    color:#e5e2f7; font-size:13px; cursor:pointer; flex-shrink:0;
+  }
+  .stop-btn:hover{ background:#4a4a6e; }
+
+  .fx-section{ margin-top:6px; }
+  .fx-section-title{
+    font-size:11px; text-transform:uppercase; letter-spacing:0.06em;
+    color:#8a86ad; margin:16px 0 8px;
+  }
+  .fx-row{
+    display:flex; align-items:center; gap:12px; margin-bottom:10px;
+  }
+  .fx-row label{
+    font-size:12.5px; color:#cfcce6; width:96px; flex-shrink:0;
+  }
+  .fx-row input[type=range]{
+    flex:1; accent-color:#7c6df0; height:3px;
+  }
+  .fx-row .fx-val{
+    font-size:11px; color:#8a86ad; width:40px; text-align:right; flex-shrink:0;
+    font-variant-numeric:tabular-nums;
+  }
+
+  .mini-transport{
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .mini-btn{
+    font-family:var(--sans);
+    font-size:14px;
+    background:var(--card);
+    border:1px solid var(--line);
+    color:var(--saffron-deep);
+    cursor:pointer;
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+  }
+  .mini-btn:hover{ border-color:var(--saffron); }
+  .mini-btn.playing{ background:var(--saffron); border-color:var(--saffron); color:#fff; }
+
+  .mini-transport-wrap{
+    max-width:760px;
+    margin:0 auto;
+    display:flex;
+    justify-content:center;
+    padding:6px 20px 2px;
+  }
+
+  @media (max-width:600px){
+    .content-card{ padding:26px 20px; }
+    header h1{ font-size:24px; }
+    .fx-row label{ width:78px; font-size:11.5px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="theme-fab" onclick="toggleTheme()" title="Dark / light mode">☾</button>
+  <button id="music-fab" onclick="toggleMusicPanel()" title="Audio player">♪</button>
+  <div class="eyebrow">॥ नित्य पाठ ॥</div>
+  <h1>Nitya Path</h1>
+  <div class="sub" id="page-heading">Loading…</div>
+  <div id="datetime-display"></div>
+</header>
+
+<!-- MUSIC PLAYER PANEL -->
+<div id="player-panel">
+  <div class="player-card">
+    <h3>Recitation — <span id="player-stotra-label">Vishnu Sahasranama</span></h3>
+    <div class="player-note">Upload the MP3 for this stotra. Play, pause, loop, and shape the sound however you like — volume, speed, stereo pan, EQ and reverb.</div>
+
+    <div class="upload-area">
+      <label for="audio-upload" class="upload-label">📁 Load MP3</label>
+      <input type="file" id="audio-upload" accept=".mp3,audio/mpeg">
+      <span class="file-name" id="file-name">no file loaded</span>
+    </div>
+
+    <div class="player-bar">
+      <button class="play-btn" id="play-btn">▶</button>
+      <div class="time-indicator">
+        <span id="time-current">0:00</span><span style="color:#555;">/</span><span id="time-duration">0:00</span>
+      </div>
+      <input type="range" class="progress-range" id="progress-range" min="0" max="1000" value="0">
+      <button class="stop-btn" id="stop-btn" title="Stop">⏹</button>
+    </div>
+
+    <div class="fx-section">
+      <div class="fx-section-title">Sound</div>
+      <div class="fx-row"><label>Volume</label><input type="range" id="fx-volume" min="0" max="150" value="100"><span class="fx-val" id="val-volume">100%</span></div>
+      <div class="fx-row"><label>Speed</label><input type="range" id="fx-speed" min="50" max="200" value="100"><span class="fx-val" id="val-speed">1.0x</span></div>
+      <div class="fx-row"><label>Stereo Pan</label><input type="range" id="fx-pan" min="-100" max="100" value="0"><span class="fx-val" id="val-pan">C</span></div>
+    </div>
+
+    <div class="fx-section">
+      <div class="fx-section-title">Equalizer</div>
+      <div class="fx-row"><label>Bass</label><input type="range" id="fx-bass" min="-24" max="24" value="0"><span class="fx-val" id="val-bass">0dB</span></div>
+      <div class="fx-row"><label>Mid</label><input type="range" id="fx-mid" min="-24" max="24" value="0"><span class="fx-val" id="val-mid">0dB</span></div>
+      <div class="fx-row"><label>Treble</label><input type="range" id="fx-treble" min="-24" max="24" value="0"><span class="fx-val" id="val-treble">0dB</span></div>
+    </div>
+
+    <div class="fx-section">
+      <div class="fx-section-title">Reverb</div>
+      <div class="fx-row"><label>Wet / Dry</label><input type="range" id="fx-reverb" min="0" max="100" value="0"><span class="fx-val" id="val-reverb">0%</span></div>
+    </div>
+
+    <div class="fx-section">
+      <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#cfcce6;cursor:pointer;">
+        <input type="checkbox" id="loop-check" checked style="accent-color:#7c6df0;width:14px;height:14px;cursor:pointer;">
+        🔁 Loop when finished
+      </label>
+    </div>
+  </div>
+</div>
+
+<div class="stotra-strip-wrap">
+  <div class="stotra-strip" id="stotra-strip"></div>
+</div>
+
+<div class="mini-transport-wrap">
+  <div class="mini-transport">
+    <button class="mini-btn" id="mini-rewind-btn" title="Rewind 10s">⏪</button>
+    <button class="mini-btn" id="mini-play-btn" title="Play/Pause">▶</button>
+  </div>
+</div>
+
+<main>
+  <div id="status">Loading…</div>
+  <div class="content-card" id="content" style="display:none;"></div>
+</main>
+
+<footer>Nitya Path · Daily recitation reader</footer>
+
+<script>
+/* ====================================================================
+   STOTRA REGISTRY — add more entries here as you add stotras
+   ==================================================================== */
+const STOTRAS = [
+  {
+    id: 'vsn',
+    label: 'Vishnu Sahasranama',
+    owner: 'joyofdhamma',
+    repo: 'SCH_Path',
+    branch: 'main',
+    filename: 'vsn.md',
+    available: true
+  }
+  // Add future stotras here, e.g.:
+  // { id:'ld', label:'Lalita Sahasranama', owner:'joyofdhamma', repo:'SCH_Path', branch:'main', filename:'LD.md', available:true }
+];
+
+let currentStotraId = STOTRAS[0].id;
+
+function getStotra(id){
+  return STOTRAS.find(s => s.id === id) || STOTRAS[0];
+}
+
+/* ====================================================================
+   TAB STRIP
+   ==================================================================== */
+function buildStotraStrip(){
+  const strip = document.getElementById('stotra-strip');
+  strip.innerHTML = '';
+  STOTRAS.forEach(s=>{
+    const btn = document.createElement('button');
+    btn.className = 'stotra-btn' + (s.available ? '' : ' coming-soon');
+    btn.id = 'stotra-btn-' + s.id;
+    btn.textContent = s.label;
+    if(s.available){
+      btn.onclick = () => switchStotra(s.id);
+    }else{
+      btn.title = 'Coming soon';
+    }
+    strip.appendChild(btn);
+  });
+}
+
+function setActiveStotraButton(id){
+  document.querySelectorAll('.stotra-btn').forEach(b=>b.classList.remove('active'));
+  const btn = document.getElementById('stotra-btn-' + id);
+  if(btn){
+    btn.classList.add('active');
+    btn.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
+  }
+}
+
+function switchStotra(id){
+  currentStotraId = id;
+  setActiveStotraButton(id);
+  history.replaceState(null, '', '#' + id);
+  const s = getStotra(id);
+  document.getElementById('player-stotra-label').textContent = s.label;
+  onStotraSwitchedForMusic();
+  loadStotra();
+}
+
+/* ====================================================================
+   LOADING / RENDERING THE STOTRA TEXT
+   ==================================================================== */
+async function loadStotra(){
+  const s = getStotra(currentStotraId);
+  const statusEl = document.getElementById('status');
+  const contentEl = document.getElementById('content');
+  contentEl.style.display = 'none';
+  statusEl.style.display = 'block';
+  statusEl.className = '';
+  statusEl.textContent = `Loading ${s.label}…`;
+  document.getElementById('page-heading').textContent = s.label;
+
+  const url = `https://raw.githubusercontent.com/${s.owner}/${s.repo}/${s.branch}/${s.filename}`;
+  const cacheKey = 'nityapath_cache_' + s.id;
+
+  try{
+    const res = await fetch(url, { cache: 'no-store' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const md = await res.text();
+    localStorage.setItem(cacheKey, md);
+    renderMarkdown(md, false);
+  }catch(e){
+    console.warn('Network fetch failed, trying cache:', e);
+    const cached = localStorage.getItem(cacheKey);
+    if(cached){
+      renderMarkdown(cached, true);
+    }else{
+      statusEl.className = 'error';
+      statusEl.textContent = `Couldn't load ${s.label} — no internet connection and no offline copy saved yet.`;
+    }
+  }
+}
+
+function renderMarkdown(md, fromCache){
+  const statusEl = document.getElementById('status');
+  const contentEl = document.getElementById('content');
+  contentEl.innerHTML = marked.parse(md);
+  if(fromCache){
+    const note = document.createElement('div');
+    note.style.cssText = 'font-size:12px;color:var(--ink-soft);margin-bottom:18px;font-style:italic;';
+    note.textContent = '(Showing offline copy saved earlier — not connected right now)';
+    contentEl.insertBefore(note, contentEl.firstChild);
+  }
+  statusEl.style.display = 'none';
+  contentEl.style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+/* ====================================================================
+   MUSIC PLAYER — simple whole-track player with Web Audio effects
+   One MP3 per stotra, remembered in-session when you switch tabs.
+   ==================================================================== */
+let stotraAudio = {}; // { [stotraId]: { objectUrl, fileName, audioEl } }
+let audioEl = null;
+let loopEnabled = true;
+
+// Web Audio graph nodes
+let actx = null;
+let sourceNodes = {};
+let bassFilter, midFilter, trebleFilter;
+let pannerNode, gainNode;
+let convolver, wetGain, dryGain, reverbMixOut;
+
+function ensureAudioGraph(){
+  if(actx) return;
+  actx = new (window.AudioContext || window.webkitAudioContext)();
+
+  bassFilter = actx.createBiquadFilter();
+  bassFilter.type = 'lowshelf';
+  bassFilter.frequency.value = 200;
+
+  midFilter = actx.createBiquadFilter();
+  midFilter.type = 'peaking';
+  midFilter.frequency.value = 1000;
+  midFilter.Q.value = 0.8;
+
+  trebleFilter = actx.createBiquadFilter();
+  trebleFilter.type = 'highshelf';
+  trebleFilter.frequency.value = 3000;
+
+  pannerNode = actx.createStereoPanner();
+  gainNode = actx.createGain();
+
+  convolver = actx.createConvolver();
+  convolver.buffer = makeImpulseResponse(2.5, 2.2);
+  wetGain = actx.createGain();
+  dryGain = actx.createGain();
+  wetGain.gain.value = 0;
+  dryGain.gain.value = 1;
+  reverbMixOut = actx.createGain();
+
+  bassFilter.connect(midFilter);
+  midFilter.connect(trebleFilter);
+  trebleFilter.connect(pannerNode);
+  pannerNode.connect(dryGain);
+  pannerNode.connect(convolver);
+  convolver.connect(wetGain);
+  dryGain.connect(reverbMixOut);
+  wetGain.connect(reverbMixOut);
+  reverbMixOut.connect(gainNode);
+  gainNode.connect(actx.destination);
+}
+
+function makeImpulseResponse(duration, decay){
+  const sampleRate = actx.sampleRate;
+  const length = sampleRate * duration;
+  const impulse = actx.createBuffer(2, length, sampleRate);
+  for(let ch=0; ch<2; ch++){
+    const data = impulse.getChannelData(ch);
+    for(let i=0; i<length; i++){
+      data[i] = (Math.random()*2-1) * Math.pow(1 - i/length, decay);
+    }
+  }
+  return impulse;
+}
+
+function connectSourceToGraph(stotraId, el){
+  ensureAudioGraph();
+  if(!sourceNodes[stotraId]){
+    sourceNodes[stotraId] = actx.createMediaElementSource(el);
+  }
+  try{ sourceNodes[stotraId].disconnect(); }catch(e){}
+  sourceNodes[stotraId].connect(bassFilter);
+}
+
+function formatTime(sec){
+  if(!isFinite(sec) || sec < 0) sec = 0;
+  const m = Math.floor(sec/60), s = Math.floor(sec%60);
+  return `${m}:${s.toString().padStart(2,'0')}`;
+}
+
+function updateProgressUI(){
+  if(!audioEl) return;
+  const current = audioEl.currentTime || 0;
+  const duration = audioEl.duration || 0;
+  document.getElementById('progress-range').value = duration>0 ? Math.min(1000,(current/duration)*1000) : 0;
+  document.getElementById('time-current').textContent = formatTime(current);
+  document.getElementById('time-duration').textContent = formatTime(duration);
+  syncMiniPlayBtn();
+}
+
+function loadAudioFile(file){
+  if(!file) return;
+  if(audioEl){ audioEl.pause(); }
+
+  const url = URL.createObjectURL(file);
+  const el = new Audio(url);
+  el.preload = 'metadata';
+  el.crossOrigin = 'anonymous';
+
+  stotraAudio[currentStotraId] = { objectUrl: url, fileName: file.name, audioEl: el };
+  audioEl = el;
+  connectSourceToGraph(currentStotraId, el);
+
+  document.getElementById('play-btn').textContent = '▶';
+  document.getElementById('play-btn').classList.remove('playing');
+  document.getElementById('progress-range').value = 0;
+  document.getElementById('time-current').textContent = '0:00';
+  document.getElementById('file-name').textContent = file.name;
+
+  el.addEventListener('loadedmetadata', ()=>{
+    document.getElementById('time-duration').textContent = formatTime(el.duration);
+    updateProgressUI();
+  });
+  el.addEventListener('timeupdate', ()=>{
+    if(audioEl === el) updateProgressUI();
+  });
+  el.addEventListener('ended', ()=>{
+    if(audioEl !== el) return;
+    const playBtn = document.getElementById('play-btn');
+    if(loopEnabled){
+      el.currentTime = 0;
+      el.play().catch(()=>{});
+      playBtn.textContent='⏸'; playBtn.classList.add('playing');
+    }else{
+      playBtn.textContent='▶'; playBtn.classList.remove('playing');
+    }
+    updateProgressUI();
+  });
+  el.addEventListener('error', ()=> alert('Error loading audio. Try another file.'));
+
+  applyAllFx();
+  updateFileNameDisplay();
+}
+
+function updateFileNameDisplay(){
+  const entry = stotraAudio[currentStotraId];
+  document.getElementById('file-name').textContent = entry ? entry.fileName : 'no file loaded';
+}
+
+function onStotraSwitchedForMusic(){
+  const entry = stotraAudio[currentStotraId];
+  if(entry && entry.audioEl){
+    audioEl = entry.audioEl;
+    document.getElementById('time-duration').textContent = formatTime(entry.audioEl.duration || 0);
+    document.getElementById('time-current').textContent = formatTime(entry.audioEl.currentTime || 0);
+  }else{
+    audioEl = null;
+    document.getElementById('time-current').textContent = '0:00';
+    document.getElementById('time-duration').textContent = '0:00';
+    document.getElementById('progress-range').value = 0;
+  }
+  document.getElementById('play-btn').textContent = (audioEl && !audioEl.paused) ? '⏸' : '▶';
+  document.getElementById('play-btn').classList.toggle('playing', !!(audioEl && !audioEl.paused));
+  updateFileNameDisplay();
+  syncMiniPlayBtn();
+}
+
+/* ---------- FX control wiring ---------- */
+function applyAllFx(){
+  if(!actx) return;
+  const vol = parseFloat(document.getElementById('fx-volume').value)/100;
+  gainNode.gain.setTargetAtTime(vol, actx.currentTime, 0.01);
+
+  const pan = parseFloat(document.getElementById('fx-pan').value)/100;
+  pannerNode.pan.setTargetAtTime(pan, actx.currentTime, 0.01);
+
+  const bass = parseFloat(document.getElementById('fx-bass').value);
+  bassFilter.gain.setTargetAtTime(bass, actx.currentTime, 0.01);
+
+  const mid = parseFloat(document.getElementById('fx-mid').value);
+  midFilter.gain.setTargetAtTime(mid, actx.currentTime, 0.01);
+
+  const treble = parseFloat(document.getElementById('fx-treble').value);
+  trebleFilter.gain.setTargetAtTime(treble, actx.currentTime, 0.01);
+
+  const reverbPct = parseFloat(document.getElementById('fx-reverb').value)/100;
+  wetGain.gain.setTargetAtTime(reverbPct, actx.currentTime, 0.01);
+  dryGain.gain.setTargetAtTime(1 - reverbPct*0.6, actx.currentTime, 0.01);
+
+  if(audioEl){
+    const speed = parseFloat(document.getElementById('fx-speed').value)/100;
+    audioEl.playbackRate = speed;
+  }
+}
+
+function wireFxControl(id, valId, formatter){
+  const input = document.getElementById(id);
+  const valEl = document.getElementById(valId);
+  input.addEventListener('input', ()=>{
+    valEl.textContent = formatter(input.value);
+    ensureAudioGraph();
+    applyAllFx();
+  });
+}
+wireFxControl('fx-volume','val-volume', v=>`${v}%`);
+wireFxControl('fx-speed','val-speed', v=>`${(v/100).toFixed(2)}x`);
+wireFxControl('fx-pan','val-pan', v=>{ v=parseInt(v); if(v===0) return 'C'; return v<0 ? `L${Math.abs(v)}` : `R${v}`; });
+wireFxControl('fx-bass','val-bass', v=>`${v>0?'+':''}${v}dB`);
+wireFxControl('fx-mid','val-mid', v=>`${v>0?'+':''}${v}dB`);
+wireFxControl('fx-treble','val-treble', v=>`${v>0?'+':''}${v}dB`);
+wireFxControl('fx-reverb','val-reverb', v=>`${v}%`);
+
+document.getElementById('audio-upload').addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if(file) loadAudioFile(file);
+});
+
+document.getElementById('play-btn').addEventListener('click', ()=>{
+  if(!audioEl){ alert('Load an MP3 first.'); return; }
+  if(actx && actx.state === 'suspended') actx.resume();
+  const playBtn = document.getElementById('play-btn');
+  if(audioEl.paused){
+    audioEl.play().catch(()=>{});
+    playBtn.textContent='⏸'; playBtn.classList.add('playing');
+  }else{
+    audioEl.pause();
+    playBtn.textContent='▶'; playBtn.classList.remove('playing');
+  }
+  syncMiniPlayBtn();
+});
+
+document.getElementById('stop-btn').addEventListener('click', ()=>{
+  if(!audioEl) return;
+  audioEl.pause();
+  audioEl.currentTime = 0;
+  document.getElementById('play-btn').textContent='▶';
+  document.getElementById('play-btn').classList.remove('playing');
+  updateProgressUI();
+});
+
+document.getElementById('progress-range').addEventListener('input', ()=>{
+  if(!audioEl || !audioEl.duration) return;
+  const pct = parseFloat(document.getElementById('progress-range').value)/1000;
+  audioEl.currentTime = pct * audioEl.duration;
+  updateProgressUI();
+});
+
+document.getElementById('loop-check').addEventListener('change', e=>{
+  loopEnabled = e.target.checked;
+});
+
+/* ---------- Mini transport (below tabs) ---------- */
+function syncMiniPlayBtn(){
+  const mini = document.getElementById('mini-play-btn');
+  if(!mini) return;
+  const isPlaying = !!(audioEl && !audioEl.paused);
+  mini.textContent = isPlaying ? '⏸' : '▶';
+  mini.classList.toggle('playing', isPlaying);
+}
+
+document.getElementById('mini-play-btn').addEventListener('click', ()=>{
+  document.getElementById('play-btn').click();
+});
+
+document.getElementById('mini-rewind-btn').addEventListener('click', ()=>{
+  if(!audioEl) return;
+  audioEl.currentTime = Math.max(0, audioEl.currentTime - 10);
+  updateProgressUI();
+});
+
+function toggleMusicPanel(){
+  const panel = document.getElementById('player-panel');
+  const fab = document.getElementById('music-fab');
+  panel.classList.toggle('open');
+  fab.classList.toggle('active');
+}
+
+/* ====================================================================
+   THEME (dark/light), remembered on this device
+   ==================================================================== */
+function applyTheme(mode){
+  document.body.classList.toggle('dark', mode === 'dark');
+  document.getElementById('theme-fab').textContent = mode === 'dark' ? '☀' : '☾';
+}
+function toggleTheme(){
+  const mode = document.body.classList.contains('dark') ? 'light' : 'dark';
+  applyTheme(mode);
+  try{ localStorage.setItem('nityapath_theme', mode); }catch(e){}
+}
+
+/* ====================================================================
+   LIVE DATE & TIME DISPLAY
+   ==================================================================== */
+function updateDateTimeDisplay(){
+  const el = document.getElementById('datetime-display');
+  if(!el) return;
+  const now = new Date();
+  const dateStr = now.toLocaleDateString(undefined, { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  const timeStr = now.toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  el.textContent = `${dateStr} · ${timeStr}`;
+}
+updateDateTimeDisplay();
+setInterval(updateDateTimeDisplay, 1000);
+
+/* ====================================================================
+   INIT
+   ==================================================================== */
+let savedTheme = 'dark';
+try{ savedTheme = localStorage.getItem('nityapath_theme') || 'dark'; }catch(e){}
+applyTheme(savedTheme);
+
+buildStotraStrip();
+
+const hashMatch = location.hash.replace('#','');
+const startStotra = STOTRAS.find(s => s.id === hashMatch && s.available);
+currentStotraId = startStotra ? startStotra.id : STOTRAS[0].id;
+
+setActiveStotraButton(currentStotraId);
+document.getElementById('player-stotra-label').textContent = getStotra(currentStotraId).label;
+loadStotra();
+</script>
+</body>
+</html>
