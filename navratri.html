@@ -279,10 +279,66 @@ const sub=(s,i)=>String(s).replace(/\[Deity name\]/g,nm(i).en);
 const gk=(i,slot,id)=>`${i}.${slot}.${id}`;
 const isDone=(i,slot,id)=>!!S.done[gk(i,slot,id)];
 
-function ganeshBlocks(){
-  return [{h:'Sankat Nashana Ganesh Stotram',hi:'श्रीगणेशस्तोत्र',lines:["श्रीगणेशाय नमः ।", "नारद उवाच ।", "प्रणम्य शिरसा देवं गौरीपुत्रं विनायकम् ।", "भक्तावासं स्मरेन्नित्यमायुःकामार्थसिद्धये ॥ १॥", "प्रथमं वक्रतुण्डं च एकदन्तं द्वितीयकम् ।", "तृतीयं कृष्णपिङ्गाक्षं गजवक्त्रं चतुर्थकम् ॥ २॥", "लम्बोदरं पञ्चमं च षष्ठं विकटमेव च ।", "सप्तमं विघ्नराजेन्द्रं धूम्रवर्णं तथाष्टमम् ॥ ३॥", "नवमं भालचन्द्रं च दशमं तु विनायकम् ।", "एकादशं गणपतिं द्वादशं तु गजाननम् ॥ ४॥", "द्वादशैतानि नामानि त्रिसन्ध्यं यः पठेन्नरः ।", "न च विघ्नभयं तस्य सर्वसिद्धिकरः प्रभुः ॥ ५॥", "विद्यार्थी लभते विद्यां धनार्थी लभते धनम् ।", "पुत्रार्थी लभते पुत्रान्मोक्षार्थी लभते गतिम् ॥ ६॥", "जपेद्गणपतिस्तोत्रं षड्भिर्मासैः फलं लभेत् ।", "संवत्सरेण सिद्धिं च लभते नात्र संशयः ॥ ७॥", "अष्टभ्यो ब्राह्मणेभ्यश्च लिखित्वा यः समर्पयेत् ।", "तस्य विद्या भवेत्सर्वा गणेशस्य प्रसादतः ॥ ८॥", "॥ इति श्रीनारदपुराणे संकटनाशनं गणेशस्तोत्रं सम्पूर्णम् ॥"]}];
+/* ---- live texts from GitHub (cached for offline) ---- */
+const SRC={gan:'https://raw.githubusercontent.com/joyofdhamma/SCH_Path/main/ganst.md',
+           san:'https://raw.githubusercontent.com/joyofdhamma/SCH_Path/main/snklp.md'};
+const SKEY='navratri-src-v1';
+let TX={};try{TX=JSON.parse(LS.getItem(SKEY)||'{}')}catch(_){TX={}}
+const SST={};   // per-source status: 'loading' | 'error'
+const getSrc=k=>TX[k]&&TX[k].t||null;
+const ALT={gan:'https://cdn.jsdelivr.net/gh/joyofdhamma/SCH_Path@main/ganst.md',
+           san:'https://cdn.jsdelivr.net/gh/joyofdhamma/SCH_Path@main/snklp.md'};
+const LS_OK=(()=>{try{localStorage.setItem('_t','1');localStorage.removeItem('_t');return true}catch(_){return false}})();
+function tfetch(url,ms){
+  const c=new AbortController(),id=setTimeout(()=>c.abort(),ms);
+  // 'no-cache' = quick conditional check (ETag), so unchanged files return fast and stay fresh
+  return fetch(url,{signal:c.signal,cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.text()}).finally(()=>clearTimeout(id));
 }
-const SK=[{"s": true, "l": ["ওঁ বিষ্ণুঃ ওঁ বিষ্ণুঃ ওঁ বিষ্ণুঃ। ওঁ তৎসৎ।"]}, {"s": false, "l": ["অদ্য শারদীয় নবরাত্রি/দুর্গোৎসবের পুণ্যলগ্নে, [বঙ্গাব্দ/শকাব্দ সাল], আশ্বিন মাসে, শুক্লপক্ষে, [তিথি] তিথিতে, [বার] বারে, [দেশ], [শহর] স্থানে,"]}, {"s": false, "l": ["আমি [নাম], [গোত্র] গোত্র, [নক্ষত্র] নক্ষত্র, [রাশি] রাশির জাতক,", "শ্রীশ্রীঠাকুর, শ্রীশ্রীমা, স্বামীজী ও গুরুমহারাজের কৃপায়,", "শ্রীশ্রীজগদম্বা দুর্গার [আজকের রূপ] রূপের প্রীতার্থে,", "দেবগণ, ঋষিগণ ও পিতৃপুরুষের আশীর্বাদে,", "গ্রহ-নক্ষত্রের শান্তি ও সকল বিঘ্ননাশের কামনায়,", "[সংখ্যা] জপ / [সময়] ধ্যান / [নিয়ম] উপবাস / পূজা করতে সংকল্প করছি।"]}, {"s": false, "l": ["মা, আমার এই সংকল্প যেন বিঘ্নহীনভাবে সিদ্ধ হয়।", "এই কর্ম যেন আমার অহং ভঙ্গ করে এবং জন্ম-মৃত্যুর চক্র থেকে মুক্তির পথ দেখায়।", "হে মা, অজ্ঞতাবশত কোনো ভুল-ত্রুটি হলে ক্ষমা করো।", "এই ভক্তি-অঞ্জলি যেন তোমার চরণে শুদ্ধভাবে পৌঁছায়।"]}, {"s": true, "l": ["ওঁ তৎসৎ ব্রহ্মার্পণমস্তু। ওঁ শান্তিঃ শান্তিঃ শান্তিঃ।"]}];
+function loadText(k){
+  // GitHub first. If it has not answered in 3.5 s, race a CDN mirror. First good answer wins.
+  return new Promise((res,rej)=>{
+    let done=false,fails=0;
+    const ok=t=>{if(!done&&t.trim()){done=true;res(t)}else fail()};
+    const fail=()=>{if(++fails>=2&&!done)rej(new Error('fail'))};
+    tfetch(SRC[k],9000).then(ok,fail);
+    setTimeout(()=>{if(!done)tfetch(ALT[k],9000).then(ok,fail);else fail()},3500);
+  });
+}
+async function fetchSrc(k,retry){
+  SST[k]='loading';
+  try{
+    const t=await loadText(k);
+    TX[k]={t,ts:Date.now()};try{LS.setItem(SKEY,JSON.stringify(TX))}catch(_){}
+    delete SST[k];
+  }catch(e){
+    if(!retry){await new Promise(r=>setTimeout(r,1500));return fetchSrc(k,1)}
+    SST[k]='error';
+  }
+  if(typeof O!=='undefined'&&O&&O.list[O.idx].src===k)renderStep();
+  if(typeof V!=='undefined'&&V.view==='more')render(true);
+}
+fetchSrc('gan');fetchSrc('san');   // start downloading immediately, before the first screen is drawn
+function parseGan(t){
+  const L=t.split('\n').map(l=>l.trim());
+  const h=L.find(l=>/^#/.test(l));
+  const lines=L.filter(l=>l&&l!=='**'&&!/^#/.test(l)).map(l=>l.replace(/\*\*/g,''));
+  return [{h:(h||'# Ganesh Stotram').replace(/^#+\s*/,'').replace(/\|\|/g,'').trim(),hi:'',lines}];
+}
+function parseSan(t){
+  const paras=[];
+  t.split(/\n\s*\n/).forEach(blk=>{
+    blk=blk.trim();if(!blk||/^#/.test(blk))return;
+    const s=blk.startsWith('**');
+    paras.push({s,l:blk.replace(/\*\*/g,'').split('\n').map(l=>l.trim())});
+  });
+  return paras;
+}
+function ganeshBlocks(){const t=getSrc('gan');return t?parseGan(t):[]}
+function srcStatus(k){
+  const st=SST[k];
+  return `<div class="blk center"><p class="dsc">${st==='error'?'Could not load the text from GitHub. Connect to the internet once. It is then saved on this phone.':'Loading from GitHub… this usually takes a few seconds.'}</p>
+    <button class="btn p" id="retry" data-k="${k}">${st==='error'?'Try again':'Loading…'}</button></div>`;
+}
 const BN_DEITY=['শৈলপুত্রী','ব্রহ্মচারিণী','চন্দ্রঘণ্টা','কুষ্মাণ্ডা','স্কন্দমাতা','কাত্যায়নী','কালরাত্রি','মহাগৌরী','সিদ্ধিদাত্রী'];
 const BN_WK=['রবিবার','সোমবার','মঙ্গলবার','বুধবার','বৃহস্পতিবার','শুক্রবার','শনিবার'];
 const SKF=[['name','নাম','Name'],['gotra','গোত্র','Gotra'],['nak','নক্ষত্র','Nakshatra'],['rashi','রাশি','Rashi'],['country','দেশ','Country'],['city','শহর','City'],['count','সংখ্যা','Japa count (e.g. 108)'],['time','সময়','Dhyana time (e.g. 20 min)'],['niyam','নিয়ম','Niyam (e.g. fast)']];
@@ -290,7 +346,7 @@ const SKD=[['year','বঙ্গাব্দ/শকাব্দ সাল','Year
 function skVal(i,k){return k==='year'||k==='tithi'?((S.skd[i]||{})[k]||''):(S.sk[k]||'')}
 function sankText(i){
   const map={'বঙ্গাব্দ/শকাব্দ সাল':'year','তিথি':'tithi','বার':'*wk','আজকের রূপ':'*dv','নাম':'name','গোত্র':'gotra','নক্ষত্র':'nak','রাশি':'rashi','দেশ':'country','শহর':'city','সংখ্যা':'count','সময়':'time','নিয়ম':'niyam'};
-  return SK.map(p=>{
+  return parseSan(getSrc('san')||'').map(p=>{
     const inner=p.l.map(l=>esc(l).replace(/\[([^\]]+)\]/g,(m,k)=>{
       const f=map[k];if(!f)return m;
       let v=f==='*wk'?BN_WK[dayDate(i).getDay()]:f==='*dv'?BN_DEITY[i]:skVal(i,f);
@@ -324,12 +380,12 @@ function mantraBlock(i){const d=nm(i);return [{h:'Mantra',hi:'मंत्र',l
 
 function items(i,slot){
   const d=nm(i);
-  const gan={id:'gan',t:'Ganesh Stotram',hi:'गणेश स्तोत्रम्',ty:'read',s:'Sankat Nashana · Narada Purana',blocks:()=>ganeshBlocks()};
+  const gan={id:'gan',t:'Ganesh Stotram',hi:'गणेश स्तोत्रम्',ty:'read',s:'Loaded from your GitHub link',src:'gan',blocks:()=>ganeshBlocks()};
   const man={id:'man',t:'Manas Puja',hi:'मानस पूजा',ty:'read',s:`Mental offering to ${d.en}`,blocks:()=>manasBlocks(i)};
   const dur={id:'dur',t:'ॐ श्री दुर्गा देव्यै नमः',ty:'japa',target:108,s:'108 times (or as many as you can)',blocks:()=>[{h:'Mantra',lines:['ॐ श्री दुर्गा देव्यै नमः'],rom:['Om Shri Durgā Devyai Namaḥ']}]};
   if(slot==='m')return[
     gan,
-    {id:'san',t:'Sankalpa',hi:'संकल्प',ty:'sank',s:`Today’s resolve · ${d.en}`}];
+    {id:'san',t:'Sankalpa',hi:'संकल्प',ty:'sank',src:'san',s:`Today’s resolve · ${d.en}`}];
   return[
     gan,
     {id:'guru',t:'Guru Dhyan',hi:'गुरु ध्यान',ty:'check',s:'Sit quietly. Remember your Guru.'},
@@ -505,6 +561,11 @@ function viewMore(){
    <div class="srow"><div class="l">App text size</div><div class="opts"><button data-fs="-1">A−</button><button data-fs="1">A+</button></div></div>
    <div class="srow"><div class="l">Show roman transliteration</div><button class="tg ${S.rom?'on':''}" data-rom aria-label="Toggle roman"></button></div>
   </div>
+  <div class="card"><h3>Live texts · GitHub</h3>
+   <p class="hint" style="margin:0 0 8px">Ganesh Stotram and Sankalpa load from your repo <b>joyofdhamma/SCH_Path</b> each time the app opens, and are saved for offline use.</p>
+   ${['gan','san'].map(k=>`<div class="srow"><div class="l">${k==='gan'?'ganst.md':'snklp.md'}<small>${SST[k]==='loading'?'Updating…':SST[k]==='error'?(getSrc(k)?'Offline. Using saved copy.':'Not loaded yet'):getSrc(k)?'Up to date · '+new Date(TX[k].ts).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'Not loaded yet'}</small></div></div>`).join('')}
+   ${LS_OK?'':'<p class="hint" style="color:var(--pri)">This phone blocks saving for local files, so the texts reload every time you open the app. Open the file with Chrome to fix this.</p>'}
+   <button class="btn g" data-refresh style="width:100%">Refresh now</button></div>
   <div class="card"><h3>Reading</h3><button class="btn g" data-ksh style="width:100%">Aparadh Kshama Stotram · अपराधक्षमापणस्तोत्रम्</button></div>
   <div class="card"><h3>Tips</h3><p class="hint" style="margin:0">• In Chrome on Android, tap ⋮ then <b>Add to Home screen</b> to open this like an app.<br>• It works fully offline. Your ticks and counts stay on this phone.<br>• Panchang: one calendar lists both Ashtami and Navami on 19 Oct 2026. If a tithi is skipped or doubled, set Day 1 above, or tap any day tab to jump.</p></div>
   <div class="card"><h3>Reset</h3><button class="btn g" data-reset style="width:100%">Clear all ticks and counts</button></div></div>`;
@@ -556,7 +617,9 @@ function renderStep(){
   document.documentElement.style.setProperty('--rs',S.rs);
   let body='',tools='';
   const jk=gk(i,slot,x.id);
-  if(x.ty==='japa'){
+  const missing=x.src&&!getSrc(x.src);
+  if(missing){body=srcStatus(x.src)}
+  else if(x.ty==='japa'){
     const c=S.cnt[jk]||0,T=x.target||108;
     body=`<div class="jwrap"><button class="jbtn" id="jb" aria-label="Count">
       <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="var(--line)" stroke-width="4"/><circle id="jr" cx="50" cy="50" r="46" fill="none" stroke="var(--acc)" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="${289-289*ringP(c,T)}"/></svg>
@@ -617,6 +680,7 @@ function wireStep(x,jk){
   };
   const sk=q('#sk2');if(sk)sk.onclick=()=>adv(false);
   const bk=q('#bk');if(bk)bk.onclick=()=>{stopAuto();stopTimer();O.idx--;renderStep()};
+  const rt=q('#retry');if(rt)rt.onclick=()=>{rt.textContent='Loading…';fetchSrc(rt.dataset.k)};
   const gn=q('#gonames');if(gn)gn.onclick=()=>{closeStep();V.view='names';render();window.scrollTo(0,0)};
   q('#ov')&&0;
   $('#ov').querySelectorAll('[data-j]').forEach(b=>b.onclick=()=>{const t=$('#b'+b.dataset.j);if(t)$('#ovb').scrollTo({top:t.offsetTop-8,behavior:'smooth'})});
@@ -677,6 +741,7 @@ document.addEventListener('click',ev=>{
   if(ds.fs){S.fs=Math.max(.85,Math.min(1.4,+(S.fs+.08*ds.fs).toFixed(2)));save();render(true);return}
   if(ds.rom!==undefined){S.rom=!S.rom;save();render(true);return}
   if(ds.ksh!==undefined){openStep([{id:'ksh',t:'Aparadh Kshama Stotram',hi:'अपराधक्षमापणस्तोत्रम्',ty:'read',blocks:()=>kshamaBlocks()}],0,V.sel,'e',false);return}
+  if(ds.refresh!==undefined){fetchSrc('gan');fetchSrc('san');render(true);toast('Refreshing…');return}
   if(ds.reset!==undefined){if(confirm('Clear all ticks, counts and notes?')){S.done={};S.cnt={};S.note={};S.nm={};save();render(true);toast('Cleared')}return}
 });
 document.addEventListener('change',ev=>{
