@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sound Catcher</title>
+<style>
+  :root{
+    --bg:#f6f5f2; --card:#ffffff; --ink:#1c1b1a; --mute:#6b6963; --line:#e3e0d8;
+    --accent:#d9480f; --accent-ink:#fff; --ok:#2b8a3e; --warn:#c92a2a; --wave:#d9480f;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#141413; --card:#1f1e1d; --ink:#f1efe8; --mute:#9d9a90; --line:#33312e;
+      --accent:#ff7a3d; --accent-ink:#141413; --ok:#69db7c; --warn:#ff8787; --wave:#ff7a3d; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  .wrap{max-width:720px;margin:0 auto;padding:24px 16px 64px}
+  h1{font-size:24px;margin:0 0 4px}
+  .sub{color:var(--mute);margin:0 0 20px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
+  label{display:block;font-size:13px;color:var(--mute);margin:0 0 4px}
+  select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:520px){.row{grid-template-columns:1fr}}
+  .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  button{font:inherit;font-weight:600;padding:12px 18px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+  button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  canvas{width:100%;height:110px;display:block;border-radius:8px;background:var(--bg);border:1px solid var(--line)}
+  .stats{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:10px;font-variant-numeric:tabular-nums;color:var(--mute);font-size:14px}
+  .stats b{color:var(--ink)}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--mute);margin-right:6px}
+  .dot.rec{background:var(--warn);animation:p 1s infinite}
+  .dot.pause{background:#f59f00}
+  @keyframes p{50%{opacity:.3}}
+  .msg{padding:10px 12px;border-radius:8px;font-size:14px;margin-top:12px;background:var(--bg);border:1px solid var(--line)}
+  .msg.err{border-color:var(--warn);color:var(--warn)}
+  .msg.info{color:var(--mute)}
+  .clip{color:var(--warn);font-weight:600}
+  .item{border-top:1px solid var(--line);padding:12px 0}
+  .item:first-child{border-top:0}
+  .item audio{width:100%;margin:8px 0}
+  .meta{font-size:13px;color:var(--mute)}
+  .item a,.item button{font-size:14px;padding:8px 12px;text-decoration:none;display:inline-block}
+  .item a{background:var(--accent);color:var(--accent-ink);border-radius:8px;font-weight:600;margin-right:8px}
+  ol{margin:6px 0 0;padding-left:20px;color:var(--mute);font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Sound Catcher</h1>
+  <p class="sub">Record the sound playing on your device. Saved as lossless audio.</p>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <label for="source">Source</label>
+        <select id="source">
+          <option value="system">System / tab audio (what you hear)</option>
+          <option value="mic">Microphone (works on phones)</option>
+        </select>
+      </div>
+      <div>
+        <label for="format">Quality</label>
+        <select id="format">
+          <option value="wav">WAV — lossless, crystal clear (big files)</option>
+          <option value="opus">Opus 256 kbps — near-transparent (small files)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="btns">
+      <button id="start" class="primary">● Start recording</button>
+      <button id="pause" disabled>Pause</button>
+      <button id="stop" disabled>Stop &amp; save</button>
+    </div>
+    <div id="msg"></div>
+  </div>
+
+  <div class="card">
+    <canvas id="wave" width="1280" height="220"></canvas>
+    <div class="stats">
+      <span><span id="dot" class="dot"></span><b id="state">Idle</b></span>
+      <span>Time <b id="time">00:00</b></span>
+      <span>Size <b id="size">0 MB</b></span>
+      <span>Peak <b id="peak">-∞ dB</b></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <b>How to get clean system audio</b>
+    <ol>
+      <li>Pick “System / tab audio”, then press Start.</li>
+      <li>In the popup, choose a screen (Windows) or a tab (Mac).</li>
+      <li>Tick “Share system audio” or “Share tab audio”.</li>
+      <li>Play your sound. Keep the peak below 0 dB.</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <b>Convert to MP3</b>
+    <p class="meta" style="margin:4px 0 12px">Pick any audio file (WebM, WAV, M4A, OGG, FLAC…). You can also convert a recording below.</p>
+    <div class="row">
+      <div>
+        <label for="kbps">MP3 quality</label>
+        <select id="kbps">
+          <option value="320">320 kbps — best</option>
+          <option value="256">256 kbps</option>
+          <option value="192" selected>192 kbps</option>
+          <option value="128">128 kbps — smallest</option>
+        </select>
+      </div>
+      <div>
+        <label for="convFile">Audio or video file</label>
+        <input id="convFile" type="file" accept="audio/*,video/*,.webm,.opus,.ogg,.m4a,.flac,.wav,.aac" multiple>
+      </div>
+    </div>
+    <div id="convStatus"></div>
+  </div>
+
+  <div class="card">
+    <b>Your recordings</b>
+    <div id="list"><p class="meta">Nothing yet.</p></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const els = { source:$('source'), format:$('format'), start:$('start'), pause:$('pause'), stop:$('stop'),
+    msg:$('msg'), wave:$('wave'), dot:$('dot'), state:$('state'), time:$('time'), size:$('size'),
+    peak:$('peak'), list:$('list') };
+
+  let stream, ctx, srcNode, analyser, workletNode, procNode, silent, recorder;
+  let chunks = [], frames = 0, bytes = 0;
+  let recording = false, paused = false, mode = 'wav';
+  let t0 = 0, pausedAt = 0, pausedTotal = 0, raf = 0, peakHold = 0, peakAt = 0;
+  let count = 0;
+
+  const canSystem = !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia);
+  if (!canSystem) {
+    els.source.value = 'mic';
+    els.source.querySelector('option[value=system]').disabled = true;
+    say('This browser cannot capture system audio (common on phones). Microphone mode is on.', 'info');
+  }
+
+  function say(text, kind) {
+    els.msg.innerHTML = text ? '<div class="msg ' + (kind || '') + '">' + text + '</div>' : '';
+  }
+  const fmtTime = s => String(Math.floor(s/60)).padStart(2,'0') + ':' + String(Math.floor(s%60)).padStart(2,'0');
+  const fmtSize = b => b > 1048576 ? (b/1048576).toFixed(1) + ' MB' : (b/1024).toFixed(0) + ' KB';
+  const elapsed = () => recording ? ((paused ? pausedAt : performance.now()) - t0 - pausedTotal) / 1000 : 0;
+
+  const workletSrc = `
+    class Cap extends AudioWorkletProcessor {
+      constructor(){ super(); this.n = 0; this.buf = new Int16Array(8192); }
+      process(inputs){
+        const i = inputs[0];
+        if (i && i.length) {
+          const L = i[0], R = i[1] || i[0];
+          for (let k = 0; k < L.length; k++) {
+            let a = Math.max(-1, Math.min(1, L[k])), b = Math.max(-1, Math.min(1, R[k]));
+            this.buf[this.n++] = a < 0 ? a * 32768 : a * 32767;
+            this.buf[this.n++] = b < 0 ? b * 32768 : b * 32767;
+            if (this.n >= this.buf.length) {
+              const out = this.buf; this.port.postMessage(out.buffer, [out.buffer]);
+              this.buf = new Int16Array(8192); this.n = 0;
+            }
+          }
+        }
+        return true;
+      }
+    }
+    registerProcessor('cap', Cap);`;
+
+  function pushPCM(int16) {
+    if (!recording || paused) return;
+    chunks.push(int16);
+    frames += int16.length / 2;
+    bytes += int16.byteLength;
+  }
+
+  async function start() {
+    say('');
+    mode = els.format.value;
+    try {
+      const raw = { echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:2 };
+      if (els.source.value === 'system') {
+        stream = await navigator.mediaDevices.getDisplayMedia({ video:true, audio:raw });
+        if (!stream.getAudioTracks().length) {
+          stream.getTracks().forEach(t => t.stop()); stream = null;
+          say('No audio was shared. Start again and tick “Share system audio” (or “Share tab audio”).', 'err');
+          return;
+        }
+      } else {
+        stream = await navigator.mediaDevices.getUserMedia({ audio:raw });
+      }
+    } catch (e) {
+      say(e.name === 'NotAllowedError' ? 'Permission denied or cancelled.' : 'Could not start: ' + e.message, 'err');
+      return;
+    }
+
+    const audioTracks = stream.getAudioTracks();
+    audioTracks[0].addEventListener('ended', () => { if (recording) stop(); });
+    const audioStream = new MediaStream(audioTracks);
+
+    ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint:'playback' });
+    srcNode = ctx.createMediaStreamSource(audioStream);
+    analyser = ctx.createAnalyser();
+    analyser.fftSize = 2048;
+    srcNode.connect(analyser);
+
+    chunks = []; frames = 0; bytes = 0; pausedTotal = 0; peakHold = 0;
+
+    if (mode === 'wav') {
+      silent = ctx.createGain(); silent.gain.value = 0; silent.connect(ctx.destination);
+      let ok = false;
+      if (ctx.audioWorklet) {
+        try {
+          const url = URL.createObjectURL(new Blob([workletSrc], { type:'application/javascript' }));
+          await ctx.audioWorklet.addModule(url);
+          URL.revokeObjectURL(url);
+          workletNode = new AudioWorkletNode(ctx, 'cap', { channelCount:2, channelCountMode:'explicit', numberOfOutputs:1, outputChannelCount:[2] });
+          workletNode.port.onmessage = e => pushPCM(new Int16Array(e.data));
+          srcNode.connect(workletNode); workletNode.connect(silent);
+          ok = true;
+        } catch (e) { /* fall back below */ }
+      }
+      if (!ok) {
+        procNode = ctx.createScriptProcessor(4096, 2, 2);
+        procNode.onaudioprocess = e => {
+          const L = e.inputBuffer.getChannelData(0);
+          const R = e.inputBuffer.numberOfChannels > 1 ? e.inputBuffer.getChannelData(1) : L;
+          const out = new Int16Array(L.length * 2);
+          for (let i = 0; i < L.length; i++) {
+            const a = Math.max(-1, Math.min(1, L[i])), b = Math.max(-1, Math.min(1, R[i]));
+            out[i*2] = a < 0 ? a * 32768 : a * 32767;
+            out[i*2+1] = b < 0 ? b * 32768 : b * 32767;
+          }
+          pushPCM(out);
+        };
+        srcNode.connect(procNode); procNode.connect(silent);
+      }
+    } else {
+      const types = ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/mp4'];
+      const type = types.find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t));
+      if (!type) { say('This browser cannot record Opus. Pick WAV instead.', 'err'); cleanup(); return; }
+      recorder = new MediaRecorder(audioStream, { mimeType:type, audioBitsPerSecond:256000 });
+      recorder.ondataavailable = e => { if (e.data.size) { chunks.push(e.data); bytes += e.data.size; } };
+      recorder.onstop = () => finish(new Blob(chunks, { type:recorder.mimeType }), recorder.mimeType.includes('webm') ? 'webm' : recorder.mimeType.includes('ogg') ? 'ogg' : 'm4a');
+      recorder.start(1000);
+    }
+
+    recording = true; paused = false; t0 = performance.now();
+    window.addEventListener('beforeunload', warn);
+    ui('rec');
+    draw();
+  }
+
+  function pause() {
+    if (!recording) return;
+    if (!paused) {
+      paused = true; pausedAt = performance.now();
+      if (recorder) recorder.pause();
+      ui('pause');
+    } else {
+      pausedTotal += performance.now() - pausedAt; paused = false;
+      if (recorder) recorder.resume();
+      ui('rec');
+    }
+  }
+
+  function stop() {
+    if (!recording) return;
+    const dur = elapsed();
+    recording = false;
+    if (mode === 'wav') {
+      const rate = ctx.sampleRate;
+      const blob = makeWav(chunks, frames, rate);
+      lastDur = frames / rate;
+      cleanup();
+      finish(blob, 'wav');
+    } else {
+      lastDur = dur;
+      recorder.stop();
+      cleanup();
+    }
+    ui('idle');
+  }
+  let lastDur = 0;
+
+  function makeWav(parts, nFrames, rate) {
+    const dataLen = nFrames * 4;
+    const h = new DataView(new ArrayBuffer(44));
+    const w = (o, s) => { for (let i = 0; i < s.length; i++) h.setUint8(o + i, s.charCodeAt(i)); };
+    w(0,'RIFF'); h.setUint32(4, 36 + dataLen, true); w(8,'WAVE'); w(12,'fmt ');
+    h.setUint32(16,16,true); h.setUint16(20,1,true); h.setUint16(22,2,true);
+    h.setUint32(24,rate,true); h.setUint32(28,rate*4,true); h.setUint16(32,4,true); h.setUint16(34,16,true);
+    w(36,'data'); h.setUint32(40,dataLen,true);
+    return new Blob([h.buffer, ...parts], { type:'audio/wav' });
+  }
+
+  function finish(blob, ext, dur, baseName) {
+    count++;
+    const url = URL.createObjectURL(blob);
+    const name = (baseName || 'recording-' + new Date().toISOString().replace(/[:.]/g,'-').slice(0,19)) + '.' + ext;
+    if (els.list.querySelector('p.meta')) els.list.innerHTML = '';
+    const d = document.createElement('div');
+    d.className = 'item';
+    d.innerHTML = '<div><b></b></div>' +
+      '<div class="meta">' + ext.toUpperCase() + ' · ' + fmtTime(dur != null ? dur : lastDur) + ' · ' + fmtSize(blob.size) + '</div>' +
+      '<audio controls src="' + url + '"></audio>' +
+      '<a href="' + url + '" download="' + name + '">Download</a>' +
+      (ext !== 'mp3' ? '<button class="mp3">Convert to MP3</button> ' : '') +
+      '<button class="del">Delete</button>';
+    d.querySelector('b').textContent = name;
+    d.querySelector('.del').onclick = () => {
+      URL.revokeObjectURL(url); d.remove();
+      if (!els.list.children.length) els.list.innerHTML = '<p class="meta">Nothing yet.</p>';
+    };
+    const cb = d.querySelector('.mp3');
+    if (cb) cb.onclick = async () => {
+      cb.disabled = true;
+      try {
+        const r = await toMp3(blob, +$('kbps').value, p => cb.textContent = 'Converting ' + p + '%');
+        finish(r.blob, 'mp3', r.duration, name.replace(/\.[^.]+$/, ''));
+      } catch (e) { say('MP3 conversion failed: ' + e.message, 'err'); }
+      cb.textContent = 'Convert to MP3'; cb.disabled = false;
+    };
+    els.list.prepend(d);
+    chunks = [];
+  }
+
+  /* ---------- MP3 conversion (decode with the browser, encode with lamejs) ---------- */
+  function loadLame() {
+    if (window.lamejs) return Promise.resolve();
+    return new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js';
+      s.onload = res;
+      s.onerror = () => rej(new Error('Could not load the MP3 encoder. Check your internet connection.'));
+      document.head.appendChild(s);
+    });
+  }
+
+  async function toMp3(blob, kbps, onProgress) {
+    await loadLame();
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    let audio;
+    try { audio = await ac.decodeAudioData(await blob.arrayBuffer()); }
+    catch (e) { throw new Error('This browser cannot read that file.'); }
+    finally { ac.close(); }
+
+    // MP3 supports up to 48 kHz. Resample anything higher.
+    if (audio.sampleRate > 48000) {
+      const off = new OfflineAudioContext(audio.numberOfChannels, Math.ceil(audio.duration * 48000), 48000);
+      const src = off.createBufferSource();
+      src.buffer = audio; src.connect(off.destination); src.start();
+      audio = await off.startRendering();
+    }
+
+    const ch = Math.min(2, audio.numberOfChannels);
+    const rate = audio.sampleRate;
+    const toInt = f => {
+      const o = new Int16Array(f.length);
+      for (let i = 0; i < f.length; i++) { const a = Math.max(-1, Math.min(1, f[i])); o[i] = a < 0 ? a * 32768 : a * 32767; }
+      return o;
+    };
+    const L = toInt(audio.getChannelData(0));
+    const R = ch > 1 ? toInt(audio.getChannelData(1)) : null;
+    const enc = new lamejs.Mp3Encoder(ch, rate, kbps);
+    const out = [], block = 1152;
+    for (let i = 0, n = 0; i < L.length; i += block, n++) {
+      const buf = ch > 1
+        ? enc.encodeBuffer(L.subarray(i, i + block), R.subarray(i, i + block))
+        : enc.encodeBuffer(L.subarray(i, i + block));
+      if (buf.length) out.push(new Int8Array(buf));
+      if (n % 400 === 0) {
+        onProgress && onProgress(Math.round(i / L.length * 100));
+        await new Promise(r => setTimeout(r));
+      }
+    }
+    const end = enc.flush();
+    if (end.length) out.push(new Int8Array(end));
+    return { blob: new Blob(out, { type:'audio/mpeg' }), duration: audio.duration };
+  }
+
+  $('convFile').onchange = async e => {
+    const files = [...e.target.files];
+    e.target.value = '';
+    for (const f of files) {
+      $('convStatus').innerHTML = '<div class="msg info">Converting ' + f.name.replace(/[<>&]/g,'') + ' …</div>';
+      try {
+        const r = await toMp3(f, +$('kbps').value, p => {
+          $('convStatus').innerHTML = '<div class="msg info">Converting ' + p + '%</div>';
+        });
+        finish(r.blob, 'mp3', r.duration, f.name.replace(/\.[^.]+$/, ''));
+        $('convStatus').innerHTML = '<div class="msg info">Done. Find it in “Your recordings”.</div>';
+      } catch (err) {
+        $('convStatus').innerHTML = '<div class="msg err">' + err.message + '</div>';
+      }
+    }
+  };
+
+  function cleanup() {
+    cancelAnimationFrame(raf);
+    window.removeEventListener('beforeunload', warn);
+    try { workletNode && workletNode.disconnect(); } catch(e){}
+    try { procNode && (procNode.onaudioprocess = null, procNode.disconnect()); } catch(e){}
+    try { srcNode && srcNode.disconnect(); } catch(e){}
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    if (ctx && ctx.state !== 'closed') ctx.close();
+    stream = ctx = srcNode = analyser = workletNode = procNode = silent = null;
+  }
+  const warn = e => { e.preventDefault(); e.returnValue = ''; };
+
+  function ui(s) {
+    els.start.disabled = s !== 'idle';
+    els.pause.disabled = s === 'idle';
+    els.stop.disabled = s === 'idle';
+    els.pause.textContent = s === 'pause' ? 'Resume' : 'Pause';
+    els.dot.className = 'dot' + (s === 'rec' ? ' rec' : s === 'pause' ? ' pause' : '');
+    els.state.textContent = s === 'rec' ? 'Recording' : s === 'pause' ? 'Paused' : 'Idle';
+    els.source.disabled = els.format.disabled = s !== 'idle';
+    if (s === 'idle') { els.time.textContent = '00:00'; els.size.textContent = '0 MB'; els.peak.textContent = '-∞ dB'; clearCanvas(); }
+  }
+
+  const g = els.wave.getContext('2d');
+  function clearCanvas() { g.clearRect(0, 0, els.wave.width, els.wave.height); }
+  function draw() {
+    raf = requestAnimationFrame(draw);
+    if (!analyser) return;
+    const data = new Float32Array(analyser.fftSize);
+    analyser.getFloatTimeDomainData(data);
+    let pk = 0;
+    for (let i = 0; i < data.length; i++) { const a = Math.abs(data[i]); if (a > pk) pk = a; }
+    const now = performance.now();
+    if (pk > peakHold || now - peakAt > 1500) { peakHold = pk; peakAt = now; }
+    const db = peakHold > 0 ? 20 * Math.log10(peakHold) : -Infinity;
+    els.peak.innerHTML = db >= -0.1 ? '<span class="clip">CLIPPING</span>' : (isFinite(db) ? db.toFixed(1) : '-∞') + ' dB';
+    els.time.textContent = fmtTime(elapsed());
+    els.size.textContent = fmtSize(bytes);
+
+    const W = els.wave.width, H = els.wave.height;
+    g.clearRect(0, 0, W, H);
+    g.lineWidth = 3;
+    g.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--wave').trim() || '#d9480f';
+    g.beginPath();
+    for (let i = 0; i < data.length; i++) {
+      const x = i / data.length * W, y = H / 2 - data[i] * (H / 2) * 0.95;
+      i ? g.lineTo(x, y) : g.moveTo(x, y);
+    }
+    g.stroke();
+  }
+
+  els.start.onclick = start;
+  els.pause.onclick = pause;
+  els.stop.onclick = stop;
+  ui('idle');
+})();
+</script>
+</body>
+</html>
