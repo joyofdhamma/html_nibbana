@@ -2,7 +2,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: two panes (compose form, QR panel). Stacks to one column on phones. */
+/* Layout: two tabs. Write tab = form + QR parts panel. Read tab = paste box + decrypted email. */
 :root {
   --bg: #f3f5f9;
   --surface: #ffffff;
@@ -67,57 +67,79 @@ body {
 header h1 { margin: 0; font-size: 1.6rem; font-weight: 600; letter-spacing: -0.01em; text-wrap: balance; }
 header p { margin: 6px 0 0; color: var(--muted); max-width: 60ch; }
 
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+.tab { border: 0; border-bottom: 3px solid transparent; border-radius: 0; padding: 10px 14px; color: var(--muted); font-weight: 500; margin-bottom: -1px; }
+.tab:hover { border-color: transparent; border-bottom-color: var(--line); }
+.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+
 .grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; }
 @media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.read-wrap { display: flex; flex-direction: column; gap: 20px; max-width: 720px; }
 
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .field[hidden] { display: none; }
 .label-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 label, .lbl { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-input, textarea {
+input, textarea, select {
   font: inherit; color: var(--fg); background: var(--bg);
   border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; width: 100%;
 }
-textarea { min-height: 220px; resize: vertical; line-height: 1.55; }
-input:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+textarea { min-height: 200px; resize: vertical; line-height: 1.55; }
+textarea.paste { min-height: 150px; font-family: var(--font-mono); font-size: 0.8rem; }
+textarea[readonly], input[readonly] { background: var(--surface); }
+input:focus-visible, textarea:focus-visible, select:focus-visible, button:focus-visible, a.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .hint { font-size: 0.8rem; color: var(--muted); }
 
 .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-button {
-  font: inherit; font-weight: 500; cursor: pointer;
+button, a.btn {
+  font: inherit; font-weight: 500; cursor: pointer; text-decoration: none; display: inline-block;
   border-radius: 6px; padding: 9px 14px; border: 1px solid var(--line);
   background: transparent; color: var(--fg);
 }
-button:hover { border-color: var(--accent); }
+button:hover, a.btn:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button:disabled { opacity: 0.6; cursor: progress; }
 button.link { border: 0; padding: 0; color: var(--accent); font-size: 0.85rem; background: none; text-decoration: underline; text-underline-offset: 2px; }
+button.small { padding: 4px 10px; font-size: 0.8rem; }
 
-.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; max-width: 340px; }
-.seg button { line-height: 1.25; }
-.seg button { border: 1px solid var(--line); border-radius: 6px; padding: 8px 6px; font-size: 0.8rem; color: var(--muted); }
-.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
+.pass-row { display: flex; gap: 8px; }
+.pass-row input { flex: 1; min-width: 0; }
 
 .qr-panel { align-items: center; text-align: center; position: sticky; top: 16px; }
 @media (max-width: 760px) { .qr-panel { position: static; } }
 .qr-box { background: #ffffff; border-radius: 8px; padding: 14px; width: 100%; max-width: 340px; aspect-ratio: 1; display: grid; place-items: center; border: 1px solid var(--line); }
 .qr-box svg { width: 100%; height: 100%; display: block; }
 .empty { color: #5b6479; font-size: 0.9rem; padding: 12px; }
+.part-title { font-weight: 600; font-variant-numeric: tabular-nums; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 340px; }
+.chips button { min-width: 36px; padding: 4px 8px; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.chips button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
 .steps { margin: 0; padding-left: 1.2em; text-align: left; color: var(--muted); font-size: 0.9rem; width: 100%; max-width: 340px; }
 .steps li { margin: 2px 0; }
 .stat { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 .note { width: 100%; border-radius: 6px; padding: 8px 12px; font-size: 0.85rem; text-align: left; }
 .note.warn { background: var(--warn-bg); color: var(--warn); }
 .note.bad { background: var(--bad-bg); color: var(--bad); }
+.note.ok { color: var(--ok); padding-inline: 0; }
 .toast { color: var(--ok); font-size: 0.85rem; min-height: 1.2em; }
+.result { gap: 14px; }
+.result h2 { margin: 0; font-size: 1.1rem; }
 </style>
 
 <div class="wrap">
   <header>
     <h1>Mail to Phone</h1>
-    <p>Write the email here. Scan the code with your phone camera. Your mail app opens with the email already filled in.</p>
+    <p>Write a long email on your computer. Encrypt it into QR codes. Scan them with your phone, paste the text into the Read tab, and get the full email back.</p>
   </header>
 
-  <div class="grid">
+  <div class="tabs" role="tablist" aria-label="Mode">
+    <button class="tab" id="tabWrite" role="tab" aria-selected="true" aria-controls="viewWrite" type="button">Write &amp; encrypt</button>
+    <button class="tab" id="tabRead" role="tab" aria-selected="false" aria-controls="viewRead" type="button">Read &amp; decrypt</button>
+  </div>
+
+  <!-- WRITE TAB -->
+  <div class="grid" id="viewWrite" role="tabpanel" aria-labelledby="tabWrite">
     <section class="panel" aria-label="Compose email">
       <div class="field">
         <div class="label-row">
@@ -150,61 +172,242 @@ button.link { border: 0; padding: 0; color: var(--accent); font-size: 0.85rem; b
       </div>
       <div class="field">
         <label for="body">Body</label>
-        <textarea id="body" placeholder="Write your email here."></textarea>
+        <textarea id="body" placeholder="Write your email here. Any length."></textarea>
+        <span class="hint" id="bodyCount"></span>
+      </div>
+      <div class="field">
+        <label for="pass">Passphrase</label>
+        <div class="pass-row">
+          <input id="pass" type="password" autocomplete="off" spellcheck="false" placeholder="At least 6 characters">
+          <button id="showPass" type="button">Show</button>
+        </div>
+        <span class="hint">You type the same passphrase on your phone. It is never saved.</span>
+      </div>
+      <div class="field">
+        <label for="partSize">QR size</label>
+        <select id="partSize">
+          <option value="150">Small: easiest to scan, more codes</option>
+          <option value="250" selected>Medium: good balance</option>
+          <option value="400">Large: fewer codes, denser</option>
+        </select>
       </div>
       <div class="row">
+        <button id="encrypt" class="primary" type="button">Encrypt &amp; make QR</button>
         <button id="clear" type="button">Clear all</button>
         <button id="sample" type="button">Load example</button>
         <span id="toast" class="toast" role="status"></span>
       </div>
     </section>
 
-    <aside class="panel qr-panel" aria-label="QR code">
-      <div class="seg" role="group" aria-label="Open in">
-        <button id="modeDefault" type="button" aria-pressed="true">Phone default</button>
-        <button id="modeGmailAndroid" type="button" aria-pressed="false">Gmail app (Android)</button>
-        <button id="modeGmailApp" type="button" aria-pressed="false">Gmail app (iPhone)</button>
-        <button id="modeGmail" type="button" aria-pressed="false">Gmail web</button>
-      </div>
-      <div class="qr-box" id="qr"></div>
-      <div class="stat" id="stat"></div>
-      <div id="msg" style="width:100%"></div>
-      <ol class="steps">
-        <li>Open the phone camera.</li>
-        <li>Point it at the code.</li>
-        <li>Tap the banner that appears.</li>
-        <li>Check the email, then press Send.</li>
-      </ol>
-      <div class="hint" id="modeHint"></div>
-      <div class="row" style="justify-content:center">
-        <button id="copyLink" type="button">Copy link</button>
+    <aside class="panel qr-panel" aria-label="Encrypted QR codes">
+      <div id="qrNote" style="width:100%"></div>
+      <div class="qr-box" id="qr"><div class="empty">Write the email, add a passphrase, then press Encrypt. The QR codes appear here.</div></div>
+      <div id="partUi" hidden style="width:100%; display:none; flex-direction:column; align-items:center; gap:12px">
+        <div class="part-title" id="partTitle"></div>
+        <div class="row" style="justify-content:center">
+          <button id="prev" type="button">Previous</button>
+          <button id="next" type="button">Next</button>
+          <button id="auto" type="button" aria-pressed="false">Auto-play</button>
+        </div>
+        <div class="chips" id="chips"></div>
+        <div class="stat" id="stat"></div>
+        <div class="row" style="justify-content:center">
+          <button id="copyPart" type="button">Copy this part</button>
+          <button id="copyAll" type="button">Copy all text</button>
+        </div>
+        <ol class="steps">
+          <li>On your phone, open the Read tab of this page.</li>
+          <li>Scan each code with a QR scanner. Copy the text it shows.</li>
+          <li>Paste every part into the Read tab, one after another.</li>
+          <li>Type the passphrase. Press Decrypt.</li>
+        </ol>
       </div>
     </aside>
+  </div>
+
+  <!-- READ TAB -->
+  <div class="read-wrap" id="viewRead" role="tabpanel" aria-labelledby="tabRead" hidden>
+    <section class="panel" aria-label="Paste encrypted text">
+      <div class="field">
+        <label for="paste">Encrypted text</label>
+        <textarea id="paste" class="paste" spellcheck="false" placeholder="Paste each part here. Each part starts with MTP1."></textarea>
+        <span class="hint" id="pasteStatus">Nothing pasted yet.</span>
+      </div>
+      <div class="field">
+        <label for="pass2">Passphrase</label>
+        <div class="pass-row">
+          <input id="pass2" type="password" autocomplete="off" spellcheck="false" placeholder="The passphrase you used when encrypting">
+          <button id="showPass2" type="button">Show</button>
+        </div>
+      </div>
+      <div class="row">
+        <button id="decrypt" class="primary" type="button">Decrypt</button>
+        <button id="clear2" type="button">Clear</button>
+        <span id="toast2" class="toast" role="status"></span>
+      </div>
+      <div id="readNote" style="width:100%"></div>
+    </section>
+
+    <section class="panel result" id="result" aria-label="Decrypted email" hidden>
+      <h2>Your email</h2>
+      <div id="resultFields" style="display:flex; flex-direction:column; gap:14px"></div>
+      <div class="row">
+        <a class="btn" id="openMail" href="#">Open in mail app</a>
+        <a class="btn" id="openGmail" href="#">Open in Gmail app (Android)</a>
+        <button id="copyEverything" type="button">Copy everything</button>
+      </div>
+      <span class="hint">If a mail button does nothing, use the Copy buttons and paste into your mail app.</span>
+    </section>
   </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
+/*CORE*/
+var te = new TextEncoder(), td = new TextDecoder();
+var PBKDF_ITER = 200000;
+
+function b64e(u8) {
+  var s = '';
+  for (var i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function b64d(s) {
+  s = s.replace(/-/g, '+').replace(/_/g, '/');
+  while (s.length % 4) s += '=';
+  var bin = atob(s), u = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  return u;
+}
+function streamBytes(bytes, transform) {
+  return new Response(new Blob([bytes]).stream().pipeThrough(transform)).arrayBuffer().then(function (b) { return new Uint8Array(b); });
+}
+function deflate(bytes) { return streamBytes(bytes, new CompressionStream('deflate-raw')); }
+function inflate(bytes) { return streamBytes(bytes, new DecompressionStream('deflate-raw')); }
+
+async function deriveKey(pass, salt) {
+  var km = await crypto.subtle.importKey('raw', te.encode(pass), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: salt, iterations: PBKDF_ITER, hash: 'SHA-256' },
+    km, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+  );
+}
+
+async function encryptEmail(obj, pass, size) {
+  var raw = te.encode(JSON.stringify(obj)), data = raw, flag = 0;
+  if (typeof CompressionStream !== 'undefined') {
+    try { var z = await deflate(raw); if (z.length < raw.length) { data = z; flag = 1; } } catch (e) {}
+  }
+  var salt = crypto.getRandomValues(new Uint8Array(16));
+  var iv = crypto.getRandomValues(new Uint8Array(12));
+  var key = await deriveKey(pass, salt);
+  var ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, data));
+  var out = new Uint8Array(29 + ct.length);
+  out[0] = flag; out.set(salt, 1); out.set(iv, 17); out.set(ct, 29);
+  var b64 = b64e(out), id = b64e(salt).slice(0, 4), n = Math.ceil(b64.length / size), parts = [];
+  for (var i = 0; i < n; i++) parts.push('MTP1.' + id + '.' + (i + 1) + '.' + n + '.' + b64.slice(i * size, (i + 1) * size));
+  return { parts: parts, rawBytes: raw.length, packedBytes: data.length, cipherChars: b64.length, compressed: flag === 1 };
+}
+
+function parseParts(text) {
+  var groups = {}, segs = text.split(/(?=MTP1\.)/);
+  segs.forEach(function (seg) {
+    var m = seg.trim().match(/^MTP1\.([A-Za-z0-9_-]{4})\.(\d+)\.(\d+)\.([A-Za-z0-9_-]+)/);
+    if (!m) return;
+    var id = m[1], i = +m[2], n = +m[3];
+    if (!groups[id]) groups[id] = { n: n, parts: {} };
+    groups[id].parts[i] = m[4];
+  });
+  var ids = Object.keys(groups);
+  if (!ids.length) return { count: 0 };
+  if (ids.length > 1) return { mixed: true, count: ids.length };
+  var g = groups[ids[0]], missing = [];
+  for (var k = 1; k <= g.n; k++) if (!g.parts[k]) missing.push(k);
+  return { id: ids[0], n: g.n, have: g.n - missing.length, missing: missing, parts: g.parts };
+}
+
+async function decryptEmail(info, pass) {
+  var s = '';
+  for (var k = 1; k <= info.n; k++) s += info.parts[k];
+  var b = b64d(s);
+  var key = await deriveKey(pass, b.slice(1, 17)), data;
+  try {
+    data = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b.slice(17, 29) }, key, b.slice(29)));
+  } catch (e) { throw new Error('BAD'); }
+  if (b[0] === 1) {
+    if (typeof DecompressionStream === 'undefined') throw new Error('NOZIP');
+    data = await inflate(data);
+  }
+  return JSON.parse(td.decode(data));
+}
+/*ENDCORE*/
+</script>
+
+<script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   var to = $('to'), cc = $('cc'), bcc = $('bcc'), subject = $('subject'), body = $('body');
-  var ccField = $('ccField'), bccField = $('bccField');
-  var qrEl = $('qr'), statEl = $('stat'), msgEl = $('msg'), toast = $('toast'), modeHint = $('modeHint');
-  var KEY = 'mail-to-phone-draft';
-  var mode = 'default';
-  var lastUri = '';
+  var ccField = $('ccField'), bccField = $('bccField'), pass = $('pass'), partSize = $('partSize');
+  var qrEl = $('qr'), qrNote = $('qrNote'), partUi = $('partUi');
+  var KEY = 'mail-to-phone-draft-v2';
+  var parts = [], cur = 0, stale = false, timer = null;
 
   var SAMPLE = {
-    to: 'dummy@example.com',
-    subject: '',
-    body: ''
+    to: 'priya@example.com',
+    subject: 'Meeting notes from Tuesday',
+    body: 'Hi Priya,\n\nThanks for your time on Tuesday. Here is a short summary:\n\n- Launch date moves to 14 November\n- I will send the revised budget by Friday\n- Please confirm the venue\n\nRegards,\nJoy'
   };
 
+  /* ---------- tabs ---------- */
+  function showTab(name) {
+    var read = name === 'read';
+    $('viewWrite').hidden = read;
+    $('viewRead').hidden = !read;
+    $('tabWrite').setAttribute('aria-selected', String(!read));
+    $('tabRead').setAttribute('aria-selected', String(read));
+    if (read) stopAuto();
+  }
+  $('tabWrite').addEventListener('click', function () { showTab('write'); });
+  $('tabRead').addEventListener('click', function () { showTab('read'); });
+  if (location.hash === '#read') showTab('read');
+  window.addEventListener('hashchange', function () { showTab(location.hash === '#read' ? 'read' : 'write'); });
+
+  /* ---------- helpers ---------- */
+  function note(el, kind, text) {
+    el.innerHTML = '';
+    if (!text) return;
+    var d = document.createElement('div');
+    d.className = 'note ' + kind;
+    d.textContent = text;
+    el.appendChild(d);
+  }
+  function flash(el, t) {
+    el.textContent = t;
+    setTimeout(function () { el.textContent = ''; }, 2200);
+  }
+  function copy(text, toastEl, okMsg) {
+    var fail = function () { flash(toastEl, 'Copy blocked. Select the text and copy by hand.'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { flash(toastEl, okMsg); }, fail);
+    } else { fail(); }
+  }
+  function nf(n) { return n.toLocaleString('en-US'); }
+  function toggleShow(btn, input) {
+    btn.addEventListener('click', function () {
+      var show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      btn.textContent = show ? 'Hide' : 'Show';
+    });
+  }
+  toggleShow($('showPass'), pass);
+  toggleShow($('showPass2'), $('pass2'));
+
+  /* ---------- draft ---------- */
   function save() {
     try {
       localStorage.setItem(KEY, JSON.stringify({
         to: to.value, cc: cc.value, bcc: bcc.value, subject: subject.value, body: body.value,
-        showCc: !ccField.hidden, showBcc: !bccField.hidden, mode: mode
+        showCc: !ccField.hidden, showBcc: !bccField.hidden, size: partSize.value
       }));
     } catch (e) {}
   }
@@ -217,53 +420,29 @@ button.link { border: 0; padding: 0; color: var(--accent); font-size: 0.85rem; b
         subject.value = d.subject || ''; body.value = d.body || '';
         ccField.hidden = !(d.showCc || d.cc);
         bccField.hidden = !(d.showBcc || d.bcc);
-        mode = (d.mode === 'gmail' || d.mode === 'gmailapp' || d.mode === 'gmailandroid') ? d.mode : 'default';
+        if (d.size) partSize.value = d.size;
         return true;
       }
     } catch (e) {}
     return false;
   }
 
-  function addrList(s, enc) {
-    return s.split(/[,;\s]+/).filter(Boolean).map(function (a) {
-      return encodeURIComponent(a).replace(/%40/g, '@');
-    }).join(',');
-  }
-  function nl(s) { return s.replace(/\r?\n/g, '\r\n'); }
-
-  function buildUri() {
-    var t = addrList(to.value), c = addrList(cc.value), b = addrList(bcc.value);
-    var p = [];
-    if (mode === 'gmailandroid') {
-      if (c) p.push('cc=' + c);
-      if (b) p.push('bcc=' + b);
-      if (subject.value) p.push('subject=' + encodeURIComponent(subject.value));
-      if (body.value) p.push('body=' + encodeURIComponent(nl(body.value)));
-      return 'intent:' + t + (p.length ? '?' + p.join('&') : '') + '#Intent;scheme=mailto;package=com.google.android.gm;end';
-    }
-    if (mode === 'gmailapp') {
-      if (t) p.push('to=' + t);
-      if (c) p.push('cc=' + c);
-      if (b) p.push('bcc=' + b);
-      if (subject.value) p.push('subject=' + encodeURIComponent(subject.value));
-      if (body.value) p.push('body=' + encodeURIComponent(nl(body.value)));
-      return 'googlegmail:///co' + (p.length ? '?' + p.join('&') : '');
-    }
-    if (mode === 'gmail') {
-      if (t) p.push('to=' + t);
-      if (c) p.push('cc=' + c);
-      if (b) p.push('bcc=' + b);
-      if (subject.value) p.push('su=' + encodeURIComponent(subject.value));
-      if (body.value) p.push('body=' + encodeURIComponent(body.value.replace(/\r?\n/g, '\n')));
-      return 'https://mail.google.com/mail/?view=cm&fs=1' + (p.length ? '&' + p.join('&') : '');
-    }
-    if (c) p.push('cc=' + c);
-    if (b) p.push('bcc=' + b);
-    if (subject.value) p.push('subject=' + encodeURIComponent(subject.value));
-    if (body.value) p.push('body=' + encodeURIComponent(nl(body.value)));
-    return 'mailto:' + t + (p.length ? '?' + p.join('&') : '');
+  function updateCount() {
+    var n = body.value.length;
+    $('bodyCount').textContent = n ? nf(n) + ' characters' : '';
   }
 
+  function markStale() {
+    updateCount();
+    save();
+    if (parts.length && !stale) {
+      stale = true;
+      stopAuto();
+      note(qrNote, 'warn', 'The email changed. Press Encrypt again to update the codes.');
+    }
+  }
+
+  /* ---------- QR parts ---------- */
   function drawSvg(qr) {
     var n = qr.getModuleCount(), q = 4, size = n + q * 2, d = '';
     for (var r = 0; r < n; r++) {
@@ -272,96 +451,224 @@ button.link { border: 0; padding: 0; color: var(--accent); font-size: 0.85rem; b
       }
     }
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + size + ' ' + size +
-      '" shape-rendering="crispEdges" role="img" aria-label="QR code for the email">' +
+      '" shape-rendering="crispEdges" role="img" aria-label="QR code part">' +
       '<rect width="' + size + '" height="' + size + '" fill="#ffffff"/><path d="' + d + '" fill="#000000"/></svg>';
   }
 
-  function note(kind, text) {
-    msgEl.innerHTML = '';
-    if (!text) return;
-    var el = document.createElement('div');
-    el.className = 'note ' + kind;
-    el.textContent = text;
-    msgEl.appendChild(el);
-  }
-
-  function render() {
-    save();
-    $('modeDefault').setAttribute('aria-pressed', String(mode === 'default'));
-    $('modeGmailAndroid').setAttribute('aria-pressed', String(mode === 'gmailandroid'));
-    $('modeGmailApp').setAttribute('aria-pressed', String(mode === 'gmailapp'));
-    $('modeGmail').setAttribute('aria-pressed', String(mode === 'gmail'));
-    modeHint.textContent = mode === 'gmailandroid'
-      ? 'Opens the Gmail app on Android. Works when your scanner passes the link to Chrome. If it only shows text, use Phone default with Gmail set as the default mail app.'
-      : mode === 'gmailapp'
-      ? 'Opens the Gmail app on iPhone. The Gmail app must be installed. It does not work on Android.'
-      : mode === 'gmail'
-      ? 'Opens Gmail in the phone browser, not in the app.'
-      : 'Opens your default mail app. On Android, set Gmail as the default mail app and this opens Gmail.';
-
-    if (!to.value.trim() && !cc.value.trim() && !bcc.value.trim() && !subject.value && !body.value) {
-      lastUri = '';
-      qrEl.innerHTML = '<div class="empty">Type an email on the left. The QR code appears here.</div>';
-      statEl.textContent = '';
-      note('', '');
-      return;
-    }
-    var uri = buildUri();
-    lastUri = uri;
-    var len = uri.length;
+  function showPart(i) {
+    if (!parts.length) return;
+    cur = (i + parts.length) % parts.length;
     try {
-      var qr = qrcode(0, 'L');
-      qr.addData(uri);
+      var qr = qrcode(0, 'M');
+      qr.addData(parts[cur]);
       qr.make();
       qrEl.innerHTML = drawSvg(qr);
-      statEl.textContent = len + ' of 2,953 characters used';
-      if (len > 1100) note('warn', 'Long email. The code is dense. Hold the phone close and steady, or shorten the body.');
-      else note('', '');
     } catch (e) {
-      qrEl.innerHTML = '<div class="empty">Too long for one QR code.</div>';
-      statEl.textContent = len + ' of 2,953 characters used';
-      note('bad', 'Shorten the body by about ' + (len - 2953) + ' characters. Line breaks and special characters count extra.');
+      qrEl.innerHTML = '<div class="empty">This part is too big. Choose a smaller QR size and encrypt again.</div>';
     }
+    $('partTitle').textContent = 'Part ' + (cur + 1) + ' of ' + parts.length;
+    var chips = $('chips').children;
+    for (var k = 0; k < chips.length; k++) chips[k].setAttribute('aria-pressed', String(k === cur));
   }
 
-  function flash(t) {
-    toast.textContent = t;
-    setTimeout(function () { toast.textContent = ''; }, 1800);
+  function buildChips() {
+    var box = $('chips');
+    box.innerHTML = '';
+    parts.forEach(function (_, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = String(i + 1);
+      b.setAttribute('aria-label', 'Show part ' + (i + 1));
+      b.addEventListener('click', function () { stopAuto(); showPart(i); });
+      box.appendChild(b);
+    });
   }
-  function copy(text, okMsg) {
-    var done = function () { flash(okMsg); };
-    var fail = function () { flash('Copy failed. Select the text and copy it by hand.'); };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(done, fail);
-    } else { fail(); }
+
+  function stopAuto() {
+    if (timer) { clearInterval(timer); timer = null; }
+    $('auto').setAttribute('aria-pressed', 'false');
+    $('auto').textContent = 'Auto-play';
   }
+  $('auto').addEventListener('click', function () {
+    if (timer) { stopAuto(); return; }
+    if (parts.length < 2) return;
+    $('auto').setAttribute('aria-pressed', 'true');
+    $('auto').textContent = 'Stop';
+    timer = setInterval(function () { showPart(cur + 1); }, 4000);
+  });
+  $('prev').addEventListener('click', function () { stopAuto(); showPart(cur - 1); });
+  $('next').addEventListener('click', function () { stopAuto(); showPart(cur + 1); });
+  $('copyPart').addEventListener('click', function () { if (parts.length) copy(parts[cur], $('toast'), 'Part copied'); });
+  $('copyAll').addEventListener('click', function () { if (parts.length) copy(parts.join('\n'), $('toast'), 'All parts copied'); });
 
-  [to, cc, bcc, subject, body].forEach(function (el) { el.addEventListener('input', render); });
+  /* ---------- encrypt ---------- */
+  $('encrypt').addEventListener('click', async function () {
+    var btn = $('encrypt');
+    note(qrNote, '', '');
+    if (!window.crypto || !crypto.subtle) {
+      note(qrNote, 'bad', 'This browser blocks encryption on this page. Open the page over https.');
+      return;
+    }
+    if (!subject.value.trim() && !body.value.trim()) {
+      note(qrNote, 'bad', 'Write a subject or a body first.');
+      return;
+    }
+    if (pass.value.length < 6) {
+      note(qrNote, 'bad', 'Enter a passphrase of at least 6 characters.');
+      pass.focus();
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Encrypting…';
+    stopAuto();
+    try {
+      var res = await encryptEmail(
+        { v: 1, t: to.value, c: cc.value, b: bcc.value, s: subject.value, m: body.value },
+        pass.value, +partSize.value
+      );
+      parts = res.parts; stale = false;
+      partUi.hidden = false;
+      partUi.style.display = 'flex';
+      buildChips();
+      showPart(0);
+      $('stat').textContent = nf(res.rawBytes) + ' bytes' + (res.compressed ? ' → ' + nf(res.packedBytes) + ' packed' : '') +
+        ' → ' + nf(res.cipherChars) + ' chars → ' + parts.length + (parts.length === 1 ? ' code' : ' codes');
+      if (parts.length > 12) note(qrNote, 'warn', 'This email needs ' + parts.length + ' codes. Choose the Large QR size, or shorten the email.');
+    } catch (e) {
+      note(qrNote, 'bad', 'Encryption failed. Try again.');
+    }
+    btn.disabled = false;
+    btn.textContent = 'Encrypt & make QR';
+  });
 
-  $('addCc').addEventListener('click', function () { ccField.hidden = false; cc.focus(); render(); });
-  $('addBcc').addEventListener('click', function () { bccField.hidden = false; bcc.focus(); render(); });
-  $('rmCc').addEventListener('click', function () { cc.value = ''; ccField.hidden = true; render(); });
-  $('rmBcc').addEventListener('click', function () { bcc.value = ''; bccField.hidden = true; render(); });
+  [to, cc, bcc, subject, body, partSize].forEach(function (el) {
+    el.addEventListener('input', markStale);
+    el.addEventListener('change', markStale);
+  });
+  pass.addEventListener('input', function () {
+    if (parts.length && !stale) { stale = true; stopAuto(); note(qrNote, 'warn', 'The passphrase changed. Press Encrypt again to update the codes.'); }
+  });
 
-  $('modeDefault').addEventListener('click', function () { mode = 'default'; render(); });
-  $('modeGmail').addEventListener('click', function () { mode = 'gmail'; render(); });
-  $('modeGmailAndroid').addEventListener('click', function () { mode = 'gmailandroid'; render(); });
-  $('modeGmailApp').addEventListener('click', function () { mode = 'gmailapp'; render(); });
+  $('addCc').addEventListener('click', function () { ccField.hidden = false; cc.focus(); save(); });
+  $('addBcc').addEventListener('click', function () { bccField.hidden = false; bcc.focus(); save(); });
+  $('rmCc').addEventListener('click', function () { cc.value = ''; ccField.hidden = true; markStale(); });
+  $('rmBcc').addEventListener('click', function () { bcc.value = ''; bccField.hidden = true; markStale(); });
 
+  function resetWriteOutput() {
+    stopAuto();
+    parts = []; stale = false;
+    partUi.hidden = true; partUi.style.display = 'none';
+    qrEl.innerHTML = '<div class="empty">Write the email, add a passphrase, then press Encrypt. The QR codes appear here.</div>';
+    note(qrNote, '', '');
+  }
   $('clear').addEventListener('click', function () {
-    to.value = ''; cc.value = ''; bcc.value = ''; subject.value = ''; body.value = '';
+    to.value = ''; cc.value = ''; bcc.value = ''; subject.value = ''; body.value = ''; pass.value = '';
     ccField.hidden = true; bccField.hidden = true;
-    render(); to.focus();
+    resetWriteOutput(); updateCount(); save(); to.focus();
   });
   $('sample').addEventListener('click', function () {
-    to.value = SAMPLE.to; subject.value = SAMPLE.subject; body.value = SAMPLE.body; render(); flash('Example loaded');
-  });
-  $('copyLink').addEventListener('click', function () {
-    if (!lastUri) { flash('Write an email first'); return; }
-    copy(lastUri, 'Link copied');
+    to.value = SAMPLE.to; subject.value = SAMPLE.subject; body.value = SAMPLE.body;
+    markStale(); flash($('toast'), 'Example loaded');
   });
 
+  /* ---------- read / decrypt ---------- */
+  var paste = $('paste'), pass2 = $('pass2'), readNote = $('readNote');
+  var lastMail = null;
+
+  function updatePasteStatus() {
+    var info = parseParts(paste.value), el = $('pasteStatus');
+    if (!paste.value.trim()) { el.textContent = 'Nothing pasted yet.'; return info; }
+    if (info.mixed) { el.textContent = 'Parts from ' + info.count + ' different emails are mixed. Clear and paste one email only.'; return info; }
+    if (!info.id) { el.textContent = 'No part found. Each part starts with MTP1.'; return info; }
+    el.textContent = 'Email ' + info.id + ': ' + info.have + ' of ' + info.n + ' parts pasted.' +
+      (info.missing.length ? ' Missing: ' + info.missing.join(', ') + '.' : ' Ready to decrypt.');
+    return info;
+  }
+  paste.addEventListener('input', updatePasteStatus);
+
+  function fieldEl(label, value, multiline) {
+    var wrap = document.createElement('div');
+    wrap.className = 'field';
+    var row = document.createElement('div');
+    row.className = 'label-row';
+    var lb = document.createElement('span');
+    lb.className = 'lbl';
+    lb.textContent = label;
+    var cb = document.createElement('button');
+    cb.type = 'button'; cb.className = 'small'; cb.textContent = 'Copy';
+    cb.addEventListener('click', function () { copy(value, $('toast2'), label + ' copied'); });
+    row.appendChild(lb); row.appendChild(cb);
+    var inp = document.createElement(multiline ? 'textarea' : 'input');
+    inp.readOnly = true;
+    inp.value = value;
+    if (multiline) inp.style.minHeight = '260px';
+    wrap.appendChild(row); wrap.appendChild(inp);
+    return wrap;
+  }
+
+  function showResult(m) {
+    var box = $('resultFields');
+    box.innerHTML = '';
+    if (m.t) box.appendChild(fieldEl('To', m.t, false));
+    if (m.c) box.appendChild(fieldEl('CC', m.c, false));
+    if (m.b) box.appendChild(fieldEl('BCC', m.b, false));
+    box.appendChild(fieldEl('Subject', m.s || '', false));
+    box.appendChild(fieldEl('Body', m.m || '', true));
+    var enc = function (s) { return encodeURIComponent(s); };
+    var list = function (s) { return (s || '').split(/[,;\s]+/).filter(Boolean).map(function (a) { return enc(a).replace(/%40/g, '@'); }).join(','); };
+    var p = [];
+    if (m.c) p.push('cc=' + list(m.c));
+    if (m.b) p.push('bcc=' + list(m.b));
+    if (m.s) p.push('subject=' + enc(m.s));
+    if (m.m) p.push('body=' + enc(m.m.replace(/\r?\n/g, '\r\n')));
+    var qs = p.length ? '?' + p.join('&') : '';
+    $('openMail').href = 'mailto:' + list(m.t) + qs;
+    $('openGmail').href = 'intent:' + list(m.t) + qs + '#Intent;scheme=mailto;package=com.google.android.gm;end';
+    lastMail = m;
+    $('result').hidden = false;
+  }
+
+  $('copyEverything').addEventListener('click', function () {
+    if (!lastMail) return;
+    var m = lastMail, t = '';
+    if (m.t) t += 'To: ' + m.t + '\n';
+    if (m.c) t += 'CC: ' + m.c + '\n';
+    if (m.b) t += 'BCC: ' + m.b + '\n';
+    t += 'Subject: ' + (m.s || '') + '\n\n' + (m.m || '');
+    copy(t, $('toast2'), 'Everything copied');
+  });
+
+  $('decrypt').addEventListener('click', async function () {
+    var btn = $('decrypt');
+    note(readNote, '', '');
+    $('result').hidden = true;
+    var info = updatePasteStatus();
+    if (!info.id || info.mixed) { note(readNote, 'bad', info.mixed ? 'Mixed parts. Clear and paste one email only.' : 'Paste the encrypted text first.'); return; }
+    if (info.missing.length) { note(readNote, 'bad', 'Missing part' + (info.missing.length > 1 ? 's' : '') + ': ' + info.missing.join(', ') + '. Scan and paste them first.'); return; }
+    if (!pass2.value) { note(readNote, 'bad', 'Enter the passphrase.'); pass2.focus(); return; }
+    if (!window.crypto || !crypto.subtle) { note(readNote, 'bad', 'This browser blocks decryption on this page. Open the page over https.'); return; }
+    btn.disabled = true; btn.textContent = 'Decrypting…';
+    try {
+      var m = await decryptEmail(info, pass2.value);
+      showResult(m);
+      note(readNote, 'ok', 'Decrypted.');
+    } catch (e) {
+      if (e && e.message === 'NOZIP') note(readNote, 'bad', 'This browser cannot unpack the email. Update Chrome and try again.');
+      else if (e && e.message === 'BAD') note(readNote, 'bad', 'Wrong passphrase, or a part was copied wrongly. Check both and try again.');
+      else note(readNote, 'bad', 'The text is damaged. Scan the parts again.');
+    }
+    btn.disabled = false; btn.textContent = 'Decrypt';
+  });
+
+  $('clear2').addEventListener('click', function () {
+    paste.value = ''; pass2.value = ''; lastMail = null;
+    $('result').hidden = true; $('resultFields').innerHTML = '';
+    note(readNote, '', ''); updatePasteStatus(); paste.focus();
+  });
+
+  /* ---------- start ---------- */
   if (!load()) { to.value = SAMPLE.to; subject.value = SAMPLE.subject; body.value = SAMPLE.body; }
-  render();
+  updateCount();
+  updatePasteStatus();
 })();
 </script>
